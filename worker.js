@@ -736,6 +736,8 @@ async function handleMe(request, env, corsHeaders) {
     await putUser(env, user);
   }
 
+  try { await env.LINKS_KV.put("lastseen:" + user.username.toLowerCase(), String(Date.now()), { expirationTtl: 3600 }); } catch(e) {}
+
   return json({ user, limits: TIER_CONFIG[user.role] }, 200, corsHeaders);
 }
 
@@ -3086,9 +3088,24 @@ async function handleAdminOverview(request, env, corsHeaders) {
       cpuP90: { value: null, available: false, note: "" },
       hourly: []
     },
-    payments: { paidUsers: 0, stripe: 0, qr: 0 },
+    payments: { paidUsers: 0, stripe: 0, qr: 0, pendingQr: 0, revenueUsd: 0, revenueVnd: 0 },
+    reports: { pending: 0, total: 0 },
     userGrowth: []
   };
+  try {
+    var lsList = await env.LINKS_KV.list({ prefix: "lastseen:", limit: 1000 });
+    var lsVals = await Promise.all(lsList.keys.map(function(k){ return env.LINKS_KV.get(k.name); }));
+    var nowMs = Date.now();
+    var activeCount = 0;
+    for (var li2 = 0; li2 < lsVals.length; li2++) {
+      if (lsVals[li2] && (nowMs - parseInt(lsVals[li2])) <= 15 * 60 * 1000) activeCount++;
+    }
+    result.activeUsers = { count: activeCount, available: true, note: "" };
+  } catch(e) {}
+  try {
+    var reports = await listReports(env);
+    result.reports = { pending: reports.filter(function(r){ return !r.dismissed; }).length, total: reports.length };
+  } catch(e) {}
   try {
     var raw = await env.LINKS_KV.get("cf_analytics_cache");
     if (raw) {
@@ -3152,18 +3169,26 @@ async function handleAdminOverview(request, env, corsHeaders) {
     var stripeUsers = new Set();
     var qrUsers = new Set();
     var allPaidUsers = new Set();
+    var revenueUsd = 0, revenueVnd = 0, pendingQr = 0;
     var payList = await env.LINKS_KV.list({ prefix: "payment:", limit: 1000 });
     var payVals = await Promise.all(payList.keys.map(function(k){ return env.LINKS_KV.get(k.name); }));
     for (var i = 0; i < payVals.length; i++) {
-      if (payVals[i]) { var p = JSON.parse(payVals[i]); if (p.status === "success" && p.username) { var un = p.username.toLowerCase(); stripeUsers.add(un); allPaidUsers.add(un); } }
+      if (payVals[i]) { var p = JSON.parse(payVals[i]); if (p.status === "success" && p.username) { var un = p.username.toLowerCase(); stripeUsers.add(un); allPaidUsers.add(un); revenueUsd += (p.amount || 0) / 100; } }
     }
     var qrList = await env.LINKS_KV.list({ prefix: "qrpay:", limit: 1000 });
     var qrVals = await Promise.all(qrList.keys.map(function(k){ return env.LINKS_KV.get(k.name); }));
     for (var i = 0; i < qrVals.length; i++) {
-      if (qrVals[i]) { var p = JSON.parse(qrVals[i]); if (p.status === "approved" && p.username) { var un = p.username.toLowerCase(); qrUsers.add(un); allPaidUsers.add(un); } }
+      if (qrVals[i]) {
+        var p = JSON.parse(qrVals[i]);
+        if (p.status === "pending") pendingQr++;
+        if (p.status === "approved" && p.username) { var un = p.username.toLowerCase(); qrUsers.add(un); allPaidUsers.add(un); revenueVnd += (p.vndPrice || 0); }
+      }
     }
     result.payments.stripe = stripeUsers.size;
     result.payments.qr = qrUsers.size;
+    result.payments.pendingQr = pendingQr;
+    result.payments.revenueUsd = Math.round(revenueUsd * 100) / 100;
+    result.payments.revenueVnd = revenueVnd;
     result.payments.paidUsers = allPaidUsers.size;
   } catch(e) {}
   return json(result, 200, corsHeaders);
@@ -3708,6 +3733,9 @@ var i18n = {
     api_title:"API Token", api_no_token:"Bạn chưa có API token.", api_gen_token:"Tạo token",
     api_regen_token:"Tạo lại token", api_monthly_limit:"Hạn mức:", api_requests_month:"requests/tháng.",
     api_example:"Ví dụ sử dụng (cURL)", api_other:"Các endpoint khác: GET /api/v1/links · GET /api/v1/analytics/:code",
+    url_tool_title:"URL Encoder / Decoder", url_tool_hint:"Mã hóa hoặc giải mã chuỗi URL (encodeURIComponent/decodeURIComponent) — chạy trực tiếp trên trình duyệt, không gửi dữ liệu lên server.",
+    url_tool_input_label:"Đầu vào", url_tool_output_label:"Kết quả", url_tool_encode_btn:"Encode", url_tool_decode_btn:"Decode",
+    url_tool_copy:"Sao chép", url_tool_error:"Chuỗi không hợp lệ để giải mã.",
     api_no_access:"Gói hiện tại chưa hỗ trợ API. Nâng cấp PRO hoặc SUPER để sử dụng.",
     // ===== ADMIN =====
     admin_title:"Quản trị hệ thống", admin_users:"Người dùng", admin_reports:"Báo cáo vi phạm",
@@ -4030,6 +4058,9 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     api_title:"API Token", api_no_token:"You don't have an API token yet.", api_gen_token:"Generate token",
     api_regen_token:"Regenerate token", api_monthly_limit:"Quota:", api_requests_month:"requests/month.",
     api_example:"Usage example (cURL)", api_other:"Other endpoints: GET /api/v1/links · GET /api/v1/analytics/:code",
+    url_tool_title:"URL Encoder / Decoder", url_tool_hint:"Encode or decode a URL string (encodeURIComponent/decodeURIComponent) — runs entirely in your browser, no data is sent to the server.",
+    url_tool_input_label:"Input", url_tool_output_label:"Output", url_tool_encode_btn:"Encode", url_tool_decode_btn:"Decode",
+    url_tool_copy:"Copy", url_tool_error:"Invalid string to decode.",
     api_no_access:"API is not available on your current plan. Upgrade to PRO or SUPER to use it.",
     // ===== ADMIN =====
     admin_title:"System administration", admin_users:"Users", admin_reports:"Abuse reports",
@@ -5965,9 +5996,18 @@ function fetchUserNotifications() {
   }).catch(function() {});
 }
 
+var _userNotifPanelClickHandler = null;
+function closeUserNotifPanel() {
+  var p = document.getElementById("userNotifPanel");
+  if (p) p.remove();
+  if (_userNotifPanelClickHandler) {
+    document.removeEventListener("click", _userNotifPanelClickHandler);
+    _userNotifPanelClickHandler = null;
+  }
+}
 function toggleUserNotifications() {
   var existing = document.getElementById("userNotifPanel");
-  if (existing) { existing.remove(); return; }
+  if (existing) { closeUserNotifPanel(); return; }
   // Fetch fresh data from server before showing panel
   fetchUserNotifications();
   var notifs = state.userNotifs || [];
@@ -6011,17 +6051,16 @@ function toggleUserNotifications() {
   document.body.appendChild(panel);
   // Close button
   var closeBtn = document.getElementById("closeNotifPanelBtn");
-  if (closeBtn) closeBtn.onclick = function(e) { e.stopPropagation(); panel.remove(); };
+  if (closeBtn) closeBtn.onclick = function(e) { e.stopPropagation(); closeUserNotifPanel(); };
   // Click outside to close
-  setTimeout(function() {
-    document.addEventListener("click", closeNotifPanelHandler);
-  }, 0);
-  function closeNotifPanelHandler(e) {
+  _userNotifPanelClickHandler = function(e) {
     if (!panel.contains(e.target) && e.target.id !== "userBell") {
-      panel.remove();
-      document.removeEventListener("click", closeNotifPanelHandler);
+      closeUserNotifPanel();
     }
-  }
+  };
+  setTimeout(function() {
+    document.addEventListener("click", _userNotifPanelClickHandler);
+  }, 0);
   var markAllBtn = document.getElementById("markAllReadBtn");
   if (markAllBtn) markAllBtn.onclick = function(e) {
     e.stopPropagation();
@@ -6073,7 +6112,8 @@ function toggleUserNotifications() {
           }
         }
       }
-      // Show detail modal
+      // Show detail modal — close the list panel first so it doesn't stay floating behind it
+      closeUserNotifPanel();
       if (notif) showNotifDetailModal(notif);
     };
   });
@@ -8202,6 +8242,21 @@ function renderApiTab(app){
     esc(buildCurlExample(origin, state.user.apiToken)) +
     '</pre>' +
     '<p class="hint">' + t("api_other") + '</p>' +
+    '</div>' +
+    '<div class="card"><h2>' + t("url_tool_title") + '</h2>' +
+    '<p class="hint">' + t("url_tool_hint") + '</p>' +
+    '<label>' + t("url_tool_input_label") + '</label>' +
+    '<textarea id="urlToolInput" rows="3" style="width:100%;padding:10px;border:1px solid var(--input-border);border-radius:8px;background:var(--input-bg);color:var(--text);font-size:13px;font-family:monospace;resize:vertical;"></textarea>' +
+    '<div style="display:flex;gap:10px;margin-top:10px;">' +
+    '<button class="btn btn-primary btn-sm" id="urlToolEncodeBtn">' + t("url_tool_encode_btn") + '</button>' +
+    '<button class="btn btn-ghost btn-sm" id="urlToolDecodeBtn">' + t("url_tool_decode_btn") + '</button>' +
+    '</div>' +
+    '<div id="urlToolMsg"></div>' +
+    '<div id="urlToolResultWrap" style="display:none;margin-top:10px;">' +
+    '<label>' + t("url_tool_output_label") + '</label>' +
+    '<textarea id="urlToolOutput" rows="3" readonly style="width:100%;padding:10px;border:1px solid var(--input-border);border-radius:8px;background:var(--input-bg);color:var(--text);font-size:13px;font-family:monospace;resize:vertical;"></textarea>' +
+    '<button class="btn btn-ghost btn-sm" id="urlToolCopyBtn" style="margin-top:8px;">' + t("url_tool_copy") + '</button>' +
+    '</div>' +
     '</div>';
   var btn = document.getElementById("btnGenToken");
   var msg = document.getElementById("apiMsg");
@@ -8215,6 +8270,26 @@ function renderApiTab(app){
   }
   var copyBtn = document.getElementById("btnCopyToken");
   if (copyBtn) copyBtn.onclick = function(){ copyText(state.user.apiToken, this); };
+
+  // URL Encoder/Decoder — thuần client-side, không gọi API
+  var urlToolMsg = document.getElementById("urlToolMsg");
+  var urlToolResultWrap = document.getElementById("urlToolResultWrap");
+  var urlToolOutput = document.getElementById("urlToolOutput");
+  function urlToolRun(fn){
+    urlToolMsg.innerHTML = "";
+    var input = document.getElementById("urlToolInput").value;
+    try {
+      var result = fn(input);
+      urlToolOutput.value = result;
+      urlToolResultWrap.style.display = "block";
+    } catch (e) {
+      urlToolResultWrap.style.display = "none";
+      urlToolMsg.innerHTML = '<div class="msg msg-error">' + esc(t("url_tool_error")) + '</div>';
+    }
+  }
+  document.getElementById("urlToolEncodeBtn").onclick = function(){ urlToolRun(encodeURIComponent); };
+  document.getElementById("urlToolDecodeBtn").onclick = function(){ urlToolRun(decodeURIComponent); };
+  document.getElementById("urlToolCopyBtn").onclick = function(){ copyText(urlToolOutput.value, this); };
 }
 
 
@@ -9146,6 +9221,7 @@ function renderOverviewCards(container, data){
   var we = w.errors || {};
   var wc = w.cpuP90 || {};
   var p = data.payments || {};
+  var rp = data.reports || {};
   var cards = '';
   cards += ovCard('users', 'Tổng người dùng', fmtNum(u.total), u.today > 0 ? '+' + u.today + ' hôm nay' : '', 'var(--indigo)');
   cards += ovCard('user', 'Người dùng hoạt động', au.available ? fmtNum(au.count) : '—', au.available ? 'Active trong 15 phút' : 'Chưa có dữ liệu lastSeen', 'var(--sky)');
@@ -9166,6 +9242,13 @@ function renderOverviewCards(container, data){
   cards += ovCard('alert', 'Workers Errors', we.available ? fmtNum(we.count) : 'Unavailable', we.available ? (we.count === 0 ? 'No errors today' : we.count + ' errors') : 'Chưa có Cloudflare Analytics', 'var(--red)');
   cards += ovCard('chart', 'CPU Time P90', wc.available ? wc.value + ' ms' : '—', wc.available ? 'CPU P90' : 'Chưa có Cloudflare Analytics', 'var(--sky)');
   cards += ovCard('card', 'Khách hàng trả phí', fmtNum(p.paidUsers), 'Stripe: ' + p.stripe + ' · QR: ' + p.qr, 'var(--green)');
+  var revenueParts = [];
+  if (p.revenueUsd > 0) revenueParts.push('$' + p.revenueUsd.toFixed(2));
+  if (p.revenueVnd > 0) revenueParts.push(fmtNum(p.revenueVnd) + 'đ');
+  var revenueVal = revenueParts.length > 0 ? revenueParts.join(' + ') : '—';
+  cards += ovCard('card', 'Doanh thu', revenueVal, 'Stripe + QR (thành công)', 'var(--purple)');
+  cards += ovCard('alert', 'Đơn QR chờ duyệt', fmtNum(p.pendingQr || 0), p.pendingQr > 0 ? 'Cần xử lý' : 'Không có đơn chờ', p.pendingQr > 0 ? 'var(--amber)' : 'var(--muted)');
+  cards += ovCard('alert', 'Báo cáo chờ xử lý', fmtNum(rp.pending || 0), rp.pending > 0 ? 'Cần xem xét' : 'Không có báo cáo mới', rp.pending > 0 ? 'var(--red)' : 'var(--muted)');
   var lastUpdated = data.workers && data.workers.requests && data.workers.requests.available ? 'Cập nhật: ' + new Date().toLocaleTimeString() : '';
   var html = '<div class="ov-refresh"><h2>' + li('chart', 18) + ' System Overview</h2><div style="display:flex;gap:8px;align-items:center;">' + (lastUpdated ? '<span style="font-size:11px;color:var(--muted);">' + lastUpdated + '</span>' : '') + '<button class="btn btn-sm" id="ovRefreshBtn">' + li('undo', 14) + ' Làm mới</button></div></div>';
   html += '<div class="overview-grid">' + cards + '</div>';
