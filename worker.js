@@ -237,12 +237,12 @@ export default {
       if (path === "api/v1/teams" && method === "GET") return await handleListTeams(request, env, corsHeaders);
       if (path === "api/v1/teams/members" && method === "POST") return await handleAddTeamMember(request, env, corsHeaders);
       if (path === "api/v1/teams/members" && method === "DELETE") return await handleRemoveTeamMember(request, env, corsHeaders);
-      if (path.startsWith("api/v1/teams/") && method === "DELETE") return await handleDeleteTeam(request, env, decodeURIComponent(path.slice(14)), corsHeaders);
-      if (path.startsWith("api/v1/teams/") && method === "PUT") return await handleUpdateTeam(request, env, decodeURIComponent(path.slice(14)), corsHeaders);
+      if (path.startsWith("api/v1/teams/") && method === "DELETE") return await handleDeleteTeam(request, env, decodeURIComponent(path.slice(13)), corsHeaders);
+      if (path.startsWith("api/v1/teams/") && method === "PUT") return await handleUpdateTeam(request, env, decodeURIComponent(path.slice(13)), corsHeaders);
       
       // ===== 4c. CAMPAIGNS (Plus+) =====
       if (path === "api/v1/campaigns" && method === "GET") return await handleListCampaigns(request, env, corsHeaders);
-      if (path.startsWith("api/v1/campaigns/") && method === "GET") return await handleCampaignHistory(request, env, decodeURIComponent(path.slice(18)), corsHeaders);
+      if (path.startsWith("api/v1/campaigns/") && method === "GET") return await handleCampaignHistory(request, env, decodeURIComponent(path.slice(17)), corsHeaders);
       
      // ===== 4b. VOUCHER (mã kích hoạt) =====
       if (path === "api/voucher/redeem" && method === "POST") return handleRedeemVoucher(request, env, corsHeaders);
@@ -295,7 +295,7 @@ export default {
       if (path === "api/blacklist" && method === "POST") return handleAddBlacklist(request, env, corsHeaders);
       if (path === "api/blacklist" && method === "DELETE") return handleRemoveBlacklist(request, env, corsHeaders);
       // ===== 6b. ADMIN: DELETE USER + BROADCAST NOTIFICATION =====
-      if (path.startsWith("api/admin/users/") && method === "DELETE") return handleAdminDeleteUser(request, env, decodeURIComponent(path.slice(17)), corsHeaders);
+      if (path.startsWith("api/admin/users/") && method === "DELETE") return handleAdminDeleteUser(request, env, decodeURIComponent(path.slice(16)), corsHeaders);
       if (path === "api/admin/users/ban" && method === "POST") return handleAdminBanUser(request, env, corsHeaders);
       if (path === "api/admin/users/search" && method === "GET") return handleAdminSearchUsers(request, env, corsHeaders);
       if (path === "api/admin/settings" && method === "GET") return handleAdminGetSettings(request, env, corsHeaders);
@@ -303,9 +303,9 @@ export default {
       if (path === "api/admin/vouchers/apply" && method === "POST") return handleAdminApplyVoucher(request, env, corsHeaders);
       if (path === "api/admin/notifications" && method === "POST") return handleAdminBroadcastNotification(request, env, corsHeaders);
       if (path === "api/admin/notifications" && method === "GET") return handleAdminListNotifications(request, env, corsHeaders);
-      if (path.startsWith("api/admin/notifications/") && method === "DELETE") return handleAdminDeleteNotification(request, env, decodeURIComponent(path.slice(25)), corsHeaders);
+      if (path.startsWith("api/admin/notifications/") && method === "DELETE") return handleAdminDeleteNotification(request, env, decodeURIComponent(path.slice(24)), corsHeaders);
       if (path === "api/notifications" && method === "GET") return handleGetMyNotifications(request, env, corsHeaders);
-      if (path.startsWith("api/notifications/") && method === "POST") return handleMarkNotificationRead(request, env, decodeURIComponent(path.slice(17)), corsHeaders);
+      if (path.startsWith("api/notifications/") && method === "POST") return handleMarkNotificationRead(request, env, decodeURIComponent(path.slice(18)), corsHeaders);
 
       // ===== 7. EXPORT WORKER SOURCE (Admin Portal > Cloudflare Worker Code tab) =====
       if (path === "api/export/cloudflare-worker" && method === "GET") return await handleExportWorker(request, env, corsHeaders);
