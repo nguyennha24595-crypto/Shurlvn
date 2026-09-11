@@ -228,8 +228,8 @@ export default {
       if (path.startsWith("api/v1/webhooks/") && method === "DELETE") return await handleDeleteWebhook(request, env, decodeURIComponent(path.slice(16)), corsHeaders);
       
       // ===== 4a2. DATA EXPORT (Pro/Super) =====
-      if (path === "api/v1/export/csv" && method === "GET") return await handleExportCsv(request, env, corsHeaders);
-      if (path === "api/v1/export/json" && method === "GET") return await handleExportJson(request, env, corsHeaders);
+      if (path === "api/v1/export/csv" && method === "GET") return await handleExportCsv(request, env, url, corsHeaders);
+      if (path === "api/v1/export/json" && method === "GET") return await handleExportJson(request, env, url, corsHeaders);
       if (path === "api/feedback" && method === "POST") return await handleFeedback(request, env, corsHeaders);
       
       // ===== 4b. TEAMS (Super/Admin) =====
@@ -3792,6 +3792,10 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     campaigns_empty:"Chưa có campaign nào. Tạo link với campaign để bắt đầu.",
     campaigns_col_name:"Campaign", campaigns_col_links:"Links", campaigns_col_clicks:"Tổng click", campaigns_col_history:"Lịch sử",
     campaigns_back:"← Quay lại", campaigns_history_title:"Lịch sử campaign:", campaigns_no_links:"Không có link nào.",
+    utm_builder_title:"UTM Builder", utm_builder_toggle:"Thêm tham số UTM (tùy chọn)",
+    utm_builder_hint:"Tự động gắn tham số UTM vào URL đích. Campaign UTM sẽ lấy theo trường Chiến dịch ở trên.",
+    utm_source:"Nguồn (utm_source)", utm_medium:"Kênh (utm_medium)", utm_term:"Từ khóa (utm_term)", utm_content:"Nội dung (utm_content)",
+    export_filter_campaign_label:"Lọc theo Campaign", export_filter_all:"Tất cả campaign",
     admin_ban:"Khóa", admin_unban:"Mở khóa", admin_banned:"Bị khóa", admin_active:"Bình thường", admin_expires:"Hết hạn:", admin_notify:"Gửi thông báo", admin_delete_user:"Xóa user", admin_ban_user:"Khóa user", admin_unban_user:"Mở khóa",
     guide_close:"Đóng hướng dẫn",
     guide_home_title:"Bắt đầu với SHORT URL",
@@ -4124,6 +4128,10 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     campaigns_empty:"No campaigns yet. Create a link with a campaign to get started.",
     campaigns_col_name:"Campaign", campaigns_col_links:"Links", campaigns_col_clicks:"Total clicks", campaigns_col_history:"History",
     campaigns_back:"← Back", campaigns_history_title:"Campaign history:", campaigns_no_links:"No links.",
+    utm_builder_title:"UTM Builder", utm_builder_toggle:"Add UTM parameters (optional)",
+    utm_builder_hint:"Automatically append UTM parameters to the destination URL. UTM campaign follows the Campaign field above.",
+    utm_source:"Source (utm_source)", utm_medium:"Medium (utm_medium)", utm_term:"Term (utm_term)", utm_content:"Content (utm_content)",
+    export_filter_campaign_label:"Filter by Campaign", export_filter_all:"All campaigns",
     admin_ban:"Ban", admin_unban:"Unban", admin_banned:"Banned", admin_active:"Active", admin_expires:"Expires:", admin_notify:"Send notification", admin_delete_user:"Delete user", admin_ban_user:"Ban user", admin_unban_user:"Unban user",
     guide_close:"Close guide",
     guide_home_title:"Get started with SHORT URL",
@@ -7124,6 +7132,34 @@ function toggleAdvFields(){
   if (e) e.style.display = e.style.display === "none" ? "block" : "none";
 }
 
+function toggleUtmFields(){
+  var e = document.getElementById("utmFields");
+  if (e) e.style.display = e.style.display === "none" ? "block" : "none";
+}
+
+function applyUtmParams(rawUrl, campaign){
+  var source = (document.getElementById("u_source") || {}).value;
+  var medium = (document.getElementById("u_medium") || {}).value;
+  var term = (document.getElementById("u_term") || {}).value;
+  var content = (document.getElementById("u_content") || {}).value;
+  source = source ? source.trim() : "";
+  medium = medium ? medium.trim() : "";
+  term = term ? term.trim() : "";
+  content = content ? content.trim() : "";
+  if (!source && !medium && !term && !content) return rawUrl;
+  try {
+    var u = new URL(rawUrl);
+    if (source) u.searchParams.set("utm_source", source);
+    if (medium) u.searchParams.set("utm_medium", medium);
+    if (campaign) u.searchParams.set("utm_campaign", campaign);
+    if (term) u.searchParams.set("utm_term", term);
+    if (content) u.searchParams.set("utm_content", content);
+    return u.toString();
+  } catch (e) {
+    return rawUrl;
+  }
+}
+
 
 function copyText(text, btnEl){
   var done = function(){ if (btnEl){ var old = btnEl.textContent; btnEl.textContent = t("copied"); setTimeout(function(){ btnEl.textContent = old; }, 1500); } };
@@ -7562,6 +7598,18 @@ function renderDashboard(app){
         '<div><label>' + t("campaign") + '</label><input type="text" id="c_campaign" placeholder="' + t("optional") + '"></div>' +
         '<div><label>' + t("tags") + '</label><input type="text" id="c_tags" placeholder="vd: sale, q1"></div>' +
       '</div>' +
+      '<p style="margin-top:6px;"><a href="javascript:void(0)" onclick="toggleUtmFields()">' + t("utm_builder_toggle") + '</a></p>' +
+      '<div id="utmFields" style="display:none;margin-top:6px;">' +
+        '<p class="hint">' + t("utm_builder_hint") + '</p>' +
+        '<div class="row">' +
+          '<div><label>' + t("utm_source") + '</label><input type="text" id="u_source" placeholder="facebook"></div>' +
+          '<div><label>' + t("utm_medium") + '</label><input type="text" id="u_medium" placeholder="social"></div>' +
+        '</div>' +
+        '<div class="row">' +
+          '<div><label>' + t("utm_term") + '</label><input type="text" id="u_term" placeholder="' + t("optional") + '"></div>' +
+          '<div><label>' + t("utm_content") + '</label><input type="text" id="u_content" placeholder="' + t("optional") + '"></div>' +
+        '</div>' +
+      '</div>' +
       (canExpiry ? '<div class="row"><div><label>' + t("expiry_date") + '</label><input type="date" id="c_expiry"></div>' +
         (canCustomDomain ? '<div><label>' + t("custom_domain") + '</label><input type="text" id="c_domain" placeholder="ten.shurl.com" oninput="updatePreview()"></div>' : '<div><label>' + t("custom_domain") + '</label><input type="text" id="c_domain" placeholder="' + t("upgrade_to_unlock") + '" disabled style="opacity:0.5;"></div>') +
         '</div>' : '') +
@@ -7702,10 +7750,10 @@ function renderDashboard(app){
     e.preventDefault();
     var msg = document.getElementById("createMsg");
     msg.innerHTML = "";
-    var body = { url: document.getElementById("c_url").value.trim() };
+    var campaign = document.getElementById("c_campaign").value.trim();
+    var body = { url: applyUtmParams(document.getElementById("c_url").value.trim(), campaign) };
     var code = document.getElementById("c_code").value.trim();
     var title = document.getElementById("c_title").value.trim();
-    var campaign = document.getElementById("c_campaign").value.trim();
     var tags = document.getElementById("c_tags").value.trim();
     if (code) body.customCode = code;
     if (title) body.title = title;
@@ -8218,7 +8266,11 @@ function renderExportTab(app){
   app.innerHTML = guideCard("export") + upgradeBanner("export") +
     '<div class="card"><h1>' + li('download', 14) + ' ' + t("export_tab_title") + '</h1>' +
     (limits.hasDataExport ? '' : '<p class="sub">' + t("export_requires") + '</p>') +
-    (limits.hasDataExport ? '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;">' +
+    (limits.hasDataExport ? '<div style="margin-top:16px;max-width:260px;">' +
+    '<label>' + t("export_filter_campaign_label") + '</label>' +
+    '<select id="exportCampaignFilter" style="width:100%;padding:8px;border:1px solid var(--input-border);border-radius:8px;background:var(--input-bg);color:var(--text);font-size:13px;"><option value="">' + t("export_filter_all") + '</option></select>' +
+    '</div>' +
+    '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;">' +
     '<button class="btn btn-primary" id="btnExportCsv">' + li('download', 12) + ' ' + t("export_csv_btn") + '</button>' +
     '<button class="btn btn-primary" id="btnExportJson">' + li('download', 12) + ' ' + t("export_json_btn") + '</button>' +
     '</div>' +
@@ -8231,10 +8283,26 @@ function renderExportTab(app){
     var csvBtn = document.getElementById("btnExportCsv");
     var jsonBtn = document.getElementById("btnExportJson");
     var msg = document.getElementById("exportMsg");
+    var campaignSel = document.getElementById("exportCampaignFilter");
+
+    api("/api/v1/campaigns", "GET").then(function(data){
+      if (campaignSel && data.campaigns && data.campaigns.length){
+        campaignSel.innerHTML = '<option value="">' + t("export_filter_all") + '</option>' +
+          data.campaigns.map(function(c){ return '<option value="' + esc(c.name) + '">' + esc(c.name) + '</option>'; }).join("");
+      }
+    }).catch(function(){});
+
+    function exportQuery(){
+      var c = campaignSel ? campaignSel.value : "";
+      return c ? ("?campaign=" + encodeURIComponent(c)) : "";
+    }
 
     if (csvBtn) csvBtn.onclick = function(){
       msg.innerHTML = '<p class="hint">Đang xuất CSV...</p>';
-      api("/api/v1/export/csv", "GET").then(function(text){
+      fetch("/api/v1/export/csv" + exportQuery(), { credentials: "same-origin" }).then(function(res){
+        if (!res.ok) return res.json().then(function(d){ throw new Error((d && d.error) || "Export failed"); });
+        return res.text();
+      }).then(function(text){
         var blob = new Blob([text], { type: "text/csv;charset=utf-8" });
         var a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
@@ -8249,7 +8317,10 @@ function renderExportTab(app){
 
     if (jsonBtn) jsonBtn.onclick = function(){
       msg.innerHTML = '<p class="hint">Đang xuất JSON...</p>';
-      api("/api/v1/export/json", "GET").then(function(text){
+      fetch("/api/v1/export/json" + exportQuery(), { credentials: "same-origin" }).then(function(res){
+        if (!res.ok) return res.json().then(function(d){ throw new Error((d && d.error) || "Export failed"); });
+        return res.text();
+      }).then(function(text){
         var blob = new Blob([text], { type: "application/json;charset=utf-8" });
         var a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
@@ -10635,19 +10706,21 @@ async function handleDeleteWebhook(request, env, hookId, corsHeaders) {
 }
 
 // ===================== DATA EXPORT HANDLERS (Pro/Super) =====================
-async function handleExportCsv(request, env, corsHeaders) {
+async function handleExportCsv(request, env, url, corsHeaders) {
   const authedUser = await getAuthenticatedUser(request, env);
   if (!authedUser) return json({ success: false, error: "Unauthorized" }, 401, corsHeaders);
   const limits = TIER_CONFIG[authedUser.role] || {};
   if (!limits.hasDataExport) return json({ success: false, error: "Data export requires Pro or Super plan" }, 403, corsHeaders);
-  
+
   const allLinks = await listAllLinks(env);
   let userLinks; if (authedUser.role === "admin") { userLinks = allLinks; } else { let ownerSet = new Set([authedUser.username.toLowerCase()]); if (authedUser.teamId) { const team = await getTeam(env, authedUser.teamId); if (team && team.members) { team.members.forEach(function(m){ ownerSet.add(m.username.toLowerCase()); }); } } userLinks = allLinks.filter(l => ownerSet.has((l.owner || "").toLowerCase())); }
+  const campaignFilter = url.searchParams.get("campaign");
+  if (campaignFilter) userLinks = userLinks.filter(l => (l.campaign || "") === campaignFilter);
   const origin = new URL(request.url).origin;
-  
-  const headers = ["code", "short_url", "destination", "title", "total_clicks", "is_enabled", "created_at", "expires_at", "is_deleted"];
+
+  const headers = ["code", "short_url", "destination", "title", "campaign", "tags", "total_clicks", "is_enabled", "created_at", "expires_at", "is_deleted"];
   const rows = userLinks.map(l => [
-    l.code, origin + "/" + l.code, l.url, (l.title || ""),
+    l.code, origin + "/" + l.code, l.url, (l.title || ""), (l.campaign || ""), (l.tags || []).join("|"),
     (l.totalClicks || 0), (l.isEnabled !== false), (l.createdAt || ""), (l.expiryDate || ""), (l.isDeleted || false)
   ]);
   
@@ -10666,15 +10739,17 @@ async function handleExportCsv(request, env, corsHeaders) {
   });
 }
 
-async function handleExportJson(request, env, corsHeaders) {
+async function handleExportJson(request, env, url, corsHeaders) {
   const authedUser = await getAuthenticatedUser(request, env);
   if (!authedUser) return json({ success: false, error: "Unauthorized" }, 401, corsHeaders);
   const limits = TIER_CONFIG[authedUser.role] || {};
   if (!limits.hasDataExport) return json({ success: false, error: "Data export requires Pro or Super plan" }, 403, corsHeaders);
-  
+
   const allLinks = await listAllLinks(env);
   let userLinks; if (authedUser.role === "admin") { userLinks = allLinks; } else { let ownerSet = new Set([authedUser.username.toLowerCase()]); if (authedUser.teamId) { const team = await getTeam(env, authedUser.teamId); if (team && team.members) { team.members.forEach(function(m){ ownerSet.add(m.username.toLowerCase()); }); } } userLinks = allLinks.filter(l => ownerSet.has((l.owner || "").toLowerCase())); }
-  
+  const campaignFilter = url.searchParams.get("campaign");
+  if (campaignFilter) userLinks = userLinks.filter(l => (l.campaign || "") === campaignFilter);
+
   const exportData = {
     exported_at: new Date().toISOString(),
     exported_by: authedUser.username,

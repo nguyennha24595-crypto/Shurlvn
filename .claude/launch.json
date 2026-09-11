@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "worker-dev",
+      "runtimeExecutable": "wrangler",
+      "runtimeArgs": ["dev", "--port", "8788", "--compatibility-date", "2026-08-18", "--local-protocol", "https"],
+      "port": 8788,
+      "url": "https://localhost:8788"
+    }
+  ]
+}
