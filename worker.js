@@ -266,6 +266,12 @@ export default {
       if (path === "api/admin/promo-settings" && method === "POST") return handleSavePromoSettings(request, env, corsHeaders);
       if (path === "api/admin/payment-reports" && method === "GET") return handlePaymentReports(request, env, corsHeaders);
       if (path === "api/admin/overview" && method === "GET") return handleAdminOverview(request, env, corsHeaders);
+      if (path === "api/admin/refresh-analytics" && method === "POST") {
+        const authedUserRA = await getAuthenticatedUser(request, env);
+        if (!authedUserRA || authedUserRA.role !== "admin") return requireAdminResponse(corsHeaders, request);
+        const refreshResult = await refreshCfAnalyticsCache(env);
+        return json(refreshResult, refreshResult.ok ? 200 : 502, corsHeaders);
+      }
       if (path === "api/webhook/stripe" && method === "POST") return handleStripeWebhook(request, env, corsHeaders);
 
       // ===== 4d. PASSWORD LINK VERIFY =====
@@ -330,6 +336,10 @@ export default {
     } catch (err) {
       return json({ error: err && err.message ? err.message : "Internal Worker Error" }, 500, corsHeaders);
     }
+  },
+
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(refreshCfAnalyticsCache(env));
   }
 };
 
@@ -3071,6 +3081,59 @@ async function handleSavePromoSettings(request, env, corsHeaders) {
   try { body = await request.json(); } catch (e) { body = {}; }
   await env.LINKS_KV.put("promo:settings", JSON.stringify(body));
   return json({ ok: true }, 200, corsHeaders);
+}
+
+// ===================== CLOUDFLARE ANALYTICS (Workers requests/errors/CPU) =====================
+// Đọc bằng GraphQL Analytics API của Cloudflare (KHÔNG phải phân tích click link của SHURL).
+// Cần secret CF_ANALYTICS_TOKEN (API Token quyền "Account > Account Analytics > Read")
+// và var CF_ACCOUNT_ID (đã có sẵn trong wrangler.jsonc, không phải bí mật).
+async function refreshCfAnalyticsCache(env) {
+  if (!env.CF_ANALYTICS_TOKEN || !env.CF_ACCOUNT_ID) {
+    return { ok: false, error: "Thiếu CF_ANALYTICS_TOKEN hoặc CF_ACCOUNT_ID." };
+  }
+  try {
+    const now = new Date();
+    const start = new Date(now.getTime() - 24 * 3600000);
+    const query = "query WorkerStats($accountTag: string!, $scriptName: string!, $start: Time!, $end: Time!) {" +
+      " viewer { accounts(filter: { accountTag: $accountTag }) {" +
+      " workersInvocationsAdaptiveGroups(filter: { scriptName: $scriptName, datetimeHour_geq: $start, datetimeHour_leq: $end }, limit: 100, orderBy: [datetimeHour_ASC]) {" +
+      " dimensions { datetimeHour } sum { requests errors } quantiles { cpuTimeP90 } } } } }";
+    const res = await fetch("https://api.cloudflare.com/client/v4/graphql", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + env.CF_ANALYTICS_TOKEN, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query,
+        variables: { accountTag: env.CF_ACCOUNT_ID, scriptName: "shorturl", start: start.toISOString(), end: now.toISOString() }
+      })
+    });
+    const data = await res.json();
+    if (data.errors && data.errors.length) {
+      await env.LINKS_KV.put("cf_analytics_debug", JSON.stringify(data.errors), { expirationTtl: 86400 });
+      return { ok: false, error: data.errors[0].message || "GraphQL error", raw: data.errors };
+    }
+    const accounts = data.data && data.data.viewer && data.data.viewer.accounts;
+    const groups = (accounts && accounts[0] && accounts[0].workersInvocationsAdaptiveGroups) || [];
+    let todayRequests = 0, todayErrors = 0;
+    let lastCpuP90 = null;
+    const hourly = groups.map(function(g){
+      const req = (g.sum && g.sum.requests) || 0;
+      const err = (g.sum && g.sum.errors) || 0;
+      todayRequests += req; todayErrors += err;
+      if (g.quantiles && g.quantiles.cpuTimeP90 != null) lastCpuP90 = g.quantiles.cpuTimeP90;
+      return { hour: g.dimensions.datetimeHour, requests: req, errors: err };
+    });
+    const cache = {
+      todayRequests: todayRequests, todayErrors: todayErrors, cpuP90: lastCpuP90,
+      planName: "Free Plan", planLimit: 100000, hourly: hourly,
+      updatedAt: new Date().toISOString()
+    };
+    await env.LINKS_KV.put("cf_analytics_cache", JSON.stringify(cache), { expirationTtl: 7200 });
+    return { ok: true, cache: cache };
+  } catch (e) {
+    const msg = (e && e.message) ? e.message : String(e);
+    try { await env.LINKS_KV.put("cf_analytics_debug", msg, { expirationTtl: 86400 }); } catch (e2) {}
+    return { ok: false, error: msg };
+  }
 }
 
 async function handleAdminOverview(request, env, corsHeaders) {
@@ -9250,7 +9313,8 @@ function renderOverviewCards(container, data){
   cards += ovCard('alert', 'Đơn QR chờ duyệt', fmtNum(p.pendingQr || 0), p.pendingQr > 0 ? 'Cần xử lý' : 'Không có đơn chờ', p.pendingQr > 0 ? 'var(--amber)' : 'var(--muted)');
   cards += ovCard('alert', 'Báo cáo chờ xử lý', fmtNum(rp.pending || 0), rp.pending > 0 ? 'Cần xem xét' : 'Không có báo cáo mới', rp.pending > 0 ? 'var(--red)' : 'var(--muted)');
   var lastUpdated = data.workers && data.workers.requests && data.workers.requests.available ? 'Cập nhật: ' + new Date().toLocaleTimeString() : '';
-  var html = '<div class="ov-refresh"><h2>' + li('chart', 18) + ' System Overview</h2><div style="display:flex;gap:8px;align-items:center;">' + (lastUpdated ? '<span style="font-size:11px;color:var(--muted);">' + lastUpdated + '</span>' : '') + '<button class="btn btn-sm" id="ovRefreshBtn">' + li('undo', 14) + ' Làm mới</button></div></div>';
+  var html = '<div class="ov-refresh"><h2>' + li('chart', 18) + ' System Overview</h2><div style="display:flex;gap:8px;align-items:center;">' + (lastUpdated ? '<span style="font-size:11px;color:var(--muted);">' + lastUpdated + '</span>' : '') + '<button class="btn btn-sm" id="ovSyncCfBtn" title="Gọi Cloudflare GraphQL Analytics API ngay thay vì chờ cron hàng giờ">' + li('chart', 14) + ' Đồng bộ Cloudflare Analytics</button><button class="btn btn-sm" id="ovRefreshBtn">' + li('undo', 14) + ' Làm mới</button></div></div>';
+  html += '<div id="ovSyncMsg"></div>';
   html += '<div class="overview-grid">' + cards + '</div>';
   html += '<div class="overview-charts">';
   html += '<div class="card" style="padding:16px;"><h3 style="margin:0 0 12px;font-size:14px;">Lượt gọi & Lỗi — 24 giờ qua</h3>';
@@ -9291,6 +9355,23 @@ function renderOverviewCards(container, data){
     refreshBtn.onclick = function(){
       container.innerHTML = '<p class="hint">Đang tải...</p>';
       api("/api/admin/overview", "GET").then(function(data){ renderOverviewCards(container, data); }).catch(function(err){ container.innerHTML = '<p class="hint">Lỗi tải: ' + esc(err && err.message ? err.message : 'Không xác định') + ' <button class="btn btn-sm" id="ovRetryBtn">Thử lại</button></p>'; var b=document.getElementById('ovRetryBtn'); if(b) b.onclick=refreshBtn.onclick; });
+    };
+  }
+  var syncBtn = document.getElementById('ovSyncCfBtn');
+  var syncMsg = document.getElementById('ovSyncMsg');
+  if (syncBtn) {
+    syncBtn.onclick = function(){
+      syncBtn.disabled = true;
+      syncMsg.innerHTML = '<p class="hint">Đang gọi Cloudflare Analytics API...</p>';
+      api("/api/admin/refresh-analytics", "POST").then(function(res){
+        syncMsg.innerHTML = '<div class="msg msg-ok">Đã đồng bộ thành công.</div>';
+        return api("/api/admin/overview", "GET");
+      }).then(function(data){
+        renderOverviewCards(container, data);
+      }).catch(function(err){
+        syncBtn.disabled = false;
+        syncMsg.innerHTML = '<div class="msg msg-error">' + esc(err && err.message ? err.message : 'Đồng bộ thất bại') + '</div>';
+      });
     };
   }
 }
