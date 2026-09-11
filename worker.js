@@ -1384,6 +1384,7 @@ async function handleBulkCreateLinks(request, env, url, corsHeaders) {
     } else if (raw && typeof raw === "object" && raw.url) {
       items.push({
         url: String(raw.url).trim(),
+        customCode: raw.customCode ? String(raw.customCode).trim() : undefined,
         title: raw.title,
         campaign: raw.campaign,
         tags: raw.tags
@@ -1418,7 +1419,7 @@ async function handleBulkCreateLinks(request, env, url, corsHeaders) {
         url: item.url,
         owner: owner,
         role: role,
-        customCode: undefined,
+        customCode: item.customCode,
         title: item.title,
         campaign: item.campaign,
         tags: item.tags,
@@ -1857,7 +1858,7 @@ async function handleCreateQr(request, env, corsHeaders) {
 
   let body;
   try { body = await request.json(); } catch (e) { body = {}; }
-  const { url: targetUrl, color, size } = body || {};
+  const { url: targetUrl, color, size, bgcolor, margin, format } = body || {};
   if (!targetUrl || !targetUrl.startsWith("http")) {
     return json({ error: "URL không hợp lệ (phải bắt đầu bằng http:// hoặc https://)" }, 400, corsHeaders);
   }
@@ -1868,9 +1869,16 @@ async function handleCreateQr(request, env, corsHeaders) {
   // Sinh QR image URL
   const qrColor = (color || "#6366f1").replace("#", "");
   const qrSize = parseInt(size) || 200;
-  const qrSrc = "https://api.qrserver.com/v1/create-qr-code/?size=" + qrSize + "x" + qrSize + "&data=" + encodeURIComponent(targetUrl) + "&color=" + qrColor;
+  const qrFormat = (format === "svg") ? "svg" : "png";
+  let qrSrc = "https://api.qrserver.com/v1/create-qr-code/?size=" + qrSize + "x" + qrSize + "&data=" + encodeURIComponent(targetUrl) + "&color=" + qrColor + "&format=" + qrFormat;
 
-  return json({ ok: true, qrUrl: qrSrc, targetUrl: targetUrl, size: qrSize, color: qrColor }, 200, corsHeaders);
+  const qrBgColor = bgcolor ? String(bgcolor).replace(/[^0-9a-fA-F]/g, "").slice(0, 6) : "";
+  if (qrBgColor) qrSrc += "&bgcolor=" + qrBgColor;
+  const qrMargin = parseInt(margin);
+  const hasMargin = !isNaN(qrMargin) && qrMargin >= 0 && qrMargin <= 20;
+  if (hasMargin) qrSrc += "&margin=" + qrMargin;
+
+  return json({ ok: true, qrUrl: qrSrc, targetUrl: targetUrl, size: qrSize, color: qrColor, bgcolor: qrBgColor || null, margin: hasMargin ? qrMargin : null, format: qrFormat }, 200, corsHeaders);
 }
 
 // ===================== HANDLERS: REPORTS =====================
@@ -3594,6 +3602,7 @@ var i18n = {
     qr_guest_desc:"Tùy chỉnh màu sắc · Tùy chỉnh kích thước", qr_guest_btn:"Tạo ngay",
     qr_desc:"Nhập bất kỳ URL nào (đã rút gọn hoặc chưa) để tạo QR Code ngay. Mỗi lần tạo QR trừ 1 lượt hạn mức/ngày.",
     qr_url_label:"URL cần tạo QR", qr_color:"Màu sắc", qr_size:"Kích cỡ", qr_btn:"Tạo QR",
+    qr_bgcolor:"Màu nền", qr_bg_transparent:"Nền trong suốt", qr_margin:"Viền (margin)", qr_margin_default:"Mặc định", qr_format:"Định dạng",
     qr_copy_link:"Sao chép link", qr_download:"Tải PNG", qr_processing:"Đang tạo QR...",
     qr_quota_error:"Hết lượt tạo QR hôm nay",
     // ===== BULK QR =====
@@ -3617,6 +3626,7 @@ var i18n = {
     bulk_title:"Tạo hàng loạt", bulk_sub:"Nhập mỗi URL trên 1 dòng. Giới hạn tối đa",
     bulk_per_batch:"link/lần.", bulk_input_placeholder:"https://vi-du1.com\\nhttps://vi-du2.com",
     bulk_submit:"Tạo hàng loạt", bulk_success:"Thành công", bulk_errors:"Lỗi", bulk_empty:"Vui lòng nhập ít nhất 1 URL.",
+    bulk_csv_hint:"Mỗi dòng: URL,alias,campaign (alias và campaign không bắt buộc). Vd: https://vi-du.com,khuyen-mai,Q1-Sale",
     // ===== ANALYTICS =====
     analytics_title:"Thống kê", analytics_back:"← Quay lại bảng điều khiển",
     analytics_total:"Tổng clicks", analytics_24h:"24 giờ qua", analytics_7d:"7 ngày qua", analytics_30d:"30 ngày qua",
@@ -3914,6 +3924,7 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     qr_guest_desc:"Custom colors · Custom sizes", qr_guest_btn:"Generate now",
     qr_desc:"Enter any URL (shortened or not) to create a QR Code instantly. Each QR generation deducts 1 from your daily quota.",
     qr_url_label:"URL for QR code", qr_color:"Color", qr_size:"Size", qr_btn:"Generate QR",
+    qr_bgcolor:"Background color", qr_bg_transparent:"Transparent background", qr_margin:"Margin", qr_margin_default:"Default", qr_format:"Format",
     qr_copy_link:"Copy link", qr_download:"Download PNG", qr_processing:"Generating QR...",
     qr_quota_error:"Daily QR generation quota reached",
     // ===== BULK QR =====
@@ -3937,6 +3948,7 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     bulk_title:"Bulk create", bulk_sub:"Enter one URL per line. Max limit:",
     bulk_per_batch:"links per batch.", bulk_input_placeholder:"https://example1.com\\nhttps://example2.com",
     bulk_submit:"Bulk create", bulk_success:"Success", bulk_errors:"Errors", bulk_empty:"Please enter at least 1 URL.",
+    bulk_csv_hint:"One per line: URL,alias,campaign (alias and campaign are optional). Ex: https://example.com,promo,Q1-Sale",
     // ===== ANALYTICS =====
     analytics_title:"Analytics", analytics_back:"← Back to dashboard",
     analytics_total:"Total clicks", analytics_24h:"Last 24 hours", analytics_7d:"Last 7 days", analytics_30d:"Last 30 days",
@@ -7120,9 +7132,10 @@ function homeQrDownload(){
   var display = document.getElementById("homeQrDisplay");
   var src = display.getAttribute("data-qrsrc");
   if (!src) return;
+  var ext = display.getAttribute("data-qrformat") === "svg" ? "svg" : "png";
   var a = document.createElement("a");
   a.href = src;
-  a.download = "qr_" + Date.now() + ".png";
+  a.download = "qr_" + Date.now() + "." + ext;
   a.target = "_blank";
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
@@ -7915,6 +7928,7 @@ function renderBulk(app){
   app.innerHTML = upgradeBanner("bulkqr") +
     '<div class="card"><h1>' + t("bulk_title") + '</h1>' +
     '<p class="sub">' + t("bulk_sub") + ' ' + limits.maxBulkBatch + ' ' + t("bulk_per_batch") + '</p>' +
+    '<p class="hint">' + t("bulk_csv_hint") + '</p>' +
     '<textarea id="bulkInput" placeholder="' + t("bulk_input_placeholder") + '"></textarea>' +
     '<div id="bulkMsg"></div>' +
     '<div style="margin-top:16px;"><button class="btn btn-primary" id="bulkSubmit">' + t("bulk_submit") + '</button></div>' +
@@ -7924,7 +7938,13 @@ function renderBulk(app){
     var lines = document.getElementById("bulkInput").value.split("\\n").map(function(l){ return l.trim(); }).filter(Boolean);
     var msg = document.getElementById("bulkMsg");
     if (lines.length === 0){ msg.innerHTML = '<div class="msg msg-error">' + t("bulk_empty") + '</div>'; return; }
-    var urls = lines.map(function(u){ return { url: u }; });
+    var urls = lines.map(function(line){
+      var parts = line.split(",").map(function(p){ return p.trim(); });
+      var item = { url: parts[0] };
+      if (parts[1]) item.customCode = parts[1];
+      if (parts[2]) item.campaign = parts[2];
+      return item;
+    });
     msg.innerHTML = '<p class="hint">' + t("processing") + ' ' + urls.length + '...</p>';
     api("/api/links/bulk", "POST", { urls: urls }).then(function(data){
       msg.innerHTML = '<div class="msg msg-ok">' + t("bulk_success") + ': ' + data.createdCount + ' · ' + t("bulk_errors") + ': ' + data.errorCount + '</div>';
@@ -7991,6 +8011,23 @@ function renderBulkQR(app){
     '<option value="150">150px</option><option value="200" selected>200px</option><option value="300">300px</option><option value="400">400px</option>' +
     '</select>' +
     '</div>' +
+    '<div style="width:100px;">' +
+    '<label>' + t("qr_bgcolor") + '</label>' +
+    '<input type="color" id="homeQrBgColor" value="#ffffff" style="width:100%;height:36px;border:1px solid var(--input-border);border-radius:8px;cursor:pointer;background:none;padding:2px;" disabled>' +
+    '<label style="font-weight:400;font-size:12px;display:flex;align-items:center;gap:4px;margin-top:4px;"><input type="checkbox" id="homeQrBgTransparent" checked onchange="document.getElementById(&#39;homeQrBgColor&#39;).disabled=this.checked;"> ' + t("qr_bg_transparent") + '</label>' +
+    '</div>' +
+    '<div style="width:90px;">' +
+    '<label>' + t("qr_margin") + '</label>' +
+    '<select id="homeQrMargin" style="width:100%;padding:8px;border:1px solid var(--input-border);border-radius:8px;background:var(--input-bg);color:var(--text);font-size:13px;">' +
+    '<option value="">' + t("qr_margin_default") + '</option><option value="0">0</option><option value="2">2</option><option value="4">4</option><option value="8">8</option>' +
+    '</select>' +
+    '</div>' +
+    '<div style="width:90px;">' +
+    '<label>' + t("qr_format") + '</label>' +
+    '<select id="homeQrFormat" style="width:100%;padding:8px;border:1px solid var(--input-border);border-radius:8px;background:var(--input-bg);color:var(--text);font-size:13px;">' +
+    '<option value="png" selected>PNG</option><option value="svg">SVG</option>' +
+    '</select>' +
+    '</div>' +
     '<div><button class="btn btn-primary" id="homeQrBtn" style="white-space:nowrap;">' + t("qr_btn") + '</button></div>' +
     '</div>' +
     '<div id="homeQrResult" style="margin-top:20px;display:none;">' +
@@ -8034,16 +8071,21 @@ function renderBulkQR(app){
       if (!url) { document.getElementById("homeQrResult").style.display = "none"; return; }
       var color = document.getElementById("homeQrColor").value;
       var size = document.getElementById("homeQrSize").value;
+      var transparent = document.getElementById("homeQrBgTransparent").checked;
+      var bgcolor = transparent ? "" : document.getElementById("homeQrBgColor").value;
+      var margin = document.getElementById("homeQrMargin").value;
+      var format = document.getElementById("homeQrFormat").value;
       var display = document.getElementById("homeQrDisplay");
       display.innerHTML = '<p class="hint">' + t("qr_processing") + '</p>';
       document.getElementById("homeQrResult").style.display = "block";
-      api("/api/qr/create", "POST", { url: url, color: color, size: parseInt(size) }).then(function(data){
+      api("/api/qr/create", "POST", { url: url, color: color, size: parseInt(size), bgcolor: bgcolor, margin: margin, format: format }).then(function(data){
         var qrSrc = data.qrUrl;
         display.innerHTML = '<img src="' + qrSrc + '" style="width:' + size + 'px;height:' + size + 'px;display:block;" alt="QR">';
         document.getElementById("homeQrLink").textContent = url;
         document.getElementById("homeQrResult").style.display = "block";
         display.setAttribute("data-qrsrc", qrSrc);
         display.setAttribute("data-qrsize", size);
+        display.setAttribute("data-qrformat", data.format || "png");
       }).catch(function(err){
         display.innerHTML = '<div class="msg msg-error">' + esc(err.message || t("qr_quota_error")) + '</div>';
         document.getElementById("homeQrResult").style.display = "block";
