@@ -9253,14 +9253,14 @@ function renderOverviewCards(container, data){
   var html = '<div class="ov-refresh"><h2>' + li('chart', 18) + ' System Overview</h2><div style="display:flex;gap:8px;align-items:center;">' + (lastUpdated ? '<span style="font-size:11px;color:var(--muted);">' + lastUpdated + '</span>' : '') + '<button class="btn btn-sm" id="ovRefreshBtn">' + li('undo', 14) + ' Làm mới</button></div></div>';
   html += '<div class="overview-grid">' + cards + '</div>';
   html += '<div class="overview-charts">';
-  html += '<div class="card" style="padding:16px;"><h3 style="margin:0 0 12px;font-size:14px;">Requests & Errors — Last 24h</h3>';
+  html += '<div class="card" style="padding:16px;"><h3 style="margin:0 0 12px;font-size:14px;">Lượt gọi & Lỗi — 24 giờ qua</h3>';
   if (w.hourly && w.hourly.length > 0 && wr.available) {
     html += renderRequestsErrorsChart(w.hourly);
   } else {
     html += '<div style="height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);font-size:13px;">' + li('chart', 32) + '<p style="margin:8px 0 0;">Chưa có dữ liệu Cloudflare Analytics</p></div>';
   }
   html += '</div>';
-  html += '<div class="card" style="padding:16px;"><h3 style="margin:0 0 12px;font-size:14px;">User Growth — Last 30 days</h3>';
+  html += '<div class="card" style="padding:16px;"><h3 style="margin:0 0 12px;font-size:14px;">Tăng trưởng người dùng — 30 ngày qua</h3>';
   if (data.userGrowth && data.userGrowth.length > 0) {
     html += renderUserGrowthChart(data.userGrowth);
   } else {
@@ -9312,14 +9312,16 @@ function renderRequestsErrorsChart(hourly){
     var h = Math.max(2, (hourly[i].requests / maxReq) * 130);
     var errH = Math.max(0, (hourly[i].errors / maxReq) * 130);
     var label = hourly[i].hour.slice(11, 16);
+    var reqLabel = hourly[i].requests > 0 ? '<div style="position:absolute;bottom:' + (h + errH + 2) + 'px;left:0;right:0;text-align:center;font-size:8px;color:var(--muted);white-space:nowrap;">' + hourly[i].requests + '</div>' : '';
     bars += '<div style="display:inline-block;width:' + barW + '%;height:160px;vertical-align:bottom;position:relative;">' +
-      '<div style="position:absolute;bottom:0;left:1px;right:1px;height:' + h + 'px;background:var(--indigo);border-radius:2px 2px 0 0;opacity:0.8;" title="' + label + ' — ' + hourly[i].requests + ' req, ' + hourly[i].errors + ' err"></div>' +
-      (errH > 0 ? '<div style="position:absolute;bottom:' + h + 'px;left:1px;right:1px;height:' + errH + 'px;background:var(--red);border-radius:2px 2px 0 0;opacity:0.9;" title="' + hourly[i].errors + ' errors"></div>' : '') +
+      reqLabel +
+      '<div style="position:absolute;bottom:0;left:1px;right:1px;height:' + h + 'px;background:var(--indigo);border-radius:2px 2px 0 0;opacity:0.8;" title="' + label + ' — ' + hourly[i].requests + ' lượt gọi, ' + hourly[i].errors + ' lỗi"></div>' +
+      (errH > 0 ? '<div style="position:absolute;bottom:' + h + 'px;left:1px;right:1px;height:' + errH + 'px;background:var(--red);border-radius:2px 2px 0 0;opacity:0.9;" title="' + hourly[i].errors + ' lỗi"></div>' : '') +
       '</div>';
   }
-  return '<div style="height:160px;position:relative;overflow:hidden;white-space:nowrap;">' + bars + '</div>' +
+  return '<div style="height:180px;position:relative;overflow:visible;white-space:nowrap;padding-top:14px;">' + bars + '</div>' +
     '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:4px;"><span>' + hourly[0].hour.slice(5, 16) + '</span><span>' + hourly[hourly.length-1].hour.slice(5, 16) + '</span></div>' +
-    '<div style="display:flex;gap:12px;margin-top:6px;font-size:11px;color:var(--muted);"><span>' + li('chart', 10) + ' Requests</span><span style="color:var(--red);">Errors</span></div>';
+    '<div style="display:flex;gap:12px;margin-top:6px;font-size:11px;color:var(--muted);"><span>' + li('chart', 10) + ' Lượt gọi</span><span style="color:var(--red);">Lỗi</span></div>';
 }
 function renderUserGrowthChart(growth){
   if (!growth || growth.length === 0) return '<div style="height:180px;display:flex;align-items:center;justify-content:center;color:var(--muted);">Chưa có dữ liệu</div>';
@@ -9330,9 +9332,11 @@ function renderUserGrowthChart(growth){
   var bars = '';
   for (var i = 0; i < growth.length; i++) {
     var h = Math.max(2, (growth[i].value / maxVal) * 140);
-    bars += '<div style="display:inline-block;width:' + barW + '%;height:180px;vertical-align:bottom;position:relative;"><div style="position:absolute;bottom:0;left:1px;right:1px;height:' + h + 'px;background:var(--indigo);border-radius:2px 2px 0 0;opacity:0.8;" title="' + growth[i].date + ': ' + growth[i].value + ' users"></div></div>';
+    var valLabel = growth[i].value > 0 ? '<div style="position:absolute;bottom:' + (h + 2) + 'px;left:0;right:0;text-align:center;font-size:8px;color:var(--muted);white-space:nowrap;">' + growth[i].value + '</div>' : '';
+    bars += '<div style="display:inline-block;width:' + barW + '%;height:180px;vertical-align:bottom;position:relative;">' + valLabel +
+      '<div style="position:absolute;bottom:0;left:1px;right:1px;height:' + h + 'px;background:var(--indigo);border-radius:2px 2px 0 0;opacity:0.8;" title="' + growth[i].date + ': ' + growth[i].value + ' người dùng"></div></div>';
   }
-  return '<div style="height:180px;position:relative;overflow:hidden;white-space:nowrap;">' + bars + '</div><div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:4px;"><span>' + growth[0].date + '</span><span>' + growth[growth.length-1].date + '</span></div>';
+  return '<div style="height:196px;position:relative;overflow:visible;white-space:nowrap;padding-top:14px;">' + bars + '</div><div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:4px;"><span>' + growth[0].date + '</span><span>' + growth[growth.length-1].date + '</span></div>';
 }
 
 function loadAdminMaintenance(body){
