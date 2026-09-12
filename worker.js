@@ -3612,7 +3612,7 @@ footer{text-align:center;color:var(--muted2);font-size:12px;padding:30px 20px;}
 .qr-card .qr-link{font-size:13px;color:var(--indigo);word-break:break-all;margin-top:8px;font-weight:600;}
 /* === AUTH SPLIT CARD (login/register) — diagonal wipe transition, no glow === */
 .auth-wrap{display:flex;justify-content:center;padding:20px 0;}
-.auth-split{position:relative;z-index:1;width:460px;max-width:100%;min-width:0;margin:0 auto;border-radius:20px;overflow:hidden;background:var(--card-solid);border:1px solid var(--border);box-shadow:var(--shadow);}
+.auth-split{position:relative;z-index:1;width:736px;max-width:100%;min-width:0;margin:0 auto;border-radius:20px;overflow:hidden;background:var(--card-solid);border:1px solid var(--border);box-shadow:var(--shadow);}
 .auth-layer{min-height:440px;background:var(--card-solid);}
 .auth-layer.current{position:relative;}
 .auth-layer.incoming{position:absolute;inset:0;z-index:2;}
@@ -3731,7 +3731,7 @@ var i18n = {
     dashboard:"Bảng điều khiển", account:"Tài khoản", api:"API", bulk:"Bulk", admin:"Quản trị",
     // ===== AUTH =====
     login_sub:"Chào mừng quay lại SHURL.", login_security:"Bảo mật bởi Cloude · Tạo tài khoản để bắt đầu",
-    auth_or:"hoặc", auth_google_register:"Đăng ký với Google", auth_google_soon:"Sắp ra mắt",
+    auth_or:"hoặc", auth_google_login:"Đăng nhập với Google", auth_google_soon:"Sắp ra mắt",
     no_account:"Chưa có tài khoản?", have_account:"Đã có tài khoản?", demo_accounts:" ",
     auth_welcome_back:"Chào mừng trở lại!", auth_welcome_back_desc:"Đăng nhập để tiếp tục quản lý Short URL, QR Code và chiến dịch của bạn.",
     auth_hello_friend:"Xin chào, bạn mới!", auth_hello_friend_desc:"Tạo tài khoản miễn phí để bắt đầu rút gọn link và theo dõi hiệu quả.",
@@ -4069,7 +4069,7 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     dashboard:"Dashboard", account:"Account", api:"API", bulk:"Bulk", admin:"Admin",
     // ===== AUTH =====
     login_sub:"Welcome back to SHURL.", login_security:"Secured by Cloude · Create an account to get started",
-    auth_or:"or", auth_google_register:"Sign up with Google", auth_google_soon:"Coming soon",
+    auth_or:"or", auth_google_login:"Sign in with Google", auth_google_soon:"Coming soon",
     no_account:"No account yet?", have_account:"Already have an account?", demo_accounts:" ",
     auth_welcome_back:"Welcome Back!", auth_welcome_back_desc:"Log in to keep managing your Short URLs, QR codes, and campaigns.",
     auth_hello_friend:"Hello, Friend!", auth_hello_friend_desc:"Create a free account to start shortening links and tracking performance.",
@@ -7695,6 +7695,20 @@ function loginFormHtml(){
       '<div id="loginMsg"></div>' +
       '<div style="margin-top:18px;"><button class="btn btn-primary" type="submit" style="width:100%;justify-content:center;">' + t("login") + '</button></div>' +
     '</form>' +
+    '<div style="display:flex;align-items:center;gap:10px;margin:18px 0;">' +
+      '<div style="flex:1;height:1px;background:var(--border);"></div>' +
+      '<span style="font-size:12px;color:var(--muted);">' + t("auth_or") + '</span>' +
+      '<div style="flex:1;height:1px;background:var(--border);"></div>' +
+    '</div>' +
+    '<button type="button" class="btn btn-ghost" onclick="googleAuthPlaceholder()" style="width:100%;justify-content:center;gap:10px;display:flex;align-items:center;">' +
+      '<svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">' +
+        '<path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"/>' +
+        '<path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z"/>' +
+        '<path fill="#FBBC05" d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24s.85 6.91 2.34 9.88l7.35-5.7z"/>' +
+        '<path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z"/>' +
+      '</svg>' +
+      t("auth_google_login") +
+    '</button>' +
     '<p class="hint" style="margin-top:16px;display:flex;justify-content:space-between;">' +
       '<span>' + t("no_account") + ' <a href="javascript:void(0)" onclick="switchAuthMode(&#39;register&#39;)">' + t("register") + '</a></span>' +
       '<a href="#/forgot-password">' + t("forgot_password") + '</a>' +
@@ -7711,20 +7725,6 @@ function registerFormHtml(){
       '<div id="regMsg"></div>' +
       '<div style="margin-top:18px;"><button class="btn btn-primary" type="submit" style="width:100%;justify-content:center;">' + t("register_free") + '</button></div>' +
     '</form>' +
-    '<div style="display:flex;align-items:center;gap:10px;margin:18px 0;">' +
-      '<div style="flex:1;height:1px;background:var(--border);"></div>' +
-      '<span style="font-size:12px;color:var(--muted);">' + t("auth_or") + '</span>' +
-      '<div style="flex:1;height:1px;background:var(--border);"></div>' +
-    '</div>' +
-    '<button type="button" class="btn btn-ghost" onclick="googleAuthPlaceholder()" style="width:100%;justify-content:center;gap:10px;display:flex;align-items:center;">' +
-      '<svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">' +
-        '<path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"/>' +
-        '<path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z"/>' +
-        '<path fill="#FBBC05" d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24s.85 6.91 2.34 9.88l7.35-5.7z"/>' +
-        '<path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z"/>' +
-      '</svg>' +
-      t("auth_google_register") +
-    '</button>' +
     '<p class="hint" style="margin-top:16px;">' + t("have_account") + ' <a href="javascript:void(0)" onclick="switchAuthMode(&#39;login&#39;)">' + t("login") + '</a></p>';
 }
 
