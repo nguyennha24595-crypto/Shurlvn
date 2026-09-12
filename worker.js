@@ -2590,11 +2590,11 @@ async function handleVerifyPassword(request, env, code, corsHeaders) {
   const { password } = body || {};
 
   if (!password) {
-    return json({ error: "Mật khẩu không đúng" }, 401, corsHeaders);
+    return json({ error: st("pw_page_wrong", request) }, 401, corsHeaders);
   }
 
   const raw = await env.LINKS_KV.get("link:" + code);
-  if (!raw) return json({ error: "Link không tồn tại" }, 404, corsHeaders);
+  if (!raw) return json({ error: st("link_not_found", request) }, 404, corsHeaders);
   const link = JSON.parse(raw);
 
   // Link không có mật khẩu → cho qua luôn
@@ -2608,13 +2608,13 @@ async function handleVerifyPassword(request, env, code, corsHeaders) {
 
   const attempts = parseInt(await env.LINKS_KV.get(attemptsKey) || "0");
   if (attempts >= maxAttempts) {
-    return json({ error: "Quá nhiều lần thử sai. Thử lại sau 15 phút." }, 429, corsHeaders);
+    return json({ error: st("pw_too_many_attempts", request) }, 429, corsHeaders);
   }
 
   const inputHash = await hashPassword(password, link.passwordSalt);
   if (inputHash !== link.password) {
     await env.LINKS_KV.put(attemptsKey, String(attempts + 1), { expirationTtl: PW_LOCKOUT_TTL });
-    return json({ error: "Mật khẩu không đúng" }, 401, corsHeaders);
+    return json({ error: st("pw_page_wrong", request) }, 401, corsHeaders);
   }
 
   // Nhập đúng → reset bộ đếm
@@ -2787,28 +2787,28 @@ async function handleRedeemVoucher(request, env, corsHeaders) {
   if (!user) return json({ error: st("not_logged_in", request) }, 401, corsHeaders);
   let body; try { body = await request.json(); } catch (e) { body = {}; }
   const { code } = body || {};
-  if (!code) return json({ error: "Nhập mã voucher" }, 400, corsHeaders);
+  if (!code) return json({ error: st("voucher_enter_code", request) }, 400, corsHeaders);
   const voucherKey = "voucher:" + code.toUpperCase();
   const raw = await env.LINKS_KV.get(voucherKey);
-  if (!raw) return json({ error: "Voucher không tồn tại" }, 404, corsHeaders);
+  if (!raw) return json({ error: st("voucher_not_found", request) }, 404, corsHeaders);
   const voucher = JSON.parse(raw);
-  if (!voucher.active) return json({ error: "Voucher đã bị vô hiệu hóa" }, 400, corsHeaders);
-  if (new Date(voucher.expiresAt) < new Date()) return json({ error: "Voucher đã hết hạn" }, 400, corsHeaders);
-  if (voucher.usedCount >= voucher.maxUses) return json({ error: "Voucher đã hết lượt dùng" }, 400, corsHeaders);
+  if (!voucher.active) return json({ error: st("voucher_disabled", request) }, 400, corsHeaders);
+  if (new Date(voucher.expiresAt) < new Date()) return json({ error: st("voucher_expired", request) }, 400, corsHeaders);
+  if (voucher.usedCount >= voucher.maxUses) return json({ error: st("voucher_no_uses_left", request) }, 400, corsHeaders);
   const usedKey = voucherKey + ":used:" + user.username;
-  if (await env.LINKS_KV.get(usedKey)) return json({ error: "Bạn đã dùng voucher này rồi" }, 400, corsHeaders);
+  if (await env.LINKS_KV.get(usedKey)) return json({ error: st("voucher_already_used", request) }, 400, corsHeaders);
   var voucherDays = Math.ceil((new Date(voucher.expiresAt).getTime() - Date.now()) / 86400000);
   var currentRank = TIER_RANK[user.role] || 0;
   var voucherRank = TIER_RANK[voucher.tier] || 0;
   if (voucherRank < currentRank && user.role !== "admin") {
-    return json({ error: "Gói hiện tại (" + user.role.toUpperCase() + ") cao hơn voucher (" + voucher.tier.toUpperCase() + "). Voucher không thể hạ gói." }, 400, corsHeaders);
+    return json({ error: st("voucher_cannot_downgrade", request).replace("{current}", user.role.toUpperCase()).replace("{voucherTier}", voucher.tier.toUpperCase()) }, 400, corsHeaders);
   }
   const ok = await upgradeUserRole(env, user.username, voucher.tier, voucherDays);
-  if (!ok) return json({ error: "Không tìm thấy user" }, 500, corsHeaders);
+  if (!ok) return json({ error: st("user_not_found", request) }, 500, corsHeaders);
   voucher.usedCount++;
   await env.LINKS_KV.put(voucherKey, JSON.stringify(voucher));
   await env.LINKS_KV.put(usedKey, new Date().toISOString());
-  var msg = voucherRank === currentRank ? "Đã cộng dồn " + voucherDays + " ngày vào gói " + voucher.tier.toUpperCase() : "Đã nâng cấp lên gói " + voucher.tier.toUpperCase();
+  var msg = voucherRank === currentRank ? st("voucher_days_added", request).replace("{days}", voucherDays).replace("{tier}", voucher.tier.toUpperCase()) : st("voucher_upgraded", request).replace("{tier}", voucher.tier.toUpperCase());
   return json({ success: true, message: msg, tier: voucher.tier }, 200, corsHeaders);
 }
 
@@ -2840,13 +2840,13 @@ async function handleStripeCheckout(request, env, url, corsHeaders) {
   if (!user) return json({ error: st("not_logged_in", request) }, 401, corsHeaders);
   let body; try { body = await request.json(); } catch (e) { body = {}; }
   const { tier } = body || {};
-  if (!["plus", "pro", "super"].includes(tier)) return json({ error: "Gói không hợp lệ" }, 400, corsHeaders);
+  if (!["plus", "pro", "super"].includes(tier)) return json({ error: st("invalid_tier", request) }, 400, corsHeaders);
   var tierRank = { free: 0, plus: 1, pro: 2, super: 3 };
-  if ((tierRank[user.role] || 0) > (tierRank[tier] || 0)) return json({ error: "Bạn đang ở gói " + (user.role || "free").toUpperCase() + ", không thể mua gói thấp hơn" }, 400, corsHeaders);
+  if ((tierRank[user.role] || 0) > (tierRank[tier] || 0)) return json({ error: st("pricing_downgrade_blocked", request).replace("{tier}", (user.role || "free").toUpperCase()) }, 400, corsHeaders);
 
   var prices = { plus: 249, pro: 800, super: 2000 };
   var amount = prices[tier] || 0;
-  if (!amount) return json({ error: "Gói không hợp lệ" }, 400, corsHeaders);
+  if (!amount) return json({ error: st("invalid_tier", request) }, 400, corsHeaders);
 
   // Kiểm tra giảm giá từ promo settings
   var promoSettings = await env.LINKS_KV.get("promo:settings");
@@ -2885,7 +2885,7 @@ async function handleStripeCheckout(request, env, url, corsHeaders) {
     })
   });
   var session = await sresp.json();
-  if (!sresp.ok) return json({ error: (session.error && session.error.message) || "Loi Stripe" }, 400, corsHeaders);
+  if (!sresp.ok) return json({ error: (session.error && session.error.message) || st("stripe_error_generic", request) }, 400, corsHeaders);
   try {
     var allAdminsS = await listAllUsers(env);
     var stripeNotifId = "notif_" + Date.now() + "_" + randomHex(4);
@@ -2948,10 +2948,10 @@ async function handleQrCheckout(request, env, corsHeaders) {
   if (!user) return json({ error: st("not_logged_in", request) }, 401, corsHeaders);
   let body; try { body = await request.json(); } catch (e) { body = {}; }
   const { tier, period } = body || {};
-  if (!["plus", "pro", "super"].includes(tier)) return json({ error: "Gói không hợp lệ" }, 400, corsHeaders);
-  if (!["week", "month", "year"].includes(period)) return json({ error: "Thời gian không hợp lệ" }, 400, corsHeaders);
+  if (!["plus", "pro", "super"].includes(tier)) return json({ error: st("invalid_tier", request) }, 400, corsHeaders);
+  if (!["week", "month", "year"].includes(period)) return json({ error: st("invalid_period", request) }, 400, corsHeaders);
   var tierRank = { free: 0, plus: 1, pro: 2, super: 3 };
-  if ((tierRank[user.role] || 0) > (tierRank[tier] || 0)) return json({ error: "Bạn đang ở gói " + (user.role || "free").toUpperCase() + ", không thể mua gói thấp hơn" }, 400, corsHeaders);
+  if ((tierRank[user.role] || 0) > (tierRank[tier] || 0)) return json({ error: st("pricing_downgrade_blocked", request).replace("{tier}", (user.role || "free").toUpperCase()) }, 400, corsHeaders);
   var prices = { plus: 2.49, pro: 8, super: 20 };
   var months = period === "week" ? 1 : period === "month" ? 1 : 12;
   var basePrice = prices[tier] * months;
@@ -2995,7 +2995,7 @@ async function handleQrGenerate(request, env, corsHeaders) {
   if (!user) return json({ error: st("not_logged_in", request) }, 401, corsHeaders);
   let body; try { body = await request.json(); } catch (e) { body = {}; }
   const { tier, period, vndPrice, orderId } = body || {};
-  if (!tier || !vndPrice || !orderId) return json({ error: "Thiếu thông tin" }, 400, corsHeaders);
+  if (!tier || !vndPrice || !orderId) return json({ error: st("missing_info", request) }, 400, corsHeaders);
   // Dùng img.vietqr.io — tạo QR trực tiếp qua URL, không cần API key
   var qrUrl = "https://img.vietqr.io/api/ACB/25105621/" + parseInt(vndPrice) + "/" + encodeURIComponent(orderId) + "/qr_only.png";
   return json({ success: true, qrUrl: qrUrl }, 200, corsHeaders);
@@ -3131,9 +3131,9 @@ async function handleQrStatusAck(request, env, corsHeaders) {
   if (!user) return json({ error: st("not_logged_in", request) }, 401, corsHeaders);
   let body; try { body = await request.json(); } catch (e) { body = {}; }
   const { orderId } = body || {};
-  if (!orderId) return json({ error: "Thiếu orderId" }, 400, corsHeaders);
+  if (!orderId) return json({ error: st("missing_order_id", request) }, 400, corsHeaders);
   const raw = await env.LINKS_KV.get("qrpay:" + orderId);
-  if (!raw) return json({ error: "Không tìm thấy" }, 404, corsHeaders);
+  if (!raw) return json({ error: st("not_found", request) }, 404, corsHeaders);
   const payment = JSON.parse(raw);
   if (payment.username !== user.username) return json({ error: "Không có quyền" }, 403, corsHeaders);
   payment.notified = true;
@@ -3170,6 +3170,8 @@ var SERVER_I18N = {
     pw_page_title:"Link được bảo vệ", pw_page_prompt:"Nhập mật khẩu để tiếp tục", pw_page_placeholder:"Mật khẩu", pw_page_btn:"Vào link →", pw_page_wrong:"Mật khẩu không đúng",
     link_expired_title:"Link hết hạn", link_expired_desc:"Link này đã hết hạn sử dụng.",
     link_disabled_title:"Link đã tắt", link_disabled_desc:"Link này đã bị vô hiệu hoá.",
+    team_requires_super:"Team yêu cầu gói Super", team_not_found:"Team không tồn tại", team_only_owner_delete:"Chỉ owner mới xóa được team", team_only_owner_edit:"Chỉ owner mới sửa được team", team_only_owner_add_member:"Chỉ owner mới thêm thành viên", team_only_owner_remove_member:"Chỉ owner mới xóa thành viên", team_deleted:"Team đã xóa", team_name_required:"Tên team là bắt buộc", team_missing_id_or_username:"Thiếu teamId hoặc username", team_max_members:"Tối đa {count} thành viên", team_user_not_found:"User không tồn tại", team_user_in_other_team:"User đã ở trong team khác", team_already_member:"Đã là thành viên", team_member_not_found:"Thành viên không tồn tại", team_cannot_remove_owner:"Không thể xóa owner",
+    pricing_downgrade_blocked:"Bạn đang ở gói {tier}, không thể mua gói thấp hơn", invalid_tier:"Gói không hợp lệ", invalid_period:"Thời gian không hợp lệ",
   },
   en: { brand:"SHURL", subject:"SHURL Voucher — Plan activation code", thanks_1:"Thank you for using the", thanks_2:"plan of", instruction:"Copy this voucher and paste it into the voucher field in your account to activate:", activate_note:"Voucher plan", activate_note_2:"is activated immediately after entering the code.", warning:"Please do not share this voucher code to avoid losing it.", closing:"Thank you for supporting the growth of this platform.", signature:"Best regards,",
     require_auth:"Please log in to perform this action.", require_admin:"Administrator access required.", enter_user_pass:"Please enter your username and password.", username_length:"Username must be 8-25 characters.", password_policy:"Password must be at least 9 characters with at least 1 uppercase letter.", username_exists:"This username already exists.", enter_user_pass_full:"Please enter both username and password.", wrong_credentials:"Wrong username or password.", not_logged_in:"Not logged in.", user_not_found:"Account not found.", api_pro_only:"API access is only available on the PRO or SUPER plan.",
@@ -3179,6 +3181,8 @@ var SERVER_I18N = {
     pw_page_title:"Protected link", pw_page_prompt:"Enter the password to continue", pw_page_placeholder:"Password", pw_page_btn:"Continue →", pw_page_wrong:"Incorrect password",
     link_expired_title:"Link expired", link_expired_desc:"This link has expired.",
     link_disabled_title:"Link disabled", link_disabled_desc:"This link has been disabled.",
+    team_requires_super:"Team requires the Super plan", team_not_found:"Team not found", team_only_owner_delete:"Only the owner can delete the team", team_only_owner_edit:"Only the owner can edit the team", team_only_owner_add_member:"Only the owner can add members", team_only_owner_remove_member:"Only the owner can remove members", team_deleted:"Team deleted", team_name_required:"Team name is required", team_missing_id_or_username:"Missing teamId or username", team_max_members:"Maximum {count} members", team_user_not_found:"User not found", team_user_in_other_team:"User is already in another team", team_already_member:"Already a member", team_member_not_found:"Member not found", team_cannot_remove_owner:"Cannot remove the owner",
+    pricing_downgrade_blocked:"You're currently on the {tier} plan and can't switch to a lower one", invalid_tier:"Invalid plan", invalid_period:"Invalid period",
   },
   ko: { brand:"SHURL", subject:"SHURL 바우처 — 플랜 활성화 코드", thanks_1:"사용해 주셔서 감사합니다", thanks_2:"플랜", instruction:"이 바우처를 복사하여 계정의 바우처 입력란에 붙여넣어 활성화하세요:", activate_note:"바우처 플랜", activate_note_2:"은 코드 입력 즉시 활성화됩니다.", warning:"바우처 코드를 외부에 공유하지 마세요.", closing:"플랫폼 성장을 위해 기여해 주셔서 감사합니다.", signature:"감사합니다," },
   zh: { brand:"SHURL", subject:"SHURL 优惠券 — 套餐激活码", thanks_1:"感谢您使用", thanks_2:"的", instruction:"请复制此优惠券并粘贴到账户中的优惠券输入框以激活：", activate_note:"优惠券套餐", activate_note_2:"在输入代码后立即激活。", warning:"请勿将优惠券代码分享给他人，以免丢失。", closing:"感谢您为平台发展做出贡献。", signature:"此致，" },
@@ -4058,7 +4062,8 @@ var i18n = {
     bulkqr:"Tạo QR hàng loạt", bulkqr_title:"Tạo mã QR hàng loạt", bulkqr_hint:"Mỗi dòng 1 link rút gọn. Tạo QR hàng loạt và tải về file Excel.",
     bulkqr_generate:"Tạo QR hàng loạt", bulkqr_download:"Tải Excel (.xls)", bulkqr_color:"Màu QR",
     bulkqr_empty:"Không có link hợp lệ.", bulkqr_max:"Tối đa 1200 link/lần.",
-    bulkqr_loading:"Đang tạo QR...", bulkqr_done:"Đã tạo QR. Bấm 'Tải Excel' để tải về.",
+    bulkqr_loading:"Đang tạo QR...", bulkqr_done:"Đã tạo {count} QR. Bấm 'Tải Excel' để tải về.",
+    bulkqr_enter_list:"Vui lòng nhập danh sách link.", bulkqr_result_heading:"Kết quả ({count} QR)", bulkqr_col_link:"Link rút gọn", bulkqr_col_qr:"QR Code",
     bulkqr_super:"Tính năng chỉ dành cho gói Super.",
     // ===== DASHBOARD =====
     my_links:"Link của tôi", total_clicks:"Tổng lượt click", daily_limit:"Hạn mức link/ngày",
@@ -4068,6 +4073,7 @@ var i18n = {
     copy:"Chép", copied:"Đã copy ✓", stats:"Thống kê", edit:"Sửa", del:"Xoá",
     enabled:"Bật", disabled:"Tắt", deleted:"Đã xóa", undo_delete:"Hủy xóa", force_delete:"Xoá ngay",
     delete_link_title:"Xóa link?", delete_link_desc:"Link sẽ bị gạch và tự xóa sau 24h. Bạn có thể khôi phục trong thời gian này.", btn_ok:"Đồng ý", btn_cancel:"Hủy", maintenance_feature_prefix:"Tính năng đang bảo trì",
+    pricing_downgrade_blocked:"Bạn đang ở gói {tier}, không thể mua gói thấp hơn!", acct_session_active:"Đang hoạt động", analytics_stats_hint:"Bấm vào \\\"Thống kê\\\" trên mỗi link trong Short URLs để xem chi tiết.",
     btn_confirm:"Xác nhận", btn_understood:"Đã hiểu", contact_support_btn:"✉️ Liên hệ hỗ trợ",
     qr_success_title:"Chúc mừng!", qr_success_desc1:"Tài khoản {user} đã được kích hoạt thành công lên gói {tier}.",
     qr_success_desc2:"Cảm ơn bạn đã tin tưởng và đồng hành cùng chúng tôi. Sự ủng hộ của bạn giúp {domain} ngày càng phát triển tốt hơn.",
@@ -4256,7 +4262,7 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     team_tab_title:"Team", team_requires:"Team yêu cầu gói Super.", team_loading:"Đang tải...",
     team_create_title:"Tạo Team", team_name_label:"Tên Team", team_create_btn:"Tạo Team",
     team_guide_title:"Hướng dẫn", team_guide_desc:"Team cho phép nhiều user cùng quản lý link. Thành viên trong team có thể xem, sửa, xóa link của nhau.",
-    team_guide_limit:"Super: tối đa 10 thành viên mỗi team.", team_empty:"Chưa có team nào. Tạo team bên dưới.",
+    team_guide_limit:"Super: tối đa {count} thành viên mỗi team.", team_empty:"Chưa có team nào. Tạo team bên dưới.",
     team_col_member:"Thành viên", team_col_role:"Vai trò", team_col_joined:"Tham gia", team_role_owner:"Owner", team_role_member:"Member",
     team_delete_btn:"Xóa Team", team_delete_confirm:"Xóa team này? Tất cả thành viên sẽ bị rời team.",
     team_add_placeholder:"username", team_add_btn:"Thêm", team_remove_confirm:"Xóa thành viên này?",
@@ -4268,6 +4274,12 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     campaigns_empty:"Chưa có campaign nào. Tạo link với campaign để bắt đầu.",
     campaigns_col_name:"Campaign", campaigns_col_links:"Links", campaigns_col_clicks:"Tổng click", campaigns_col_history:"Lịch sử",
     campaigns_back:"← Quay lại", campaigns_history_title:"Lịch sử campaign:", campaigns_no_links:"Không có link nào.",
+    campaigns_view_history:"Xem lịch sử", campaigns_changed_date:"(đổi ngày {date})",
+    link_not_found:"Link không tồn tại", pw_too_many_attempts:"Quá nhiều lần thử sai. Thử lại sau 15 phút.",
+    voucher_enter_code:"Nhập mã voucher", voucher_not_found:"Voucher không tồn tại", voucher_disabled:"Voucher đã bị vô hiệu hóa", voucher_expired:"Voucher đã hết hạn", voucher_no_uses_left:"Voucher đã hết lượt dùng", voucher_already_used:"Bạn đã dùng voucher này rồi",
+    voucher_cannot_downgrade:"Gói hiện tại ({current}) cao hơn voucher ({voucherTier}). Voucher không thể hạ gói.",
+    voucher_days_added:"Đã cộng dồn {days} ngày vào gói {tier}", voucher_upgraded:"Đã nâng cấp lên gói {tier}",
+    stripe_error_generic:"Lỗi Stripe", missing_info:"Thiếu thông tin", missing_order_id:"Thiếu orderId", not_found:"Không tìm thấy",
     utm_builder_title:"UTM Builder", utm_builder_toggle:"Thêm tham số UTM (tùy chọn)",
     utm_builder_hint:"Tự động gắn tham số UTM vào URL đích. Campaign UTM sẽ lấy theo trường Chiến dịch ở trên.",
     utm_source:"Nguồn (utm_source)", utm_medium:"Kênh (utm_medium)", utm_term:"Từ khóa (utm_term)", utm_content:"Nội dung (utm_content)",
@@ -4410,7 +4422,8 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     bulkqr:"Bulk QR", bulkqr_title:"Bulk QR Code", bulkqr_hint:"One shortened link per line. Generate QR codes in bulk and download as an Excel file.",
     bulkqr_generate:"Generate bulk QR", bulkqr_download:"Download Excel (.xls)", bulkqr_color:"QR color",
     bulkqr_empty:"No valid links.", bulkqr_max:"Max. 1200 links per batch.",
-    bulkqr_loading:"Generating QR...", bulkqr_done:"QR codes generated. Click 'Download Excel' to save.",
+    bulkqr_loading:"Generating QR...", bulkqr_done:"Generated {count} QR codes. Click 'Download Excel' to save.",
+    bulkqr_enter_list:"Please enter a list of links.", bulkqr_result_heading:"Results ({count} QR codes)", bulkqr_col_link:"Short link", bulkqr_col_qr:"QR Code",
     bulkqr_super:"Super plan only feature.",
     // ===== DASHBOARD =====
     my_links:"My links", total_clicks:"Total clicks", daily_limit:"Daily link limit",
@@ -4420,6 +4433,7 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     copy:"Copy", copied:"Copied ✓", stats:"Analytics", edit:"Edit", del:"Delete",
     enabled:"Enabled", disabled:"Disabled", deleted:"Deleted", undo_delete:"Undo delete", force_delete:"Delete permanently",
     delete_link_title:"Delete link?", delete_link_desc:"The link will be struck through and auto-deleted after 24h. You can restore it during this time.", btn_ok:"OK", btn_cancel:"Cancel", maintenance_feature_prefix:"This feature is under maintenance",
+    pricing_downgrade_blocked:"You're currently on the {tier} plan and can't switch to a lower one!", acct_session_active:"Active", analytics_stats_hint:"Click \\\"Stats\\\" on any link in Short URLs to see detailed analytics.",
     btn_confirm:"Confirm", btn_understood:"Got it", contact_support_btn:"✉️ Contact support",
     qr_success_title:"Congratulations!", qr_success_desc1:"Account {user} has been successfully upgraded to the {tier} plan.",
     qr_success_desc2:"Thank you for trusting and supporting us. Your support helps {domain} keep improving.",
@@ -4624,7 +4638,7 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     team_tab_title:"Team", team_requires:"Team requires Super plan.", team_loading:"Loading...",
     team_create_title:"Create Team", team_name_label:"Team name", team_create_btn:"Create Team",
     team_guide_title:"Guide", team_guide_desc:"Team allows multiple users to manage links together. Team members can view, edit, and delete each other's links.",
-    team_guide_limit:"Super: max 10 members per team.", team_empty:"No team yet. Create one below.",
+    team_guide_limit:"Super: max {count} members per team.", team_empty:"No team yet. Create one below.",
     team_col_member:"Member", team_col_role:"Role", team_col_joined:"Joined", team_role_owner:"Owner", team_role_member:"Member",
     team_delete_btn:"Delete Team", team_delete_confirm:"Delete this team? All members will be removed.",
     team_add_placeholder:"username", team_add_btn:"Add", team_remove_confirm:"Remove this member?",
@@ -4636,6 +4650,12 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     campaigns_empty:"No campaigns yet. Create a link with a campaign to get started.",
     campaigns_col_name:"Campaign", campaigns_col_links:"Links", campaigns_col_clicks:"Total clicks", campaigns_col_history:"History",
     campaigns_back:"← Back", campaigns_history_title:"Campaign history:", campaigns_no_links:"No links.",
+    campaigns_view_history:"View history", campaigns_changed_date:"(changed on {date})",
+    link_not_found:"Link not found", pw_too_many_attempts:"Too many failed attempts. Please try again in 15 minutes.",
+    voucher_enter_code:"Enter a voucher code", voucher_not_found:"Voucher not found", voucher_disabled:"This voucher has been disabled", voucher_expired:"This voucher has expired", voucher_no_uses_left:"This voucher has no uses left", voucher_already_used:"You've already used this voucher",
+    voucher_cannot_downgrade:"Your current plan ({current}) is higher than the voucher's ({voucherTier}). A voucher can't downgrade your plan.",
+    voucher_days_added:"Added {days} days to your {tier} plan", voucher_upgraded:"Upgraded to the {tier} plan",
+    stripe_error_generic:"Stripe error", missing_info:"Missing information", missing_order_id:"Missing orderId", not_found:"Not found",
     utm_builder_title:"UTM Builder", utm_builder_toggle:"Add UTM parameters (optional)",
     utm_builder_hint:"Automatically append UTM parameters to the destination URL. UTM campaign follows the Campaign field above.",
     utm_source:"Source (utm_source)", utm_medium:"Medium (utm_medium)", utm_term:"Term (utm_term)", utm_content:"Content (utm_content)",
@@ -7179,7 +7199,7 @@ function showQrModal(tier) {
     var period = this.getAttribute("data-period") || "month";
     var tierRank = { free: 0, plus: 1, pro: 2, super: 3 };
     if (state.user && (tierRank[state.user.role] || 0) > (tierRank[tier] || 0)) {
-      alert("Bạn đang ở gói " + (state.user.role || "free").toUpperCase() + ", không thể mua gói thấp hơn!");
+      alert(tf("pricing_downgrade_blocked", { tier: (state.user.role || "free").toUpperCase() }));
       return;
     }
     var result = document.getElementById("qrResult");
@@ -7933,18 +7953,18 @@ var bulkQrData = [];
 function generateBulkQR(){
   var input = document.getElementById("bqrInput").value.trim();
   var color = document.getElementById("bqrColor").value.replace("#", "");
-  if (!input){ document.getElementById("bqrMsg").innerHTML = '<div class="msg msg-error">Vui lòng nhập danh sách link.</div>'; return; }
+  if (!input){ document.getElementById("bqrMsg").innerHTML = '<div class="msg msg-error">' + t("bulkqr_enter_list") + '</div>'; return; }
   var lines = input.split("\\n").map(function(l){ return l.trim(); }).filter(Boolean);
-  if (lines.length === 0){ document.getElementById("bqrMsg").innerHTML = '<div class="msg msg-error">Không có link hợp lệ.</div>'; return; }
-  if (lines.length > 1200){ document.getElementById("bqrMsg").innerHTML = '<div class="msg msg-error">Tối đa 1200 link/lần.</div>'; return; }
+  if (lines.length === 0){ document.getElementById("bqrMsg").innerHTML = '<div class="msg msg-error">' + t("bulkqr_empty") + '</div>'; return; }
+  if (lines.length > 1200){ document.getElementById("bqrMsg").innerHTML = '<div class="msg msg-error">' + t("bulkqr_max") + '</div>'; return; }
 
-  document.getElementById("bqrMsg").innerHTML = '<div class="msg msg-ok">⏳ Đang tạo ' + lines.length + ' QR...</div>';
+  document.getElementById("bqrMsg").innerHTML = '<div class="msg msg-ok">⏳ ' + t("bulkqr_loading") + '</div>';
 
   bulkQrData = [];
   var preview = document.getElementById("bqrPreview");
   preview.style.display = "block";
-  preview.innerHTML = '<h3>Kết quả (' + lines.length + ' QR)</h3>' +
-    '<div style="overflow-x:auto;"><table><thead><tr><th>Link rút gọn</th><th>QR Code</th></tr></thead><tbody id="bqrTableBody">';
+  preview.innerHTML = '<h3>' + tf("bulkqr_result_heading", { count: lines.length }) + '</h3>' +
+    '<div style="overflow-x:auto;"><table><thead><tr><th>' + t("bulkqr_col_link") + '</th><th>' + t("bulkqr_col_qr") + '</th></tr></thead><tbody id="bqrTableBody">';
 
   lines.forEach(function(link, idx){
     var shortUrl = link.replace("https://", "").replace("http://", "");
@@ -7956,7 +7976,7 @@ function generateBulkQR(){
     document.getElementById("bqrTableBody").insertAdjacentHTML("beforeend", row);
   });
 
-  document.getElementById("bqrMsg").innerHTML = '<div class="msg msg-ok">Đã tạo ' + lines.length + ' QR. Bấm [Tải Excel] để tải về.</div>';
+  document.getElementById("bqrMsg").innerHTML = '<div class="msg msg-ok">' + tf("bulkqr_done", { count: lines.length }) + '</div>';
   document.getElementById("bqrDlBtn").disabled = false;
   document.getElementById("bqrDlBtn").style.opacity = "1";
 }
@@ -7966,7 +7986,7 @@ function downloadBulkQR(){
   var color = document.getElementById("bqrColor").value.replace("#", "");
   var html = '<html><head><meta charset="utf-8"><title>Bulk QR</title></head><body>' +
     '<table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse;font-family:Arial;">' +
-    '<tr style="background:#6366f1;color:#fff;"><th>Link rút gọn</th><th>QR Code</th></tr>';
+    '<tr style="background:#6366f1;color:#fff;"><th>' + t("bulkqr_col_link") + '</th><th>' + t("bulkqr_col_qr") + '</th></tr>';
 
   bulkQrData.forEach(function(item){
     var qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=" + encodeURIComponent(item.link) + "&color=" + color;
@@ -8989,7 +9009,7 @@ function renderAnalyticsOverview(app){
       });
       html += '</tbody></table></div></div>';
     }
-    html += '<div class="card"><p class="hint">' + li("chart", 14) + ' Click vao "Stats" tren tung link trong Short URLs de xem analytics chi tiet.</p></div>';
+    html += '<div class="card"><p class="hint">' + li("chart", 14) + ' ' + t("analytics_stats_hint") + '</p></div>';
     app.innerHTML = html;
   }).catch(function(err){ app.innerHTML = '<div class="card"><div class="msg msg-error">' + esc(err.message) + '</div></div>'; });
 }
@@ -9162,7 +9182,7 @@ function renderWebhookTab(app){
       document.querySelectorAll(".btnDelWh").forEach(function(btn){
         btn.onclick = function(){
           var id = this.getAttribute("data-id");
-          if (!confirm("Xóa webhook này?")) return;
+          if (!confirm(t("wh_delete_confirm"))) return;
           api("/api/v1/webhooks/" + id, "DELETE").then(function(){
             loadWebhooks();
           }).catch(function(err){
@@ -9296,15 +9316,15 @@ function renderCampaignsTab(app){
       listEl.innerHTML = '<table style="width:100%;border-collapse:collapse;"><thead><tr>' +
         '<th style="text-align:left;padding:8px;border-bottom:1px solid var(--border);">Campaign</th>' +
         '<th style="text-align:right;padding:8px;border-bottom:1px solid var(--border);">Links</th>' +
-        '<th style="text-align:right;padding:8px;border-bottom:1px solid var(--border);">Tổng click</th>' +
-        '<th style="text-align:left;padding:8px;border-bottom:1px solid var(--border);">Lịch sử</th>' +
+        '<th style="text-align:right;padding:8px;border-bottom:1px solid var(--border);">' + t("campaigns_col_clicks") + '</th>' +
+        '<th style="text-align:left;padding:8px;border-bottom:1px solid var(--border);">' + t("campaigns_col_history") + '</th>' +
         '</tr></thead><tbody>' +
         data.campaigns.map(function(c){
           return '<tr style="cursor:pointer;" class="campaignRow" data-campaign="' + esc(c.name) + '">' +
             '<td style="padding:8px;border-bottom:1px solid var(--border);"><span class="badge badge-pro">' + esc(c.name) + '</span></td>' +
             '<td style="padding:8px;border-bottom:1px solid var(--border);text-align:right;">' + c.linkCount + '</td>' +
             '<td style="padding:8px;border-bottom:1px solid var(--border);text-align:right;">' + (c.totalClicks || 0) + '</td>' +
-            '<td style="padding:8px;border-bottom:1px solid var(--border);font-size:12px;color:var(--muted);">Xem lịch sử</td>' +
+            '<td style="padding:8px;border-bottom:1px solid var(--border);font-size:12px;color:var(--muted);">' + t("campaigns_view_history") + '</td>' +
             '</tr>';
         }).join("") +
         '</tbody></table>';
@@ -9321,9 +9341,9 @@ function renderCampaignsTab(app){
 
   function loadCampaignHistory(campaignName){
     var listEl = document.getElementById("campaignList");
-    listEl.innerHTML = '<p class="hint"><a href="javascript:void(0)" id="campaignBackLink">← Quay lại</a></p>' +
-      '<h2>Lịch sử campaign: ' + esc(campaignName) + '</h2>' +
-      '<div id="historyDetail"><p class="hint">Đang tải...</p></div>';
+    listEl.innerHTML = '<p class="hint"><a href="javascript:void(0)" id="campaignBackLink">' + t("campaigns_back") + '</a></p>' +
+      '<h2>' + t("campaigns_history_title") + ' ' + esc(campaignName) + '</h2>' +
+      '<div id="historyDetail"><p class="hint">' + t("campaigns_loading") + '</p></div>';
     document.getElementById("campaignBackLink").onclick = function(e){
       e.preventDefault();
       navigate("campaigns");
@@ -9337,7 +9357,7 @@ function renderCampaignsTab(app){
       }
       detailEl.innerHTML = data.links.map(function(l){
         var historyHtml = (l.campaignHistory || []).map(function(h){
-          return '<div style="font-size:11px;color:var(--muted);padding:2px 0;">← ' + esc(h.campaign) + ' (đổi ngày ' + esc((h.changedAt || "").slice(0,10)) + ')</div>';
+          return '<div style="font-size:11px;color:var(--muted);padding:2px 0;">← ' + esc(h.campaign) + ' ' + tf("campaigns_changed_date", { date: esc((h.changedAt || "").slice(0,10)) }) + '</div>';
         }).join("");
         return '<div class="card" style="margin-bottom:8px;border:1px solid var(--border);padding:12px;">' +
           '<div style="display:flex;justify-content:space-between;align-items:center;">' +
@@ -9345,7 +9365,7 @@ function renderCampaignsTab(app){
           '<span class="hint">' + (l.totalClicks || 0) + ' clicks</span>' +
           '</div>' +
           '<p class="hint" style="margin-top:4px;">→ ' + esc(l.url || "") + '</p>' +
-          (historyHtml ? '<div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);"><p class="hint" style="margin-bottom:4px;">Lịch sử campaign:</p>' + historyHtml + '</div>' : '') +
+          (historyHtml ? '<div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);"><p class="hint" style="margin-bottom:4px;">' + t("campaigns_history_title") + '</p>' + historyHtml + '</div>' : '') +
           '</div>';
       }).join("");
     }).catch(function(err){
@@ -9376,7 +9396,7 @@ function renderTeamTab(app){
     '</div>' : '') +
     '<div class="card" style="margin-top:16px;border:1px solid var(--border);"><h2>' + t("team_guide_title") + '</h2>' +
     '<p class="hint">' + t("team_guide_desc") + '</p>' +
-    '<p class="hint">Super: tối đa ' + (limits.maxTeamMembers || 10) + ' thành viên mỗi team.</p>' +
+    '<p class="hint">' + tf("team_guide_limit", { count: (limits.maxTeamMembers || 10) }) + '</p>' +
     '</div>' +
     '</div>';
 
@@ -9799,7 +9819,7 @@ function renderAccount(app){
   } catch(e) {}
   var platformName = "—";
   try { platformName = navigator.platform || "—"; } catch(e) {}
-  secCard += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);"><div><div style="font-size:12px;color:var(--muted);margin-bottom:2px;">' + t("acct_session") + '</div><div style="font-size:13px;color:var(--text);">' + t("acct_current_device") + '</div><div style="font-size:11px;color:var(--muted);margin-top:2px;">' + esc(browserName) + ' · ' + esc(platformName) + '</div></div><span style="font-size:11px;padding:2px 8px;border-radius:6px;background:rgba(34,197,94,0.15);color:#22c55e;font-weight:600;">Đang hoạt động</span></div>';
+  secCard += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);"><div><div style="font-size:12px;color:var(--muted);margin-bottom:2px;">' + t("acct_session") + '</div><div style="font-size:13px;color:var(--text);">' + t("acct_current_device") + '</div><div style="font-size:11px;color:var(--muted);margin-top:2px;">' + esc(browserName) + ' · ' + esc(platformName) + '</div></div><span style="font-size:11px;padding:2px 8px;border-radius:6px;background:rgba(34,197,94,0.15);color:#22c55e;font-weight:600;">' + t("acct_session_active") + '</span></div>';
   // Language switcher
   secCard += '<div style="padding-top:8px;"><button class="btn btn-ghost btn-sm" style="width:100%;justify-content:space-between;" onclick="toggleLangPanel()"><span>' + li('setting', 14) + ' ' + t("language") + '</span><span id="langArrow" style="transition:transform 0.3s ease;">▶</span></button>';
   secCard += '<div id="langPanel" style="display:none;flex-wrap:wrap;gap:6px;margin-top:8px;overflow:hidden;transition:max-height 0.3s ease,opacity 0.3s ease;max-height:0;opacity:0;">';
@@ -11789,13 +11809,13 @@ async function handleCreateTeam(request, env, corsHeaders) {
   const authedUser = await getAuthenticatedUser(request, env);
   if (!authedUser) return json({ success: false, error: "Unauthorized" }, 401, corsHeaders);
   const limits = TIER_CONFIG[authedUser.role] || {};
-  if (!limits.hasTeam) return json({ success: false, error: "Team yêu cầu gói Super" }, 403, corsHeaders);
-  
+  if (!limits.hasTeam) return json({ success: false, error: st("team_requires_super", request) }, 403, corsHeaders);
+
   let body;
   try { body = await request.json(); } catch (e) { body = {}; }
   const { name } = body || {};
-  if (!name || !name.trim()) return json({ success: false, error: "Tên team là bắt buộc" }, 400, corsHeaders);
-  
+  if (!name || !name.trim()) return json({ success: false, error: st("team_name_required", request) }, 400, corsHeaders);
+
   const teamId = "team_" + randomHex(8);
   const team = {
     id: teamId,
@@ -11827,29 +11847,29 @@ async function handleDeleteTeam(request, env, teamId, corsHeaders) {
   const authedUser = await getAuthenticatedUser(request, env);
   if (!authedUser) return json({ success: false, error: "Unauthorized" }, 401, corsHeaders);
   const limits = TIER_CONFIG[authedUser.role] || {};
-  if (!limits.hasTeam) return json({ success: false, error: "Team yêu cầu gói Super" }, 403, corsHeaders);
-  
+  if (!limits.hasTeam) return json({ success: false, error: st("team_requires_super", request) }, 403, corsHeaders);
+
   const team = await getTeam(env, teamId);
-  if (!team) return json({ success: false, error: "Team không tồn tại" }, 404, corsHeaders);
-  if (team.ownerId !== authedUser.id && authedUser.role !== "admin") return json({ success: false, error: "Chỉ owner mới xóa được team" }, 403, corsHeaders);
-  
+  if (!team) return json({ success: false, error: st("team_not_found", request) }, 404, corsHeaders);
+  if (team.ownerId !== authedUser.id && authedUser.role !== "admin") return json({ success: false, error: st("team_only_owner_delete", request) }, 403, corsHeaders);
+
   for (const m of (team.members || [])) {
     const mu = await getUser(env, m.username);
     if (mu && mu.teamId === teamId) { mu.teamId = null; await putUser(env, mu); }
   }
   await env.LINKS_KV.delete("team:" + teamId);
-  return json({ success: true, message: "Team đã xóa" }, 200, corsHeaders);
+  return json({ success: true, message: st("team_deleted", request) }, 200, corsHeaders);
 }
 
 async function handleUpdateTeam(request, env, teamId, corsHeaders) {
   const authedUser = await getAuthenticatedUser(request, env);
   if (!authedUser) return json({ success: false, error: "Unauthorized" }, 401, corsHeaders);
   const limits = TIER_CONFIG[authedUser.role] || {};
-  if (!limits.hasTeam) return json({ success: false, error: "Team yêu cầu gói Super" }, 403, corsHeaders);
-  
+  if (!limits.hasTeam) return json({ success: false, error: st("team_requires_super", request) }, 403, corsHeaders);
+
   const team = await getTeam(env, teamId);
-  if (!team) return json({ success: false, error: "Team không tồn tại" }, 404, corsHeaders);
-  if (team.ownerId !== authedUser.id && authedUser.role !== "admin") return json({ success: false, error: "Chỉ owner mới sửa được team" }, 403, corsHeaders);
+  if (!team) return json({ success: false, error: st("team_not_found", request) }, 404, corsHeaders);
+  if (team.ownerId !== authedUser.id && authedUser.role !== "admin") return json({ success: false, error: st("team_only_owner_edit", request) }, 403, corsHeaders);
   
   let body;
   try { body = await request.json(); } catch (e) { body = {}; }
@@ -11863,25 +11883,25 @@ async function handleAddTeamMember(request, env, corsHeaders) {
   const authedUser = await getAuthenticatedUser(request, env);
   if (!authedUser) return json({ success: false, error: "Unauthorized" }, 401, corsHeaders);
   const limits = TIER_CONFIG[authedUser.role] || {};
-  if (!limits.hasTeam) return json({ success: false, error: "Team yêu cầu gói Super" }, 403, corsHeaders);
-  
+  if (!limits.hasTeam) return json({ success: false, error: st("team_requires_super", request) }, 403, corsHeaders);
+
   let body;
   try { body = await request.json(); } catch (e) { body = {}; }
   const { teamId, username } = body || {};
-  if (!teamId || !username) return json({ success: false, error: "Thiếu teamId hoặc username" }, 400, corsHeaders);
-  
+  if (!teamId || !username) return json({ success: false, error: st("team_missing_id_or_username", request) }, 400, corsHeaders);
+
   const team = await getTeam(env, teamId);
-  if (!team) return json({ success: false, error: "Team không tồn tại" }, 404, corsHeaders);
-  if (team.ownerId !== authedUser.id && authedUser.role !== "admin") return json({ success: false, error: "Chỉ owner mới thêm thành viên" }, 403, corsHeaders);
-  
+  if (!team) return json({ success: false, error: st("team_not_found", request) }, 404, corsHeaders);
+  if (team.ownerId !== authedUser.id && authedUser.role !== "admin") return json({ success: false, error: st("team_only_owner_add_member", request) }, 403, corsHeaders);
+
   const maxMembers = limits.maxTeamMembers || 10;
-  if (team.members.length >= maxMembers) return json({ success: false, error: "Tối đa " + maxMembers + " thành viên" }, 400, corsHeaders);
-  
+  if (team.members.length >= maxMembers) return json({ success: false, error: st("team_max_members", request).replace("{count}", maxMembers) }, 400, corsHeaders);
+
   const cleanUsername = username.trim().toLowerCase();
   const targetUser = await getUser(env, cleanUsername);
-  if (!targetUser) return json({ success: false, error: "User không tồn tại" }, 404, corsHeaders);
-  if (targetUser.teamId) return json({ success: false, error: "User đã ở trong team khác" }, 400, corsHeaders);
-  if (team.members.some(m => m.username.toLowerCase() === cleanUsername)) return json({ success: false, error: "Đã là thành viên" }, 400, corsHeaders);
+  if (!targetUser) return json({ success: false, error: st("team_user_not_found", request) }, 404, corsHeaders);
+  if (targetUser.teamId) return json({ success: false, error: st("team_user_in_other_team", request) }, 400, corsHeaders);
+  if (team.members.some(m => m.username.toLowerCase() === cleanUsername)) return json({ success: false, error: st("team_already_member", request) }, 400, corsHeaders);
   
   team.members.push({ username: targetUser.username, role: "member", addedAt: new Date().toISOString() });
   await putTeam(env, team);
@@ -11896,21 +11916,21 @@ async function handleRemoveTeamMember(request, env, corsHeaders) {
   const authedUser = await getAuthenticatedUser(request, env);
   if (!authedUser) return json({ success: false, error: "Unauthorized" }, 401, corsHeaders);
   const limits = TIER_CONFIG[authedUser.role] || {};
-  if (!limits.hasTeam) return json({ success: false, error: "Team yêu cầu gói Super" }, 403, corsHeaders);
-  
+  if (!limits.hasTeam) return json({ success: false, error: st("team_requires_super", request) }, 403, corsHeaders);
+
   let body;
   try { body = await request.json(); } catch (e) { body = {}; }
   const { teamId, username } = body || {};
-  if (!teamId || !username) return json({ success: false, error: "Thiếu teamId hoặc username" }, 400, corsHeaders);
-  
+  if (!teamId || !username) return json({ success: false, error: st("team_missing_id_or_username", request) }, 400, corsHeaders);
+
   const team = await getTeam(env, teamId);
-  if (!team) return json({ success: false, error: "Team không tồn tại" }, 404, corsHeaders);
-  if (team.ownerId !== authedUser.id && authedUser.role !== "admin") return json({ success: false, error: "Chỉ owner mới xóa thành viên" }, 403, corsHeaders);
-  
+  if (!team) return json({ success: false, error: st("team_not_found", request) }, 404, corsHeaders);
+  if (team.ownerId !== authedUser.id && authedUser.role !== "admin") return json({ success: false, error: st("team_only_owner_remove_member", request) }, 403, corsHeaders);
+
   const cleanUsername = username.trim().toLowerCase();
   const member = team.members.find(m => m.username.toLowerCase() === cleanUsername);
-  if (!member) return json({ success: false, error: "Thành viên không tồn tại" }, 404, corsHeaders);
-  if (member.role === "owner") return json({ success: false, error: "Không thể xóa owner" }, 400, corsHeaders);
+  if (!member) return json({ success: false, error: st("team_member_not_found", request) }, 404, corsHeaders);
+  if (member.role === "owner") return json({ success: false, error: st("team_cannot_remove_owner", request) }, 400, corsHeaders);
   
   team.members = team.members.filter(m => m.username.toLowerCase() !== cleanUsername);
   await putTeam(env, team);
