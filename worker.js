@@ -724,7 +724,7 @@ async function handleRegister(request, env, corsHeaders) {
   if (!username || !password) {
     return json({ error: st("enter_user_pass", request) }, 400, corsHeaders);
   }
-  if (username.length < 3 || username.length > 25) {
+  if (username.length < 8 || username.length > 25) {
     return json({ error: st("username_length", request) }, 400, corsHeaders);
   }
   if (password.length < 9 || !/[A-Z]/.test(password)) {
@@ -3150,7 +3150,7 @@ async function handleRejectQrPayment(request, env, corsHeaders) {
 var SERVER_I18N = {
   vi: { 
     brand:"SHURL", subject:"Voucher SHURL — Mã kích hoạt gói", thanks_1:"Cảm ơn bạn đã sử dụng gói", thanks_2:"của", instruction:"Hãy copy voucher này và dán vào ô nhập voucher ở phần tài khoản để kích hoạt:", activate_note:"Gói voucher", activate_note_2:"được kích hoạt ngay sau khi nhập mã.", warning:"Vui lòng không share mã voucher ra ngoài tránh trường hợp mất.", closing:"Xin cảm ơn bạn đã đóng góp cho nền tảng này phát triển.", signature:"Trân trọng,",
-    require_auth:"Vui lòng đăng nhập để thực hiện thao tác này.", require_admin:"Yêu cầu quyền Quản trị viên (Admin).", enter_user_pass:"Vui lòng nhập tên đăng nhập và mật khẩu.", username_length:"Tên đăng nhập phải từ 3-25 ký tự.", password_policy:"Mật khẩu tối thiểu 9 ký tự và có ít nhất 1 chữ viết hoa.", username_exists:"Tên đăng nhập đã tồn tại trong hệ thống.", enter_user_pass_full:"Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.", wrong_credentials:"Sai tên đăng nhập hoặc mật khẩu.", not_logged_in:"Chưa đăng nhập.", user_not_found:"Không tìm thấy tài khoản.", api_pro_only:"Tính năng API chỉ mở cho gói PRO hoặc SUPER." 
+    require_auth:"Vui lòng đăng nhập để thực hiện thao tác này.", require_admin:"Yêu cầu quyền Quản trị viên (Admin).", enter_user_pass:"Vui lòng nhập tên đăng nhập và mật khẩu.", username_length:"Tên đăng nhập phải từ 8-25 ký tự.", password_policy:"Mật khẩu tối thiểu 9 ký tự và có ít nhất 1 chữ viết hoa.", username_exists:"Tên đăng nhập đã tồn tại trong hệ thống.", enter_user_pass_full:"Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.", wrong_credentials:"Sai tên đăng nhập hoặc mật khẩu.", not_logged_in:"Chưa đăng nhập.", user_not_found:"Không tìm thấy tài khoản.", api_pro_only:"Tính năng API chỉ mở cho gói PRO hoặc SUPER." 
   }, 
   en: { brand:"SHURL", subject:"SHURL Voucher — Plan activation code", thanks_1:"Thank you for using the", thanks_2:"plan of", instruction:"Copy this voucher and paste it into the voucher field in your account to activate:", activate_note:"Voucher plan", activate_note_2:"is activated immediately after entering the code.", warning:"Please do not share this voucher code to avoid losing it.", closing:"Thank you for supporting the growth of this platform.", signature:"Best regards," },
   ko: { brand:"SHURL", subject:"SHURL 바우처 — 플랜 활성화 코드", thanks_1:"사용해 주셔서 감사합니다", thanks_2:"플랜", instruction:"이 바우처를 복사하여 계정의 바우처 입력란에 붙여넣어 활성화하세요:", activate_note:"바우처 플랜", activate_note_2:"은 코드 입력 즉시 활성화됩니다.", warning:"바우처 코드를 외부에 공유하지 마세요.", closing:"플랫폼 성장을 위해 기여해 주셔서 감사합니다.", signature:"감사합니다," },
@@ -3985,7 +3985,7 @@ var i18n = {
     auth_welcome_back:"Chào mừng trở lại!", auth_welcome_back_desc:"Đăng nhập để tiếp tục quản lý Short URL, QR Code và chiến dịch của bạn.",
     auth_hello_friend:"Xin chào, bạn mới!", auth_hello_friend_desc:"Tạo tài khoản miễn phí để bắt đầu rút gọn link và theo dõi hiệu quả.",
     register_sub:"Tạo tài khoản miễn phí để quản lý link.", register_free:"Đăng ký miễn phí",
-    reg_username:"Tên đăng nhập (3-25 ký tự)", reg_email:"Email (tuỳ chọn)", reg_password:"Mật khẩu (tối thiểu 9 ký tự và có ít nhất 1 chữ viết hoa)",
+    reg_username:"Tên đăng nhập (8-25 ký tự)", reg_email:"Email (tuỳ chọn)", reg_password:"Mật khẩu (tối thiểu 9 ký tự và có ít nhất 1 chữ viết hoa)",
     reg_newpassword:"Mật khẩu mới",
     // ===== FORGOT PASSWORD =====
     forgot_password:"Quên mật khẩu", forgot_sub:"Nhập tên tài khoản để nhận mã khôi phục qua email.", change_password:"Đổi mật khẩu", old_password:"Mật khẩu cũ", new_password:"Mật khẩu mới", confirm_password:"Xác nhận mật khẩu", send_code:"Gửi mã xác nhận", verify_code:"Mã xác nhận (6 số)", code_sent_to_email:"Mã xác nhận đã được gửi đến email của bạn.", code_sent:"Đã gửi mã xác nhận", password_changed:"Đổi mật khẩu thành công!", password_mismatch:"Mật khẩu xác nhận không khớp", password_too_short:"Mật khẩu phải tối thiểu 9 ký tự", fill_all_fields:"Vui lòng điền đầy đủ thông tin", sending:"Đang gửi...", processing:"Đang xử lý...", send_failed:"Gửi thất bại", change_failed:"Đổi mật khẩu thất bại", cancel:"Hủy", confirm:"Xác nhận", security_password:"Mật khẩu",
@@ -4323,7 +4323,7 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     auth_welcome_back:"Welcome Back!", auth_welcome_back_desc:"Log in to keep managing your Short URLs, QR codes, and campaigns.",
     auth_hello_friend:"Hello, Friend!", auth_hello_friend_desc:"Create a free account to start shortening links and tracking performance.",
     register_sub:"Create a free account to manage your links.", register_free:"Sign up free",
-    reg_username:"Username (3-25 characters)", reg_email:"Email (optional)", reg_password:"Password (min. 9 characters with at least 1 uppercase letter)",
+    reg_username:"Username (8-25 characters)", reg_email:"Email (optional)", reg_password:"Password (min. 9 characters with at least 1 uppercase letter)",
     reg_newpassword:"New password",
     // ===== FORGOT PASSWORD =====
     forgot_password:"Forgot password", forgot_sub:"Enter your username to receive a recovery code via email.", change_password:"Change password", old_password:"Current password", new_password:"New password", confirm_password:"Confirm password", send_code:"Send verification code", verify_code:"Verification code (6 digits)", code_sent_to_email:"A verification code has been sent to your email.", code_sent:"Verification code sent", password_changed:"Password changed successfully!", password_mismatch:"Passwords do not match", password_too_short:"Password must be at least 9 characters", fill_all_fields:"Please fill in all fields", sending:"Sending...", processing:"Processing...", send_failed:"Failed to send", change_failed:"Failed to change password", cancel:"Cancel", confirm:"Confirm", security_password:"Password",
@@ -4675,7 +4675,7 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     login_sub:"SHURL에 다시 오신 것을 환영합니다.", login_security:"Cloudflare 보호 · 계정을 만들어 시작하세요",
     no_account:"계정이 없으신가요?", have_account:"이미 계정이 있으신가요?", demo_accounts:" ",
     register_sub:"무료 계정을 만들어 링크를 관리하세요.", register_free:"무료로 가입",
-    reg_username:"사용자명 (3-25자)", reg_email:"이메일 (선택)", reg_password:"비밀번호 (최소 9자, 대문자 1개 이상 포함)",
+    reg_username:"사용자명 (8-25자)", reg_email:"이메일 (선택)", reg_password:"비밀번호 (최소 9자, 대문자 1개 이상 포함)",
     reg_newpassword:"새 비밀번호",
     // ===== FORGOT PASSWORD =====
     forgot_password:"비밀번호 찾기", forgot_sub:"사용자명을 입력하면 복구 코드를 이메일로 보내드립니다.", change_password:"비밀번호 변경", old_password:"현재 비밀번호", new_password:"새 비밀번호", confirm_password:"비밀번호 확인", send_code:"인증 코드 보내기", verify_code:"인증 코드 (6자리)", code_sent_to_email:"인증 코드가 이메일로 발송되었습니다.", code_sent:"인증 코드 발송됨", password_changed:"비밀번호가 성공적으로 변경되었습니다!", password_mismatch:"비밀번호가 일치하지 않습니다", password_too_short:"비밀번호는 최소 9자 이상이어야 합니다", fill_all_fields:"모든 필드를 입력해 주세요", sending:"전송 중...", processing:"처리 중...", send_failed:"전송 실패", change_failed:"비밀번호 변경 실패", cancel:"취소", confirm:"확인", security_password:"비밀번호",
@@ -4949,7 +4949,7 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     login_sub:"欢迎回到 SHURL。", login_security:"由 Cloudflare 保护 · 创建账户即可开始",
     no_account:"还没有账户？", have_account:"已有账户？", demo_accounts:" ",
     register_sub:"创建免费账户来管理链接。", register_free:"免费注册",
-    reg_username:"用户名（3-25 个字符）", reg_email:"邮箱（可选）", reg_password:"密码（最少 9 个字符，且至少包含 1 个大写字母）",
+    reg_username:"用户名（8-25 个字符）", reg_email:"邮箱（可选）", reg_password:"密码（最少 9 个字符，且至少包含 1 个大写字母）",
     reg_newpassword:"新密码",
     // ===== FORGOT PASSWORD =====
     forgot_password:"忘记密码", forgot_sub:"输入用户名，我们将通过邮箱发送恢复码。", change_password:"修改密码", old_password:"当前密码", new_password:"新密码", confirm_password:"确认密码", send_code:"发送验证码", verify_code:"验证码（6位）", code_sent_to_email:"验证码已发送到您的邮箱。", code_sent:"验证码已发送", password_changed:"密码修改成功！", password_mismatch:"两次密码不一致", password_too_short:"密码至少需要9个字符", fill_all_fields:"请填写所有字段", sending:"发送中...", processing:"处理中...", send_failed:"发送失败", change_failed:"修改密码失败", cancel:"取消", confirm:"确认", security_password:"密码",
@@ -5220,7 +5220,7 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     login_sub:"SHURL पर आपका पुनः स्वागत है।", login_security:"Cloudflare द्वारा सुरक्षित · शुरू करने के लिए खाता बनाएं",
     no_account:"अभी तक खाता नहीं है?", have_account:"पहले से खाता है?", demo_accounts:" ",
     register_sub:"लिंक प्रबंधित करने के लिए मुफ़्त खाता बनाएं।", register_free:"मुफ़्त रजिस्टर करें",
-    reg_username:"उपयोगकर्ता नाम (3-25 अक्षर)", reg_email:"ईमेल (वैकल्पिक)", reg_password:"पासवर्ड (न्यूनतम 9 अक्षर, कम से कम 1 बड़ा अक्षर आवश्यक)",
+    reg_username:"उपयोगकर्ता नाम (8-25 अक्षर)", reg_email:"ईमेल (वैकल्पिक)", reg_password:"पासवर्ड (न्यूनतम 9 अक्षर, कम से कम 1 बड़ा अक्षर आवश्यक)",
     reg_newpassword:"नया पासवर्ड",
     // ===== FORGOT PASSWORD =====
     forgot_password:"पासवर्ड भूल गए", forgot_sub:"रिकवरी कोड ईमेल पर प्राप्त करने के लिए उपयोगकर्ता नाम दर्ज करें।", change_password:"पासवर्ड बदलें", old_password:"वर्तमान पासवर्ड", new_password:"नया पासवर्ड", confirm_password:"पासवर्ड की पुष्टि करें", send_code:"सत्यापन कोड भेजें", verify_code:"सत्यापन कोड (6 अंक)", code_sent_to_email:"सत्यापन कोड आपके ईमेल पर भेजा गया है।", code_sent:"सत्यापन कोड भेजा गया", password_changed:"पासवर्ड सफलतापूर्वक बदला गया!", password_mismatch:"पासवर्ड मेल नहीं खाते", password_too_short:"पासवर्ड कम से कम 9 अक्षरों का होना चाहिए", fill_all_fields:"कृपया सभी फ़ील्ड भरें", sending:"भेजा जा रहा है...", processing:"प्रसंस्करण...", send_failed:"भेजने में विफल", change_failed:"पासवर्ड बदलने में विफल", cancel:"रद्द करें", confirm:"पुष्टि करें", security_password:"पासवर्ड",
@@ -5491,7 +5491,7 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     login_sub:"SHURLへようこそ。", login_security:"Cloudflare保護 アカウントを作成して始めましょう",
     no_account:"アカウントをお持ちでないですか？", have_account:"既にアカウントをお持ちですか？", demo_accounts:" ",
     register_sub:"無料アカウントを作成してリンクを管理しょう。", register_free:"無料で登録",
-    reg_username:"ユーザー名（3〜25文字）", reg_email:"メールドレス任意）", reg_password:"パスワード9文字以上大文字を1つ以上含む）",
+    reg_username:"ユーザー名（8〜25文字）", reg_email:"メールドレス任意）", reg_password:"パスワード9文字以上大文字を1つ以上含む）",
     reg_newpassword:"新しいパスワード",
     // ===== FORGOT PASSWORD =====
     forgot_password:"パスワードを忘れた", forgot_sub:"ユーザー名を入力すると、復旧コードメールでお送りします。", change_password:"パスワード変更", old_password:"現在のパスワード", new_password:"新しいパスワード", confirm_password:"パスワード確認", send_code:"確認コードを送信", verify_code:"確認コード（6桁）", code_sent_to_email:"確認コードがメールに送信されました。", code_sent:"確認コード送信済み", password_changed:"パスワードが正常に変更されました！", password_mismatch:"パスワードが一致しません", password_too_short:"パスワードは9文字以上必要です", fill_all_fields:"すべての項目を入力してください", sending:"送信中...", processing:"処理中...", send_failed:"送信失敗", change_failed:"パスワード変更失敗", cancel:"キャンセル", confirm:"確認", security_password:"パスワード",
@@ -5762,7 +5762,7 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     login_sub:"Bon retour sur SHURL.", login_security:"Sécurisé par Cloudflare · Créez un compte pour commencer",
     no_account:"Pas encore de compte ?", have_account:"Vous avez déjà un compte ?", demo_accounts:" ",
     register_sub:"Créez un compte gratuit pour gérer vos liens.", register_free:"Inscription gratuite",
-    reg_username:"Nom d'utilisateur (3-25 caractères)", reg_email:"E-mail (facultatif)", reg_password:"Mot de passe (min. 9 caractères, dont au moins 1 majuscule)",
+    reg_username:"Nom d'utilisateur (8-25 caractères)", reg_email:"E-mail (facultatif)", reg_password:"Mot de passe (min. 9 caractères, dont au moins 1 majuscule)",
     reg_newpassword:"Nouveau mot de passe",
     // ===== FORGOT PASSWORD =====
     forgot_password:"Mot de passe oublié", forgot_sub:"Saisissez votre nom d'utilisateur pour recevoir un code de récupération par e-mail.", change_password:"Changer le mot de passe", old_password:"Mot de passe actuel", new_password:"Nouveau mot de passe", confirm_password:"Confirmer le mot de passe", send_code:"Envoyer le code", verify_code:"Code de vérification (6 chiffres)", code_sent_to_email:"Un code de vérification a été envoyé à votre e-mail.", code_sent:"Code de vérification envoyé", password_changed:"Mot de passe modifié avec succès !", password_mismatch:"Les mots de passe ne correspondent pas", password_too_short:"Le mot de passe doit contenir au moins 9 caractères", fill_all_fields:"Veuillez remplir tous les champs", sending:"Envoi...", processing:"Traitement...", send_failed:"Échec de l'envoi", change_failed:"Échec du changement de mot de passe", cancel:"Annuler", confirm:"Confirmer", security_password:"Mot de passe",
@@ -6031,7 +6031,7 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     login_sub:"Bienvenido de nuevo a SHURL.", login_security:"Protegido por Cloudflare · Crea una cuenta para empezar",
     no_account:"¿Aún no tienes cuenta?", have_account:"¿Ya tienes cuenta?", demo_accounts:" ",
     register_sub:"Crea una cuenta gratuita para gestionar tus enlaces.", register_free:"Registro gratuito",
-    reg_username:"Nombre de usuario (3-25 caracteres)", reg_email:"Correo electrónico (opcional)", reg_password:"Contraseña (mínimo 9 caracteres y al menos 1 mayúscula)",
+    reg_username:"Nombre de usuario (8-25 caracteres)", reg_email:"Correo electrónico (opcional)", reg_password:"Contraseña (mínimo 9 caracteres y al menos 1 mayúscula)",
     reg_newpassword:"Nueva contraseña",
     // ===== FORGOT PASSWORD =====
     forgot_password:"Olvidé mi contraseña", forgot_sub:"Introduce tu nombre de usuario para recibir un código de recuperación por correo.", change_password:"Cambiar contraseña", old_password:"Contraseña actual", new_password:"Nueva contraseña", confirm_password:"Confirmar contraseña", send_code:"Enviar código", verify_code:"Código de verificación (6 dígitos)", code_sent_to_email:"Se ha enviado un código de verificación a tu correo.", code_sent:"Código enviado", password_changed:"¡Contraseña cambiada con éxito!", password_mismatch:"Las contraseñas no coinciden", password_too_short:"La contraseña debe tener al menos 9 caracteres", fill_all_fields:"Por favor completa todos los campos", sending:"Enviando...", processing:"Procesando...", send_failed:"Error al enviar", change_failed:"Error al cambiar la contraseña", cancel:"Cancelar", confirm:"Confirmar", security_password:"Contraseña",
