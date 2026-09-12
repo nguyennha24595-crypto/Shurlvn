@@ -133,6 +133,24 @@ export default {
     }
 
     const path = url.pathname.replace(/^\/+|\/+$/g, "");
+
+    // Rate limit cơ bản — chống spam theo IP/phút.
+    // Không ghi KV mỗi request (tốn write quota) mà lấy mẫu ngẫu nhiên ~1/10 request để ghi,
+    // nên ngưỡng chặn cũng hạ tương ứng còn 1/10 (120 req/phút thật ~ ghi nhận khoảng 12).
+    const SKIP_RATE_LIMIT = ["favicon.ico", "robots.txt", "sitemap.xml"];
+    if (!SKIP_RATE_LIMIT.includes(path)) {
+      const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+      const rateMinute = Math.floor(Date.now() / 60000);
+      const rateKey = "ratelimit:" + ip + ":" + rateMinute;
+      const rateCount = parseInt(await env.LINKS_KV.get(rateKey) || "0");
+      if (rateCount > 12) {
+        return new Response("Too Many Requests", { status: 429, headers: { "Retry-After": "60" } });
+      }
+      if (Math.random() < 0.1) {
+        await env.LINKS_KV.put(rateKey, String(rateCount + 1), { expirationTtl: 120 });
+      }
+    }
+
     const method = request.method;
     const corsHeaders = {
       "Access-Control-Allow-Origin": "*",
