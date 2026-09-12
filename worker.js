@@ -3623,6 +3623,10 @@ footer{text-align:center;color:var(--muted2);font-size:12px;padding:30px 20px;}
 .auth-color .btn-ghost-invert:hover{background:rgba(255,255,255,0.26);}
 .auth-form-side{position:relative;z-index:1;min-height:440px;display:flex;align-items:center;padding:44px 36px;}
 .auth-form-inner{width:100%;}
+.auth-divider{display:flex;align-items:center;gap:10px;margin:18px 0 14px;color:var(--muted);font-size:12px;}
+.auth-divider::before,.auth-divider::after{content:"";flex:1;height:1px;background:var(--border);}
+.btn-google{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:10px 16px;border:1px solid var(--input-border);border-radius:10px;background:var(--input-bg);color:var(--text);font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;}
+.btn-google:hover{background:var(--stat-bg);border-color:var(--border);}
 .auth-layer.mode-login .auth-color{left:56%;clip-path:polygon(22% 0,100% 0,100% 100%,0 100%);}
 .auth-layer.mode-login .auth-form-side{padding-left:36px;padding-right:calc(44% + 26px);}
 .auth-layer.mode-register .auth-color{left:0%;clip-path:polygon(0 0,78% 0,100% 100%,0 100%);}
@@ -3697,6 +3701,7 @@ var i18n = {
     login_sub:"Chào mừng quay lại SHURL.", login_security:"Bảo mật bởi Cloudflare · Tạo tài khoản để bắt đầu",
     no_account:"Chưa có tài khoản?", have_account:"Đã có tài khoản?", demo_accounts:" ",
     auth_welcome_back:"Chào mừng trở lại!", auth_welcome_back_desc:"Đăng nhập để tiếp tục quản lý Short URL, QR Code và chiến dịch của bạn.",
+    auth_or:"hoặc", auth_google_login:"Đăng nhập bằng Google", auth_google_register:"Đăng ký bằng Google", auth_google_soon:"Sắp ra mắt",
     auth_hello_friend:"Xin chào, bạn mới!", auth_hello_friend_desc:"Tạo tài khoản miễn phí để bắt đầu rút gọn link và theo dõi hiệu quả.",
     register_sub:"Tạo tài khoản miễn phí để quản lý link.", register_free:"Đăng ký miễn phí",
     reg_username:"Tên đăng nhập (3-25 ký tự)", reg_email:"Email (tuỳ chọn)", reg_password:"Mật khẩu (tối thiểu 9 ký tự và có ít nhất 1 chữ viết hoa)",
@@ -4024,6 +4029,7 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     login_sub:"Welcome back to SHURL.", login_security:"Secured byflare · Create an account to get started",
     no_account:"No account yet?", have_account:"Already have an account?", demo_accounts:" ",
     auth_welcome_back:"Welcome Back!", auth_welcome_back_desc:"Log in to keep managing your Short URLs, QR codes, and campaigns.",
+    auth_or:"or", auth_google_login:"Sign in with Google", auth_google_register:"Sign up with Google", auth_google_soon:"Coming soon",
     auth_hello_friend:"Hello, Friend!", auth_hello_friend_desc:"Create a free account to start shortening links and tracking performance.",
     register_sub:"Create a free account to manage your links.", register_free:"Sign up free",
     reg_username:"Username (3-25 characters)", reg_email:"Email (optional)", reg_password:"Password (min. 9 characters with at least 1 uppercase letter)",
@@ -7657,6 +7663,22 @@ function authColorContent(mode){
     '<button type="button" class="btn-ghost-invert" onclick="switchAuthMode(&#39;login&#39;)">' + t("login") + '</button>';
 }
 
+function authGoogleComingSoon(){ alert(t("auth_google_soon")); }
+
+function authGoogleButtonHtml(mode){
+  var label = mode === "login" ? t("auth_google_login") : t("auth_google_register");
+  return '<div class="auth-divider"><span>' + t("auth_or") + '</span></div>' +
+    '<button type="button" class="btn-google" onclick="authGoogleComingSoon()">' +
+      '<svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+        '<path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>' +
+        '<path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>' +
+        '<path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z"/>' +
+        '<path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/>' +
+      '</svg>' +
+      '<span>' + label + '</span>' +
+    '</button>';
+}
+
 function loginFormHtml(){
   return '<h1>' + t("login") + '</h1><p class="sub">' + t("login_sub") + '</p>' +
     '<form id="loginForm">' +
@@ -7668,6 +7690,7 @@ function loginFormHtml(){
       '<div id="loginMsg"></div>' +
       '<div style="margin-top:18px;"><button class="btn btn-primary" type="submit" style="width:100%;justify-content:center;">' + t("login") + '</button></div>' +
     '</form>' +
+    authGoogleButtonHtml("login") +
     '<p class="hint" style="margin-top:16px;display:flex;justify-content:space-between;">' +
       '<span>' + t("no_account") + ' <a href="javascript:void(0)" onclick="switchAuthMode(&#39;register&#39;)">' + t("register") + '</a></span>' +
       '<a href="#/forgot-password">' + t("forgot_password") + '</a>' +
@@ -7684,6 +7707,7 @@ function registerFormHtml(){
       '<div id="regMsg"></div>' +
       '<div style="margin-top:18px;"><button class="btn btn-primary" type="submit" style="width:100%;justify-content:center;">' + t("register_free") + '</button></div>' +
     '</form>' +
+    authGoogleButtonHtml("register") +
     '<p class="hint" style="margin-top:16px;">' + t("have_account") + ' <a href="javascript:void(0)" onclick="switchAuthMode(&#39;login&#39;)">' + t("login") + '</a></p>';
 }
 
