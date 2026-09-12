@@ -8575,7 +8575,7 @@ function qrWsHandleCsvFile(input){
   var reader = new FileReader();
   reader.onload = function(){
     var text = String(reader.result || "");
-    var lines = text.split(/\r?\n/).map(function(l){ return l.trim(); }).filter(Boolean);
+    var lines = text.split(/\\r?\\n/).map(function(l){ return l.trim(); }).filter(Boolean);
     var urls = [];
     lines.forEach(function(line, idx){
       var col0 = line.split(",")[0].trim();
@@ -8586,7 +8586,7 @@ function qrWsHandleCsvFile(input){
     var hint = document.getElementById("qrWsCsvDetected");
     if (ta && urls.length > 0) {
       var existing = ta.value.trim();
-      ta.value = existing ? (existing + "\n" + urls.join("\n")) : urls.join("\n");
+      ta.value = existing ? (existing + "\\n" + urls.join("\\n")) : urls.join("\\n");
     }
     if (hint) hint.textContent = urls.length > 0 ? (t("qr_csv_detected") + " " + urls.length) : "";
     input.value = "";
