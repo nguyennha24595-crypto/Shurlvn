@@ -357,6 +357,18 @@ export default {
       if (path === "favicon.ico") {
         return new Response(null, { status: 204 });
       }
+      if (path === "sitemap.xml") {
+        const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://shurlvn.com/</loc>
+    <lastmod>` + new Date().toISOString().split("T")[0] + `</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>`;
+        return new Response(sitemap, { headers: { "Content-Type": "application/xml; charset=utf-8" } });
+      }
       // ===== 9. SHORTLINK REDIRECT (/:code) =====
       return await handleRedirect(request, env, url, path, ctx);
     } catch (err) {
