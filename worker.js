@@ -7876,11 +7876,10 @@ function bindLoginForm(){
   var formEl = document.getElementById("loginForm");
   if (!formEl) return;
 
-  if (window.location.search.indexOf("google_error=") !== -1) {
+  if (window.__pendingGoogleError) {
+    window.__pendingGoogleError = null;
     var msgEl = document.getElementById("loginMsg");
     if (msgEl) msgEl.innerHTML = '<div class="msg msg-error">' + esc(t("google_login_error")) + '</div>';
-    var cleanUrl = window.location.origin + window.location.pathname + window.location.hash;
-    window.history.replaceState({}, document.title, cleanUrl);
   }
 
   formEl.addEventListener("submit", function(e){
@@ -11428,6 +11427,7 @@ window.addEventListener("DOMContentLoaded", function(){
     .then(function(){
       render(); renderFooter();
       var params = new URLSearchParams(window.location.search);
+      window.__pendingGoogleError = params.get("google_error");
       if (params.get("upgrade") === "success") {
         var tierNames = { plus: "Plus", pro: "Pro", super: "Super" };
         var tn = state.user ? (tierNames[state.user.role] || state.user.role) : "";
@@ -11439,7 +11439,7 @@ window.addEventListener("DOMContentLoaded", function(){
       } else if (params.get("voucher") === "cancelled") {
         showVoucherCancelModal();
       }
-      if (window.location.search) history.replaceState(null, "", window.location.pathname);
+      if (window.location.search) history.replaceState(null, "", window.location.pathname + window.location.hash);
     });
 });
 </script>
