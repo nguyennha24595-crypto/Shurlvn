@@ -3646,6 +3646,42 @@ footer{text-align:center;color:var(--muted2);font-size:12px;padding:30px 20px;}
   .auth-layer.mode-register{flex-direction:column-reverse;}
   .auth-form-side{padding:26px 22px!important;min-height:0;}
 }
+/* === QR WORKSPACE (#/bulkqr) === */
+.qr-workspace{display:grid;grid-template-columns:1.1fr 1fr;gap:24px;align-items:start;}
+.qr-step-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted2);margin:18px 0 8px;}
+.qr-step-label:first-child{margin-top:0;}
+.qr-type-toggle{display:flex;gap:8px;margin-bottom:4px;}
+.qr-type-btn{flex:1;padding:9px 12px;border:1px solid var(--input-border);border-radius:10px;background:var(--input-bg);color:var(--muted);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.15s ease;}
+.qr-type-btn.active{border-color:var(--indigo);background:rgba(99,102,241,0.12);color:var(--indigo);}
+.qr-color-row{display:flex;gap:16px;flex-wrap:wrap;}
+.qr-color-field{flex:1;min-width:130px;}
+.qr-color-field label{display:block;margin-bottom:4px;}
+.qr-color-input-wrap{display:flex;align-items:center;gap:8px;}
+.qr-color-input-wrap input[type=color]{width:38px;height:34px;border:1px solid var(--input-border);border-radius:8px;cursor:pointer;background:none;padding:2px;flex-shrink:0;}
+.qr-color-input-wrap input[type=text]{width:100%;padding:7px 10px;border:1px solid var(--input-border);border-radius:8px;background:var(--input-bg);color:var(--text);font-size:13px;font-family:ui-monospace,monospace;}
+.qr-presets{display:flex;gap:6px;margin-top:6px;}
+.qr-preset-swatch{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);cursor:pointer;padding:0;}
+.qr-preset-swatch:hover{border-color:var(--indigo);}
+.qr-contrast-warn{margin-top:8px;font-size:12px;color:var(--amber);display:none;align-items:center;gap:6px;}
+.qr-size-row{display:flex;gap:8px;flex-wrap:wrap;}
+.qr-size-btn{padding:8px 14px;border:1px solid var(--input-border);border-radius:8px;background:var(--input-bg);color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+.qr-size-btn.active{border-color:var(--indigo);background:rgba(99,102,241,0.12);color:var(--indigo);}
+.qr-preview-card{position:sticky;top:16px;text-align:center;padding:28px 20px;}
+.qr-preview-box{width:240px;height:240px;margin:0 auto;border-radius:16px;background:var(--stat-bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;}
+.qr-preview-box img{max-width:100%;max-height:100%;display:block;}
+.qr-preview-empty{color:var(--muted);font-size:13px;padding:20px;line-height:1.6;}
+.qr-preview-error{color:var(--red);font-size:13px;padding:20px;line-height:1.6;}
+.qr-preview-data{margin-top:14px;font-size:12px;color:var(--muted);word-break:break-all;max-width:280px;margin-left:auto;margin-right:auto;}
+.qr-download-row{display:flex;gap:10px;justify-content:center;margin-top:18px;flex-wrap:wrap;}
+.qr-collapsible-toggle{font-size:13px;color:var(--link-color);cursor:pointer;display:inline-block;margin-top:4px;}
+.qr-existing-select{width:100%;padding:8px 10px;border:1px solid var(--input-border);border-radius:8px;background:var(--input-bg);color:var(--text);font-size:13px;margin-top:8px;}
+.qr-utm-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+.qr-csv-drop{border:1px dashed var(--input-border);border-radius:10px;padding:14px;text-align:center;font-size:13px;color:var(--muted);margin-top:10px;}
+@media(max-width:900px){
+  .qr-workspace{grid-template-columns:1fr;}
+  .qr-preview-card{position:static;order:-1;}
+  .qr-utm-grid{grid-template-columns:1fr;}
+}
 </style>
 </head>
 <body>
@@ -3731,6 +3767,16 @@ var i18n = {
     qr_bgcolor:"Màu nền", qr_bg_transparent:"Nền trong suốt", qr_margin:"Viền (margin)", qr_margin_default:"Mặc định", qr_format:"Định dạng",
     qr_copy_link:"Sao chép link", qr_download:"Tải PNG", qr_processing:"Đang tạo QR...",
     qr_quota_error:"Hết lượt tạo QR hôm nay",
+    qr_workspace_sub:"Tạo và tùy chỉnh QR Code trực tiếp — thay đổi gì cũng thấy ngay, không cần bấm tạo lại.",
+    qr_step_type:"Chọn loại mã QR", qr_step_input:"Nhập dữ liệu", qr_step_customize:"Tùy chỉnh",
+    qr_type_url:"URL", qr_type_text:"Văn bản", qr_text_label:"Nội dung văn bản",
+    qr_preview_heading:"Xem trước", qr_preview_empty:"Nhập dữ liệu để xem trước QR Code",
+    qr_preview_invalid:"URL không hợp lệ", qr_preview_error:"Không thể tạo QR Code. Vui lòng thử lại.",
+    qr_download_svg:"Tải SVG",
+    qr_use_existing:"hoặc chọn Short URL đã tạo", qr_use_existing_placeholder:"-- Chọn link --",
+    qr_create_shorturl_btn:"Tạo Short URL", qr_shorturl_created:"Đã tạo:",
+    qr_contrast_warning:"Màu QR và nền quá giống nhau, có thể khó quét.",
+    qr_csv_label:"hoặc tải lên file CSV (cột URL)", qr_csv_detected:"Đã phát hiện URL từ CSV:",
     // ===== BULK QR =====
     bulkqr:"Tạo QR hàng loạt", bulkqr_title:"Tạo mã QR hàng loạt", bulkqr_hint:"Mỗi dòng 1 link rút gọn. Tạo QR hàng loạt và tải về file Excel.",
     bulkqr_generate:"Tạo QR hàng loạt", bulkqr_download:"Tải Excel (.xls)", bulkqr_color:"Màu QR",
@@ -4058,6 +4104,16 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     qr_bgcolor:"Background color", qr_bg_transparent:"Transparent background", qr_margin:"Margin", qr_margin_default:"Default", qr_format:"Format",
     qr_copy_link:"Copy link", qr_download:"Download PNG", qr_processing:"Generating QR...",
     qr_quota_error:"Daily QR generation quota reached",
+    qr_workspace_sub:"Create and customize your QR Code live — every change shows instantly, no need to re-generate.",
+    qr_step_type:"Choose QR type", qr_step_input:"Enter data", qr_step_customize:"Customize",
+    qr_type_url:"URL", qr_type_text:"Text", qr_text_label:"Text content",
+    qr_preview_heading:"Preview", qr_preview_empty:"Enter data to preview the QR Code",
+    qr_preview_invalid:"Invalid URL", qr_preview_error:"Couldn't generate the QR Code. Please try again.",
+    qr_download_svg:"Download SVG",
+    qr_use_existing:"or pick an existing Short URL", qr_use_existing_placeholder:"-- Select a link --",
+    qr_create_shorturl_btn:"Create Short URL", qr_shorturl_created:"Created:",
+    qr_contrast_warning:"QR color and background are too similar — it may be hard to scan.",
+    qr_csv_label:"or upload a CSV file (URL column)", qr_csv_detected:"URLs detected from CSV:",
     // ===== BULK QR =====
     bulkqr:"Bulk QR", bulkqr_title:"Bulk QR Code", bulkqr_hint:"One shortened link per line. Generate QR codes in bulk and download as an Excel file.",
     bulkqr_generate:"Generate bulk QR", bulkqr_download:"Download Excel (.xls)", bulkqr_color:"QR color",
@@ -7267,22 +7323,6 @@ function updateHomePreview(){
   var base = location.origin + "/";
   previewUrl.textContent = alias ? (base + alias) : (base + "...");
 }
-function homeQrCopyLink(){
-  var link = document.getElementById("homeQrLink").textContent;
-  if (link) copyText(link, document.getElementById("homeQrCopyBtn"));
-}
-function homeQrDownload(){
-  var display = document.getElementById("homeQrDisplay");
-  var src = display.getAttribute("data-qrsrc");
-  if (!src) return;
-  var ext = display.getAttribute("data-qrformat") === "svg" ? "svg" : "png";
-  var a = document.createElement("a");
-  a.href = src;
-  a.download = "qr_" + Date.now() + "." + ext;
-  a.target = "_blank";
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-}
-
 function toggleAdvFields(){
   var e = document.getElementById("advFields");
   if (e) e.style.display = e.style.display === "none" ? "block" : "none";
@@ -8214,57 +8254,90 @@ function renderBulkQR(app){
   var maxBatch = limits.maxBulkBatch || 100;
   var canUse = state.user && (state.user.role === "super" || state.user.role === "admin");
 
-  var qrSingleHtml = (state.user ?
-    '<div class="card" id="homeQrSection">' +
+  var qrWorkspaceHtml = (state.user ?
+    '<div class="card">' +
     '<h2>' + t("qr_title") + '</h2>' +
-    '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:end;">' +
-    '<div style="flex:1;min-width:200px;">' +
-    '<label>' + t("qr_url_label") + '</label>' +
-    '<input type="url" id="homeQrUrl" placeholder="https://shurl.com/abc hoặc https://..." style="width:100%;">' +
+    '<p class="hint" style="margin-top:-6px;">' + t("qr_workspace_sub") + '</p>' +
+    '<div class="qr-workspace">' +
+    '<div>' +
+
+    '<div class="qr-step-label">' + t("qr_step_type") + '</div>' +
+    '<div class="qr-type-toggle">' +
+    '<button type="button" class="qr-type-btn active" data-qrtype="url">' + li('link', 14) + ' ' + t("qr_type_url") + '</button>' +
+    '<button type="button" class="qr-type-btn" data-qrtype="text">' + li('file', 14) + ' ' + t("qr_type_text") + '</button>' +
     '</div>' +
-    '<div style="width:100px;">' +
-    '<label>' + t("qr_color") + '</label>' +
-    '<input type="color" id="homeQrColor" value="#191a1eff" style="width:100%;height:36px;border:1px solid var(--input-border);border-radius:8px;cursor:pointer;background:none;padding:2px;">' +
+
+    '<div class="qr-step-label">' + t("qr_step_input") + '</div>' +
+    '<div id="qrWsUrlWrap">' +
+    '<input type="url" id="qrWsUrl" class="qr-existing-select" style="margin-top:0;" placeholder="https://shurl.com/abc hoặc https://...">' +
+    '<select id="qrWsExistingSelect" class="qr-existing-select"><option value="">' + t("qr_use_existing_placeholder") + '</option></select>' +
+    '<div class="hint" style="margin-top:4px;font-size:12px;">' + t("qr_use_existing") + '</div>' +
+    '<div style="margin-top:8px;">' +
+    '<button type="button" class="btn btn-ghost btn-sm" id="qrWsCreateShortBtn">' + li('link', 12) + ' ' + t("qr_create_shorturl_btn") + '</button>' +
+    '<span id="qrWsShortUrlResult" class="hint" style="margin-left:8px;font-size:12px;"></span>' +
     '</div>' +
-    '<div style="width:90px;">' +
-    '<label>' + t("qr_size") + '</label>' +
-    '<select id="homeQrSize" style="width:100%;padding:8px;border:1px solid var(--input-border);border-radius:8px;background:var(--input-bg);color:var(--text);font-size:13px;">' +
-    '<option value="150">150px</option><option value="200" selected>200px</option><option value="300">300px</option><option value="400">400px</option>' +
-    '</select>' +
     '</div>' +
-    '<div style="width:100px;">' +
-    '<label>' + t("qr_bgcolor") + '</label>' +
-    '<input type="color" id="homeQrBgColor" value="#ffffff" style="width:100%;height:36px;border:1px solid var(--input-border);border-radius:8px;cursor:pointer;background:none;padding:2px;" disabled>' +
-    '<label style="font-weight:400;font-size:12px;display:flex;align-items:center;gap:4px;margin-top:4px;"><input type="checkbox" id="homeQrBgTransparent" checked onchange="document.getElementById(&#39;homeQrBgColor&#39;).disabled=this.checked;"> ' + t("qr_bg_transparent") + '</label>' +
+    '<div id="qrWsTextWrap" style="display:none;">' +
+    '<label>' + t("qr_text_label") + '</label>' +
+    '<textarea id="qrWsText" rows="3" class="qr-existing-select" style="resize:vertical;font-family:inherit;"></textarea>' +
     '</div>' +
-    '<div style="width:90px;">' +
-    '<label>' + t("qr_margin") + '</label>' +
-    '<select id="homeQrMargin" style="width:100%;padding:8px;border:1px solid var(--input-border);border-radius:8px;background:var(--input-bg);color:var(--text);font-size:13px;">' +
+
+    '<div class="qr-collapsible-toggle" id="qrWsUtmToggle">' + li('plus', 12) + ' ' + t("utm_builder_toggle") + '</div>' +
+    '<div id="utmFields" style="display:none;">' +
+    '<p class="hint">' + t("utm_builder_hint") + '</p>' +
+    '<div class="qr-utm-grid">' +
+    '<div><label>' + t("utm_source") + '</label><input type="text" id="u_source" placeholder="facebook"></div>' +
+    '<div><label>' + t("utm_medium") + '</label><input type="text" id="u_medium" placeholder="social"></div>' +
+    '<div><label>' + t("utm_term") + '</label><input type="text" id="u_term" placeholder="' + t("optional") + '"></div>' +
+    '<div><label>' + t("utm_content") + '</label><input type="text" id="u_content" placeholder="' + t("optional") + '"></div>' +
+    '<div><label>' + t("campaign") + '</label><input type="text" id="qrWsCampaign" placeholder="' + t("optional") + '"></div>' +
+    '</div>' +
+    '<button type="button" class="btn btn-ghost btn-sm" id="qrWsApplyUtmBtn" style="margin-top:8px;">' + t("utm_builder_title") + '</button>' +
+    '</div>' +
+
+    '<div class="qr-step-label">' + t("qr_step_customize") + '</div>' +
+    '<div class="qr-color-row">' +
+    '<div class="qr-color-field"><label>' + t("qr_color") + '</label>' +
+    '<div class="qr-color-input-wrap"><input type="color" id="qrWsColor" value="#000000"><input type="text" id="qrWsColorHex" value="#000000"></div></div>' +
+    '<div class="qr-color-field"><label>' + t("qr_bgcolor") + '</label>' +
+    '<div class="qr-color-input-wrap"><input type="color" id="qrWsBgColor" value="#ffffff" disabled><input type="text" id="qrWsBgColorHex" value="#ffffff" disabled></div>' +
+    '<label style="font-weight:400;font-size:12px;display:flex;align-items:center;gap:4px;margin-top:6px;"><input type="checkbox" id="qrWsBgTransparent" checked> ' + t("qr_bg_transparent") + '</label>' +
+    '</div>' +
+    '</div>' +
+    '<div class="qr-presets" id="qrWsPresets"></div>' +
+    '<div class="qr-contrast-warn" id="qrWsContrastWarn">' + li('alert', 12) + ' ' + t("qr_contrast_warning") + '</div>' +
+
+    '<div class="qr-step-label">' + t("qr_size") + '</div>' +
+    '<div class="qr-size-row" id="qrWsSizeRow">' +
+    ['150', '200', '300', '400'].map(function(sz){
+      return '<button type="button" class="qr-size-btn' + (sz === '200' ? ' active' : '') + '" data-size="' + sz + '">' + sz + 'px</button>';
+    }).join('') +
+    '</div>' +
+    '<input type="hidden" id="qrWsSize" value="200">' +
+
+    '<div class="qr-step-label">' + t("qr_margin") + '</div>' +
+    '<select id="qrWsMargin" class="qr-existing-select">' +
     '<option value="">' + t("qr_margin_default") + '</option><option value="0">0</option><option value="2">2</option><option value="4">4</option><option value="8">8</option>' +
     '</select>' +
+
     '</div>' +
-    '<div style="width:90px;">' +
-    '<label>' + t("qr_format") + '</label>' +
-    '<select id="homeQrFormat" style="width:100%;padding:8px;border:1px solid var(--input-border);border-radius:8px;background:var(--input-bg);color:var(--text);font-size:13px;">' +
-    '<option value="png" selected>PNG</option><option value="svg">SVG</option>' +
-    '</select>' +
-    '</div>' +
-    '<div><button class="btn btn-primary" id="homeQrBtn" style="white-space:nowrap;">' + t("qr_btn") + '</button></div>' +
-    '</div>' +
-    '<div id="homeQrResult" style="margin-top:20px;display:none;">' +
-    '<div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;justify-content:center;">' +
-    '<div id="homeQrDisplay" style="background:#fff;border-radius:12px;overflow:hidden;border:2px solid var(--border);box-shadow:0 4px 16px rgba(0,0,0,0.15);"></div>' +
-    '<div style="text-align:center;">' +
-    '<div id="homeQrLink" style="font-size:14px;font-weight:600;color:var(--link-color);word-break:break-all;margin-bottom:8px;max-width:280px;"></div>' +
-    '<button class="btn btn-ghost btn-sm" id="homeQrCopyBtn" onclick="homeQrCopyLink()">' + t("qr_copy_link") + '</button>' +
-    '<button class="btn btn-ghost btn-sm" id="homeQrDlBtn" onclick="homeQrDownload()" style="margin-left:6px;">' + t("qr_download") + '</button>' +
+
+    '<div class="card qr-preview-card">' +
+    '<h3 style="margin-top:0;">' + t("qr_preview_heading") + '</h3>' +
+    '<div class="qr-preview-box" id="qrWsPreviewBox"><div class="qr-preview-empty">' + t("qr_preview_empty") + '</div></div>' +
+    '<div class="qr-preview-data" id="qrWsPreviewData"></div>' +
+    '<div class="qr-download-row">' +
+    '<button class="btn btn-primary btn-sm" id="qrWsDlPngBtn" disabled>' + li('download', 12) + ' ' + t("qr_download") + '</button>' +
+    '<button class="btn btn-ghost btn-sm" id="qrWsDlSvgBtn" disabled>' + t("qr_download_svg") + '</button>' +
+    '<button class="btn btn-ghost btn-sm" id="qrWsCopyBtn" disabled>' + t("qr_copy_link") + '</button>' +
     '</div>' +
     '</div>' +
+
     '</div>' +
     '</div>' : '');
 
   var html = guideCard("bulkqr") + '<div class="page-head"><h1>' + li('qr', 24) + ' QR Codes</h1></div>' +
-    qrSingleHtml +
+    qrWorkspaceHtml +
     '<div class="card">' +
     '<h2>' + li('smartphone', 14) + ' ' + t("bulkqr_title") + '</h2>' +
     (canUse ? '' : '<p class="hint">' + li('lock_icon', 12) + ' ' + t("bulkqr_super") + '</p>') +
@@ -8274,6 +8347,7 @@ function renderBulkQR(app){
     '</div>' +
     '<label>' + t("bulkqr_hint") + '</label>' +
     '<textarea id="bqrInput" rows="8" placeholder="' + (canUse ? "shurl.com/abc\\nshurl.com/def" : t("bulkqr_super")) + '" style="width:100%;padding:12px;border:1px solid var(--input-border);border-radius:10px;background:var(--input-bg);color:var(--text);font-size:14px;font-family:monospace;resize:vertical;outline:none;" ' + (canUse ? "" : "disabled") + '></textarea>' +
+    (canUse ? '<div class="qr-csv-drop"><label style="cursor:pointer;">' + li('upload', 12) + ' ' + t("qr_csv_label") + '<input type="file" id="qrWsCsvFile" accept=".csv,text/csv" style="display:none;"></label><div id="qrWsCsvDetected" style="margin-top:6px;"></div></div>' : '') +
     '<div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">' +
     '<button class="btn btn-primary" id="bqrBtn" ' + (canUse ? "" : "disabled") + ' onclick="generateBulkQR()">' + li('image', 12) + ' ' + t("bulkqr_generate") + '</button>' +
     '<button class="btn btn-ghost" id="bqrDlBtn" disabled style="opacity:0.5;" onclick="downloadBulkQR()">' + t("bulkqr_download") + '</button>' +
@@ -8284,39 +8358,319 @@ function renderBulkQR(app){
 
   app.innerHTML = html;
 
-  // Bind nút tạo QR đơn — reuse chính logic từ home
-  var qrBtn = document.getElementById("homeQrBtn");
-  if (qrBtn) {
-    qrBtn.addEventListener("click", function(){
-      var url = document.getElementById("homeQrUrl").value.trim();
-      if (!url) { document.getElementById("homeQrResult").style.display = "none"; return; }
-      var color = document.getElementById("homeQrColor").value;
-      var size = document.getElementById("homeQrSize").value;
-      var transparent = document.getElementById("homeQrBgTransparent").checked;
-      var bgcolor = transparent ? "" : document.getElementById("homeQrBgColor").value;
-      var margin = document.getElementById("homeQrMargin").value;
-      var format = document.getElementById("homeQrFormat").value;
-      var display = document.getElementById("homeQrDisplay");
-      display.innerHTML = '<p class="hint">' + t("qr_processing") + '</p>';
-      document.getElementById("homeQrResult").style.display = "block";
-      api("/api/qr/create", "POST", { url: url, color: color, size: parseInt(size), bgcolor: bgcolor, margin: margin, format: format }).then(function(data){
-        var qrSrc = data.qrUrl;
-        display.innerHTML = '<img src="' + qrSrc + '" style="width:' + size + 'px;height:' + size + 'px;display:block;" alt="QR">';
-        document.getElementById("homeQrLink").textContent = url;
-        document.getElementById("homeQrResult").style.display = "block";
-        display.setAttribute("data-qrsrc", qrSrc);
-        display.setAttribute("data-qrsize", size);
-        display.setAttribute("data-qrformat", data.format || "png");
-      }).catch(function(err){
-        display.innerHTML = '<div class="msg msg-error">' + esc(err.message || t("qr_quota_error")) + '</div>';
-        document.getElementById("homeQrResult").style.display = "block";
+  if (state.user) qrWsBindWorkspace();
+}
+
+var qrWsPresetList = [
+  { fg: "#000000", bg: "#ffffff" },
+  { fg: "#1e293b", bg: "#f8fafc" },
+  { fg: "#6366f1", bg: "#ffffff" },
+  { fg: "#ffffff", bg: "#000000" },
+  { fg: "#065f46", bg: "#ecfdf5" }
+];
+
+function qrWsGetType(){
+  var textWrap = document.getElementById("qrWsTextWrap");
+  return (textWrap && textWrap.style.display !== "none") ? "text" : "url";
+}
+
+function qrWsGetData(){
+  if (qrWsGetType() === "text") {
+    var textEl = document.getElementById("qrWsText");
+    return textEl ? textEl.value : "";
+  }
+  var urlEl = document.getElementById("qrWsUrl");
+  return urlEl ? urlEl.value.trim() : "";
+}
+
+function qrWsIsValid(data){
+  if (!data) return false;
+  if (qrWsGetType() === "url") {
+    try { new URL(data); return true; } catch (e) { return false; }
+  }
+  return true;
+}
+
+function qrWsBuildUrl(format){
+  var data = qrWsGetData();
+  if (!data) return "";
+  var colorEl = document.getElementById("qrWsColor");
+  var bgEl = document.getElementById("qrWsBgColor");
+  var transEl = document.getElementById("qrWsBgTransparent");
+  var sizeEl = document.getElementById("qrWsSize");
+  var marginEl = document.getElementById("qrWsMargin");
+  var color = (colorEl ? colorEl.value : "#000000").replace("#", "");
+  var transparent = transEl ? transEl.checked : true;
+  var bg = transparent ? "" : (bgEl ? bgEl.value.replace("#", "") : "");
+  var size = sizeEl ? sizeEl.value : "200";
+  var margin = marginEl ? marginEl.value : "";
+  var url = "https://api.qrserver.com/v1/create-qr-code/?size=" + size + "x" + size + "&data=" + encodeURIComponent(data) + "&color=" + color;
+  if (bg) url += "&bgcolor=" + bg;
+  if (margin !== "") url += "&margin=" + margin;
+  url += "&format=" + (format || "png");
+  return url;
+}
+
+function qrWsHexLuma(hex){
+  hex = (hex || "").replace("#", "");
+  if (hex.length !== 6) return null;
+  var r = parseInt(hex.substr(0, 2), 16), g = parseInt(hex.substr(2, 2), 16), b = parseInt(hex.substr(4, 2), 16);
+  if (isNaN(r) || isNaN(g) || isNaN(b)) return null;
+  return 0.299 * r + 0.587 * g + 0.114 * b;
+}
+
+function qrWsCheckContrast(){
+  var warn = document.getElementById("qrWsContrastWarn");
+  if (!warn) return;
+  var transEl = document.getElementById("qrWsBgTransparent");
+  if (transEl && transEl.checked) { warn.style.display = "none"; return; }
+  var colorEl = document.getElementById("qrWsColor");
+  var bgEl = document.getElementById("qrWsBgColor");
+  var l1 = qrWsHexLuma(colorEl ? colorEl.value : "");
+  var l2 = qrWsHexLuma(bgEl ? bgEl.value : "");
+  if (l1 == null || l2 == null) { warn.style.display = "none"; return; }
+  warn.style.display = Math.abs(l1 - l2) < 60 ? "flex" : "none";
+}
+
+function qrWsUpdatePreview(){
+  var box = document.getElementById("qrWsPreviewBox");
+  if (!box) return;
+  qrWsCheckContrast();
+  var dataEl = document.getElementById("qrWsPreviewData");
+  var dlPng = document.getElementById("qrWsDlPngBtn");
+  var dlSvg = document.getElementById("qrWsDlSvgBtn");
+  var copyBtn = document.getElementById("qrWsCopyBtn");
+  var disableBtns = function(){
+    if (dlPng) dlPng.disabled = true;
+    if (dlSvg) dlSvg.disabled = true;
+    if (copyBtn) copyBtn.disabled = true;
+  };
+  var data = qrWsGetData();
+  if (!data) {
+    box.innerHTML = '<div class="qr-preview-empty">' + t("qr_preview_empty") + '</div>';
+    if (dataEl) dataEl.textContent = "";
+    disableBtns();
+    return;
+  }
+  if (!qrWsIsValid(data)) {
+    box.innerHTML = '<div class="qr-preview-error">' + t("qr_preview_invalid") + '</div>';
+    if (dataEl) dataEl.textContent = "";
+    disableBtns();
+    return;
+  }
+  var imgUrl = qrWsBuildUrl("png");
+  box.innerHTML = "";
+  var img = document.createElement("img");
+  img.alt = "QR";
+  img.style.maxWidth = "100%";
+  img.style.maxHeight = "100%";
+  img.onerror = function(){ box.innerHTML = '<div class="qr-preview-error">' + t("qr_preview_error") + '</div>'; disableBtns(); };
+  img.src = imgUrl;
+  box.appendChild(img);
+  if (dataEl) dataEl.textContent = data;
+  if (dlPng) dlPng.disabled = false;
+  if (dlSvg) dlSvg.disabled = false;
+  if (copyBtn) copyBtn.disabled = false;
+}
+
+var qrWsDebounceTimer = null;
+function qrWsUpdatePreviewDebounced(){
+  clearTimeout(qrWsDebounceTimer);
+  qrWsDebounceTimer = setTimeout(qrWsUpdatePreview, 300);
+}
+
+function qrWsSetType(type){
+  var urlWrap = document.getElementById("qrWsUrlWrap");
+  var textWrap = document.getElementById("qrWsTextWrap");
+  var btnUrl = document.querySelector('.qr-type-btn[data-qrtype="url"]');
+  var btnText = document.querySelector('.qr-type-btn[data-qrtype="text"]');
+  if (!urlWrap || !textWrap) return;
+  if (type === "text") {
+    urlWrap.style.display = "none"; textWrap.style.display = "block";
+    if (btnUrl) btnUrl.classList.remove("active");
+    if (btnText) btnText.classList.add("active");
+  } else {
+    urlWrap.style.display = "block"; textWrap.style.display = "none";
+    if (btnText) btnText.classList.remove("active");
+    if (btnUrl) btnUrl.classList.add("active");
+  }
+  qrWsUpdatePreview();
+}
+
+function qrWsSetSize(size){
+  var input = document.getElementById("qrWsSize");
+  if (input) input.value = size;
+  document.querySelectorAll(".qr-size-btn").forEach(function(b){
+    b.classList.toggle("active", b.getAttribute("data-size") === String(size));
+  });
+  qrWsUpdatePreview();
+}
+
+function qrWsApplyPreset(fg, bg){
+  var colorEl = document.getElementById("qrWsColor");
+  var colorHexEl = document.getElementById("qrWsColorHex");
+  var bgEl = document.getElementById("qrWsBgColor");
+  var bgHexEl = document.getElementById("qrWsBgColorHex");
+  var transEl = document.getElementById("qrWsBgTransparent");
+  if (colorEl) colorEl.value = fg;
+  if (colorHexEl) colorHexEl.value = fg;
+  if (bgEl) bgEl.value = bg;
+  if (bgHexEl) bgHexEl.value = bg;
+  if (transEl) { transEl.checked = false; if (bgEl) bgEl.disabled = false; if (bgHexEl) bgHexEl.disabled = false; }
+  qrWsUpdatePreview();
+}
+
+function qrWsDownload(format){
+  var url = qrWsBuildUrl(format);
+  if (!url) return;
+  var a = document.createElement("a");
+  a.href = url;
+  a.download = "qr_" + Date.now() + "." + format;
+  a.target = "_blank";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+function qrWsCopyData(){
+  var data = qrWsGetData();
+  if (data) copyText(data, document.getElementById("qrWsCopyBtn"));
+}
+
+var qrWsExistingLoaded = false;
+function qrWsLoadExisting(){
+  if (qrWsExistingLoaded) return;
+  qrWsExistingLoaded = true;
+  var sel = document.getElementById("qrWsExistingSelect");
+  if (!sel) return;
+  api("/api/links").then(function(res){
+    var links = (res.links || []).filter(function(l){ return !l.isDeleted; });
+    sel.innerHTML = '<option value="">' + t("qr_use_existing_placeholder") + '</option>' +
+      links.map(function(l){
+        return '<option value="' + esc(l.shortUrl) + '">' + esc(l.shortUrl) + (l.title ? (" — " + esc(l.title)) : "") + '</option>';
+      }).join("");
+  }).catch(function(){});
+}
+
+function qrWsCreateShortUrl(){
+  var urlEl = document.getElementById("qrWsUrl");
+  var btn = document.getElementById("qrWsCreateShortBtn");
+  var resultEl = document.getElementById("qrWsShortUrlResult");
+  if (!urlEl || !urlEl.value.trim()) return;
+  var raw = urlEl.value.trim();
+  if (btn) btn.disabled = true;
+  api("/api/links", "POST", { url: raw }).then(function(data){
+    var link = data.link;
+    urlEl.value = link.shortUrl;
+    if (resultEl) resultEl.textContent = t("qr_shorturl_created") + " " + link.shortUrl;
+    if (btn) btn.disabled = false;
+    qrWsUpdatePreview();
+  }).catch(function(err){
+    if (resultEl) resultEl.textContent = err.message || "";
+    if (btn) btn.disabled = false;
+  });
+}
+
+function qrWsHandleCsvFile(input){
+  var file = input.files && input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(){
+    var text = String(reader.result || "");
+    var lines = text.split(/\r?\n/).map(function(l){ return l.trim(); }).filter(Boolean);
+    var urls = [];
+    lines.forEach(function(line, idx){
+      var col0 = line.split(",")[0].trim();
+      if (idx === 0 && /^url$/i.test(col0)) return;
+      if (col0) urls.push(col0);
+    });
+    var ta = document.getElementById("bqrInput");
+    var hint = document.getElementById("qrWsCsvDetected");
+    if (ta && urls.length > 0) {
+      var existing = ta.value.trim();
+      ta.value = existing ? (existing + "\n" + urls.join("\n")) : urls.join("\n");
+    }
+    if (hint) hint.textContent = urls.length > 0 ? (t("qr_csv_detected") + " " + urls.length) : "";
+    input.value = "";
+  };
+  reader.readAsText(file);
+}
+
+function qrWsBindWorkspace(){
+  document.querySelectorAll(".qr-type-btn").forEach(function(btn){
+    btn.addEventListener("click", function(){ qrWsSetType(btn.getAttribute("data-qrtype")); });
+  });
+  document.querySelectorAll(".qr-size-btn").forEach(function(btn){
+    btn.addEventListener("click", function(){ qrWsSetSize(btn.getAttribute("data-size")); });
+  });
+
+  var presetsBox = document.getElementById("qrWsPresets");
+  if (presetsBox) {
+    presetsBox.innerHTML = qrWsPresetList.map(function(p, idx){
+      return '<button type="button" class="qr-preset-swatch" data-preset-idx="' + idx + '" style="background:linear-gradient(135deg,' + p.fg + ' 50%,' + p.bg + ' 50%);" title="' + p.fg + ' / ' + p.bg + '"></button>';
+    }).join("");
+    presetsBox.querySelectorAll(".qr-preset-swatch").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var p = qrWsPresetList[parseInt(btn.getAttribute("data-preset-idx"), 10)];
+        if (p) qrWsApplyPreset(p.fg, p.bg);
       });
     });
+  }
 
-    document.getElementById("homeQrUrl").addEventListener("keypress", function(e){
-      if (e.key === "Enter") { document.getElementById("homeQrBtn").click(); }
+  var urlEl = document.getElementById("qrWsUrl");
+  var textEl = document.getElementById("qrWsText");
+  if (urlEl) urlEl.addEventListener("input", qrWsUpdatePreviewDebounced);
+  if (textEl) textEl.addEventListener("input", qrWsUpdatePreviewDebounced);
+
+  var colorEl = document.getElementById("qrWsColor");
+  var colorHexEl = document.getElementById("qrWsColorHex");
+  var bgEl = document.getElementById("qrWsBgColor");
+  var bgHexEl = document.getElementById("qrWsBgColorHex");
+  var transEl = document.getElementById("qrWsBgTransparent");
+  var marginEl = document.getElementById("qrWsMargin");
+
+  if (colorEl) colorEl.addEventListener("input", function(){ if (colorHexEl) colorHexEl.value = colorEl.value; qrWsUpdatePreview(); });
+  if (colorHexEl) colorHexEl.addEventListener("change", function(){ if (/^#[0-9a-fA-F]{6}$/.test(colorHexEl.value) && colorEl) colorEl.value = colorHexEl.value; qrWsUpdatePreview(); });
+  if (bgEl) bgEl.addEventListener("input", function(){ if (bgHexEl) bgHexEl.value = bgEl.value; qrWsUpdatePreview(); });
+  if (bgHexEl) bgHexEl.addEventListener("change", function(){ if (/^#[0-9a-fA-F]{6}$/.test(bgHexEl.value) && bgEl) bgEl.value = bgHexEl.value; qrWsUpdatePreview(); });
+  if (transEl) transEl.addEventListener("change", function(){
+    if (bgEl) bgEl.disabled = transEl.checked;
+    if (bgHexEl) bgHexEl.disabled = transEl.checked;
+    qrWsUpdatePreview();
+  });
+  if (marginEl) marginEl.addEventListener("change", qrWsUpdatePreview);
+
+  var utmToggle = document.getElementById("qrWsUtmToggle");
+  if (utmToggle) utmToggle.addEventListener("click", toggleUtmFields);
+  var applyUtmBtn = document.getElementById("qrWsApplyUtmBtn");
+  if (applyUtmBtn) applyUtmBtn.addEventListener("click", function(){
+    if (!urlEl) return;
+    var campaignEl = document.getElementById("qrWsCampaign");
+    urlEl.value = applyUtmParams(urlEl.value.trim(), campaignEl ? campaignEl.value.trim() : "");
+    qrWsUpdatePreview();
+  });
+
+  var existingSel = document.getElementById("qrWsExistingSelect");
+  if (existingSel) {
+    existingSel.addEventListener("focus", qrWsLoadExisting);
+    existingSel.addEventListener("mousedown", qrWsLoadExisting);
+    existingSel.addEventListener("change", function(){
+      if (existingSel.value && urlEl) { urlEl.value = existingSel.value; qrWsSetType("url"); }
     });
   }
+
+  var createShortBtn = document.getElementById("qrWsCreateShortBtn");
+  if (createShortBtn) createShortBtn.addEventListener("click", qrWsCreateShortUrl);
+
+  var dlPngBtn = document.getElementById("qrWsDlPngBtn");
+  var dlSvgBtn = document.getElementById("qrWsDlSvgBtn");
+  var copyBtn = document.getElementById("qrWsCopyBtn");
+  if (dlPngBtn) dlPngBtn.addEventListener("click", function(){ qrWsDownload("png"); });
+  if (dlSvgBtn) dlSvgBtn.addEventListener("click", function(){ qrWsDownload("svg"); });
+  if (copyBtn) copyBtn.addEventListener("click", qrWsCopyData);
+
+  var csvFile = document.getElementById("qrWsCsvFile");
+  if (csvFile) csvFile.addEventListener("change", function(){ qrWsHandleCsvFile(csvFile); });
+
+  qrWsUpdatePreview();
 }
 
 function renderAnalyticsOverview(app){
