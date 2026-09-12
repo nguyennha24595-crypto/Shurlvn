@@ -3617,22 +3617,36 @@ footer{text-align:center;color:var(--muted2);font-size:12px;padding:30px 20px;}
 .auth-glow-ring span{position:absolute;top:0;left:0;width:32px;height:6px;border-radius:8px;background:var(--border);box-shadow:0 0 8px 1px currentColor;transform-origin:230px 260px;transform:scale(1) rotate(calc(var(--i) * (360deg / 50)));animation:authGlowBlink 3s linear infinite;animation-delay:calc(var(--i) * (3s / 50));}
 @keyframes authGlowBlink{0%{background:var(--sky);color:var(--sky);}20%{background:var(--indigo);color:var(--indigo);}40%,100%{background:var(--border);color:var(--border);}}
 .auth-split{position:relative;z-index:1;margin:5px;border-radius:20px;overflow:hidden;background:var(--card-solid);border:1px solid var(--border);box-shadow:var(--shadow);}
-.auth-color{position:absolute;top:0;bottom:0;width:44%;background:linear-gradient(150deg,var(--indigo),var(--purple));color:#fff;display:flex;flex-direction:column;justify-content:center;padding:36px 30px;z-index:2;transition:left 0.6s cubic-bezier(.65,0,.35,1), clip-path 0.6s cubic-bezier(.65,0,.35,1);}
+.auth-color{position:absolute;top:0;bottom:0;width:44%;background:linear-gradient(150deg,var(--indigo),var(--purple));color:#fff;display:flex;flex-direction:column;justify-content:center;padding:36px 30px;z-index:2;transform-origin:50% 50%;}
 .auth-color h2{color:#fff;font-size:22px;margin:0 0 10px;}
 .auth-color p{color:rgba(255,255,255,0.85);font-size:13px;line-height:1.6;margin:0 0 20px;}
 .auth-color .btn-ghost-invert{background:rgba(255,255,255,0.14);color:#fff;border:1px solid rgba(255,255,255,0.45);border-radius:10px;padding:9px 20px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;align-self:flex-start;}
 .auth-color .btn-ghost-invert:hover{background:rgba(255,255,255,0.26);}
-.auth-form-side{position:relative;z-index:1;min-height:440px;display:flex;align-items:center;padding:44px 36px;transition:padding-left 0.6s ease, padding-right 0.6s ease;}
+.auth-form-side{position:relative;z-index:1;min-height:440px;display:flex;align-items:center;padding:44px 36px;transition:padding-left 0.5s cubic-bezier(.65,0,.35,1), padding-right 0.5s cubic-bezier(.65,0,.35,1);}
 .auth-form-inner{width:100%;}
 .auth-split.mode-login .auth-color{left:56%;clip-path:polygon(22% 0,100% 0,100% 100%,0 100%);}
 .auth-split.mode-login .auth-form-side{padding-left:36px;padding-right:calc(44% + 26px);}
 .auth-split.mode-register .auth-color{left:0%;clip-path:polygon(0 0,78% 0,100% 100%,0 100%);}
 .auth-split.mode-register .auth-form-side{padding-left:calc(44% + 26px);padding-right:36px;}
+/* Hinge/seesaw switch: the diagonal leans the OPPOSITE way at the midpoint before settling,
+   combined with a horizontal slide + slight skew/rotate — not a plain left/clip-path interpolation. */
+@keyframes authHingeToRegister{
+  0%{ left:56%; clip-path:polygon(22% 0,100% 0,100% 100%,0 100%); transform:skewY(0deg) rotate(0deg); }
+  50%{ left:26%; clip-path:polygon(58% 0,100% 0,42% 100%,0 100%); transform:skewY(-6deg) rotate(-2.5deg); }
+  100%{ left:0%; clip-path:polygon(0 0,78% 0,100% 100%,0 100%); transform:skewY(0deg) rotate(0deg); }
+}
+@keyframes authHingeToLogin{
+  0%{ left:0%; clip-path:polygon(0 0,78% 0,100% 100%,0 100%); transform:skewY(0deg) rotate(0deg); }
+  50%{ left:30%; clip-path:polygon(42% 0,100% 0,58% 100%,0 100%); transform:skewY(6deg) rotate(2.5deg); }
+  100%{ left:56%; clip-path:polygon(22% 0,100% 0,100% 100%,0 100%); transform:skewY(0deg) rotate(0deg); }
+}
+.auth-color.hinge-to-register{animation:authHingeToRegister 0.5s cubic-bezier(.65,0,.35,1) both;}
+.auth-color.hinge-to-login{animation:authHingeToLogin 0.5s cubic-bezier(.65,0,.35,1) both;}
 .auth-wrap{min-width:0;}
 .auth-glow{min-width:0;}
 @media(max-width:640px){
   .auth-glow{width:100%;}
-  .auth-color{position:relative;width:100%;left:0!important;clip-path:none!important;padding:26px 22px;transition:none;}
+  .auth-color{position:relative;width:100%;left:0!important;clip-path:none!important;padding:26px 22px;transition:none;animation:none!important;transform:none!important;}
   .auth-split{display:flex;flex-direction:column;}
   .auth-split.mode-register{flex-direction:column-reverse;}
   .auth-form-side{padding:26px 22px!important;min-height:0;}
@@ -7757,10 +7771,16 @@ function switchAuthMode(target){
   var colorEl = document.getElementById("authColor");
   var formInnerEl = document.getElementById("authFormInner");
   if (!splitEl || !colorEl || !formInnerEl) return;
+  var hingeClass = target === "register" ? "hinge-to-register" : "hinge-to-login";
+  // Restart the hinge animation cleanly even if the user clicks back and forth quickly
+  colorEl.classList.remove("hinge-to-register", "hinge-to-login");
+  void colorEl.offsetWidth;
   splitEl.className = "auth-split mode-" + target;
+  colorEl.classList.add(hingeClass);
   colorEl.innerHTML = authColorContent(target);
   formInnerEl.innerHTML = target === "login" ? loginFormHtml() : registerFormHtml();
   bindAuthForm(target);
+  setTimeout(function(){ colorEl.classList.remove("hinge-to-register", "hinge-to-login"); }, 520);
   try { history.replaceState(null, "", "#/" + target); } catch (e) { location.hash = "#/" + target; }
 }
 
