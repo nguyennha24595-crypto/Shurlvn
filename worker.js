@@ -174,7 +174,7 @@ export default {
         try { authedUser = await getAuthenticatedUser(request, env); } catch(e) { authedUser = null; }
         if (!authedUser || authedUser.role !== "admin") {
           if (path.startsWith("api/")) {
-            return json({ error: "Hệ thống đang bảo trì. Vui lòng quay lại sau.", maintenance: true, note: globalMaint.note || "" }, 503, corsHeaders);
+            return json({ error: st("maintenance_global", request), maintenance: true, note: globalMaint.note || "" }, 503, corsHeaders);
           }
           return new Response(MAINTENANCE_HTML(globalMaint.note || ""), { headers: { "Content-Type": "text/html; charset=utf-8" } });
         }
@@ -200,7 +200,7 @@ export default {
             let authedUser = null;
             try { authedUser = await getAuthenticatedUser(request, env); } catch(e) { authedUser = null; }
             if (!authedUser || (authedUser.role !== "admin" && authedUser.role !== "super")) {
-              return json({ error: "Tính năng đang bảo trì: " + (featMaint.note || featureMap[routePrefix]), maintenance: true, feature: featureMap[routePrefix] }, 503, corsHeaders);
+              return json({ error: st("maintenance_feature_prefix", request) + ": " + (featMaint.note || featureMap[routePrefix]), maintenance: true, feature: featureMap[routePrefix] }, 503, corsHeaders);
             }
           }
           break;
@@ -272,9 +272,9 @@ export default {
 
 
       // ===== 4c. STRIPE BILLING + VOUCHER + PAYMENT =====
-      if (path === "api/billing/checkout" && method === "POST") { var mSt = await checkMaintenance(env, "stripe", corsHeaders); if (mSt) return mSt; return handleStripeCheckout(request, env, url, corsHeaders); }
-      if (path === "api/billing/voucher-checkout" && method === "POST") { var mVc = await checkMaintenance(env, "voucher", corsHeaders); if (mVc) return mVc; return handleVoucherCheckout(request, env, url, corsHeaders); }
-      if (path === "api/billing/qr-checkout" && method === "POST") { var mQr = await checkMaintenance(env, "qr_payment", corsHeaders); if (mQr) return mQr; return handleQrCheckout(request, env, corsHeaders); }
+      if (path === "api/billing/checkout" && method === "POST") { var mSt = await checkMaintenance(env, "stripe", corsHeaders, request); if (mSt) return mSt; return handleStripeCheckout(request, env, url, corsHeaders); }
+      if (path === "api/billing/voucher-checkout" && method === "POST") { var mVc = await checkMaintenance(env, "voucher", corsHeaders, request); if (mVc) return mVc; return handleVoucherCheckout(request, env, url, corsHeaders); }
+      if (path === "api/billing/qr-checkout" && method === "POST") { var mQr = await checkMaintenance(env, "qr_payment", corsHeaders, request); if (mQr) return mQr; return handleQrCheckout(request, env, corsHeaders); }
       if (path === "api/billing/qr-generate" && method === "POST") return handleQrGenerate(request, env, corsHeaders);
       if (path === "api/admin/qr-payments" && method === "GET") return handleListQrPayments(request, env, corsHeaders);
       if (path === "api/billing/qr-status" && method === "GET") return handleQrStatus(request, env, corsHeaders);
@@ -775,7 +775,7 @@ async function handleLogin(request, env, corsHeaders) {
   const attemptsKey = "login_attempts:" + cleanUser;
   const attempts = parseInt(await env.LINKS_KV.get(attemptsKey) || "0");
   if (attempts >= LOGIN_MAX_ATTEMPTS) {
-    return json({ error: "Quá nhiều lần đăng nhập sai. Vui lòng thử lại sau 15 phút." }, 429, corsHeaders);
+    return json({ error: st("login_too_many_attempts", request) }, 429, corsHeaders);
   }
 
   async function recordFailedAttempt() {
@@ -788,7 +788,7 @@ async function handleLogin(request, env, corsHeaders) {
     return json({ error: st("invalid_credentials", request) }, 401, corsHeaders);
   }
   if (user.banned) {
-    return json({ error: "Tài khoản đã bị khóa. Vui lòng liên hệ admin." }, 403, corsHeaders);
+    return json({ error: st("account_locked", request) }, 403, corsHeaders);
   }
   const hash = await hashPassword(password, user.salt);
   if (hash !== user.hash) {
@@ -804,7 +804,7 @@ async function handleLogin(request, env, corsHeaders) {
     const expectedCode = await generateTotpCode(user.totpSecret);
     if (totpCode !== expectedCode){
       await recordFailedAttempt();
-      return json({ error: "Mã TOTP không đúng" }, 401, corsHeaders);
+      return json({ error: st("totp_wrong", request) }, 401, corsHeaders);
     }
   }
 
@@ -835,7 +835,7 @@ function clearOauthStateCookieHeader() {
 
 async function handleGoogleAuthStart(request, env, corsHeaders) {
   if (!env.GOOGLE_CLIENT_ID) {
-    return json({ error: "Đăng nhập Google chưa được cấu hình." }, 500, corsHeaders);
+    return json({ error: st("google_not_configured", request) }, 500, corsHeaders);
   }
   const url = new URL(request.url);
   const redirectUri = url.origin + "/api/auth/google/callback";
@@ -1232,7 +1232,7 @@ function getOtpAuthUrl(secret, username, domain){
 
 async function handleSetup2fa(request, env, corsHeaders){
   const user = await getAuthenticatedUser(request, env);
-  if (!user) return json({ error: "Chưa đăng nhập" }, 401, corsHeaders);
+  if (!user) return json({ error: st("not_logged_in", request) }, 401, corsHeaders);
   if (user.role !== "admin") return json({ error: "Chỉ admin mới được bật 2FA" }, 403, corsHeaders);
 
   const fullUser = await getUser(env, user.username);
@@ -1253,7 +1253,7 @@ async function handleSetup2fa(request, env, corsHeaders){
 
 async function handleVerify2fa(request, env, corsHeaders){
   const user = await getAuthenticatedUser(request, env);
-  if (!user) return json({ error: "Chưa đăng nhập" }, 401, corsHeaders);
+  if (!user) return json({ error: st("not_logged_in", request) }, 401, corsHeaders);
   if (user.role !== "admin") return json({ error: "Chỉ admin mới được bật 2FA" }, 403, corsHeaders);
 
   let body;
@@ -1264,7 +1264,7 @@ async function handleVerify2fa(request, env, corsHeaders){
   if (!pendingSecret) return json({ error: "Phiên thiết lập hết hạn. Vui lòng thử lại." }, 400, corsHeaders);
 
   const expectedCode = await generateTotpCode(pendingSecret);
-  if (code !== expectedCode) return json({ error: "Mã TOTP không đúng" }, 401, corsHeaders);
+  if (code !== expectedCode) return json({ error: st("totp_wrong", request) }, 401, corsHeaders);
 
   // Lưu secret vĩnh viễn
   const fullUser = await getUser(env, user.username);
@@ -1278,7 +1278,7 @@ async function handleVerify2fa(request, env, corsHeaders){
 
 async function handleDisable2fa(request, env, corsHeaders){
   const user = await getAuthenticatedUser(request, env);
-  if (!user) return json({ error: "Chưa đăng nhập" }, 401, corsHeaders);
+  if (!user) return json({ error: st("not_logged_in", request) }, 401, corsHeaders);
   if (user.role !== "admin") return json({ error: "Chỉ admin mới được tắt 2FA" }, 403, corsHeaders);
 
   const fullUser = await getUser(env, user.username);
@@ -1543,7 +1543,7 @@ async function handleCreateLink(request, env, url, corsHeaders) {
   let { url: targetUrl, customCode, title, campaign, tags, expiryDate, customDomain, password, pixels, abUrls, abPercentages, deepLinks } = body || {};
 
   if (!targetUrl) {
-    return json({ error: "URL không được để trống" }, 400, corsHeaders);
+    return json({ error: st("url_required", request) }, 400, corsHeaders);
   }
 
   const authedUser = await getAuthenticatedUser(request, env);
@@ -1738,7 +1738,7 @@ async function handleUpdateLink(request, env, url, code, corsHeaders) {
 
 async function handleDeleteLink(request, env, code, corsHeaders) {
   const user = await getAuthenticatedUser(request, env);
-  if (!user) return json({ error: "Chưa đăng nhập" }, 401, corsHeaders);
+  if (!user) return json({ error: st("not_logged_in", request) }, 401, corsHeaders);
   const raw = await env.LINKS_KV.get("link:" + code);
   if (!raw) return json({ error: "Link không tồn tại" }, 404, corsHeaders);
   const link = JSON.parse(raw);
@@ -1756,7 +1756,7 @@ async function handleDeleteLink(request, env, code, corsHeaders) {
 }
 async function handleRestoreLink(request, env, code, corsHeaders) {
   const user = await getAuthenticatedUser(request, env);
-  if (!user) return json({ error: "Chưa đăng nhập" }, 401, corsHeaders);
+  if (!user) return json({ error: st("not_logged_in", request) }, 401, corsHeaders);
   const raw = await env.LINKS_KV.get("link:" + code);
   if (!raw) return json({ error: "Link không tồn tại" }, 404, corsHeaders);
   const link = JSON.parse(raw);
@@ -1772,7 +1772,7 @@ async function handleRestoreLink(request, env, code, corsHeaders) {
 
 async function handleForceDeleteLink(request, env, code, corsHeaders) {
   const user = await getAuthenticatedUser(request, env);
-  if (!user) return json({ error: "Chưa đăng nhập" }, 401, corsHeaders);
+  if (!user) return json({ error: st("not_logged_in", request) }, 401, corsHeaders);
   const raw = await env.LINKS_KV.get("link:" + code);
   if (!raw) return json({ error: "Link không tồn tại" }, 404, corsHeaders);
   const link = JSON.parse(raw);
@@ -2435,18 +2435,18 @@ async function handleRedirect(request, env, url, path, ctx) {
   const link = JSON.parse(raw);
 
   if (link.isEnabled === false) {
-    return html('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Link đã tắt</title></head><body style="font-family:system-ui;text-align:center;padding:60px;"><h1>Link đã tắt</h1><p>Link này đã bị vô hiệu hoá.</p></body></html>', 410);
+    return html('<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + escHtml(st("link_disabled_title", request)) + '</title></head><body style="font-family:system-ui;text-align:center;padding:60px;"><h1>' + escHtml(st("link_disabled_title", request)) + '</h1><p>' + escHtml(st("link_disabled_desc", request)) + '</p></body></html>', 410);
   }
 
   if (link.expiryDate && new Date(link.expiryDate) < new Date()) {
-    return html('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Link hết hạn</title></head><body style="font-family:system-ui;text-align:center;padding:60px;"><h1>Link hết hạn</h1><p>Link này đã hết hạn sử dụng.</p></body></html>', 410);
+    return html('<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + escHtml(st("link_expired_title", request)) + '</title></head><body style="font-family:system-ui;text-align:center;padding:60px;"><h1>' + escHtml(st("link_expired_title", request)) + '</h1><p>' + escHtml(st("link_expired_desc", request)) + '</p></body></html>', 410);
   }
 
   if (link.password) {
     const cookies = request.headers.get("Cookie") || "";
     const pwCookieMatch = cookies.includes("shurl_pw_" + path + "=ok");
     if (!pwCookieMatch) {
-      return renderPasswordPage(path, url.origin);
+      return renderPasswordPage(path, url.origin, request);
     }
   }
 
@@ -2495,11 +2495,12 @@ function pickABUrl(urls, percentages) {
 }
 
 
-function renderPasswordPage(code, origin) {
+function renderPasswordPage(code, origin, request) {
+  var pwTitle = escHtml(st("pw_page_title", request));
   return html(
     '<!DOCTYPE html><html><head><meta charset="utf-8">' +
     '<meta name="viewport" content="width=device-width,initial-scale=1">' +
-    '<title>Link được bảo vệ</title>' +
+    '<title>' + pwTitle + '</title>' +
     '<style>' +
     'body{font-family:system-ui;background:#0f172a;color:#e2e8f0;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;}' +
     '.box{background:#1e293b;border-radius:16px;padding:32px;max-width:380px;width:90%;text-align:center;}' +
@@ -2509,11 +2510,11 @@ function renderPasswordPage(code, origin) {
     '.err{color:#f87171;font-size:14px;margin-top:8px;display:none;}' +
     '</style></head><body>' +
     '<div class="box">' +
-    '<h2>' + li('lock', 18) + ' Link được bảo vệ</h2>' +
-    '<p style="color:#94a3b8;font-size:14px;">Nhập mật khẩu để tiếp tục</p>' +
-    '<input type="password" id="pw" placeholder="Mật khẩu" onkeypress="if(event.key===\'Enter\')doVerify()">' +
-    '<button onclick="doVerify()">Vào link →</button>' +
-    '<p class="err" id="err">Mật khẩu không đúng</p>' +
+    '<h2>' + li('lock', 18) + ' ' + pwTitle + '</h2>' +
+    '<p style="color:#94a3b8;font-size:14px;">' + escHtml(st("pw_page_prompt", request)) + '</p>' +
+    '<input type="password" id="pw" placeholder="' + escHtml(st("pw_page_placeholder", request)) + '" onkeypress="if(event.key===\'Enter\')doVerify()">' +
+    '<button onclick="doVerify()">' + escHtml(st("pw_page_btn", request)) + '</button>' +
+    '<p class="err" id="err">' + escHtml(st("pw_page_wrong", request)) + '</p>' +
     '</div>' +
     '<script>' +
     'async function doVerify(){' +
@@ -2771,7 +2772,7 @@ async function handleDeleteVoucher(request, env, code, corsHeaders) {
 
 async function handleRedeemVoucher(request, env, corsHeaders) {
   const user = await getAuthenticatedUser(request, env);
-  if (!user) return json({ error: "Chưa đăng nhập" }, 401, corsHeaders);
+  if (!user) return json({ error: st("not_logged_in", request) }, 401, corsHeaders);
   let body; try { body = await request.json(); } catch (e) { body = {}; }
   const { code } = body || {};
   if (!code) return json({ error: "Nhập mã voucher" }, 400, corsHeaders);
@@ -2824,7 +2825,7 @@ async function verifyStripeSignature(body, signatureHeader, secret) {
 
 async function handleStripeCheckout(request, env, url, corsHeaders) {
   const user = await getAuthenticatedUser(request, env);
-  if (!user) return json({ error: "Chưa đăng nhập" }, 401, corsHeaders);
+  if (!user) return json({ error: st("not_logged_in", request) }, 401, corsHeaders);
   let body; try { body = await request.json(); } catch (e) { body = {}; }
   const { tier } = body || {};
   if (!["plus", "pro", "super"].includes(tier)) return json({ error: "Gói không hợp lệ" }, 400, corsHeaders);
@@ -2889,7 +2890,7 @@ async function handleStripeCheckout(request, env, url, corsHeaders) {
 // ===================== VOUCHER CHECKOUT (mua voucher trước) =====================
 async function handleVoucherCheckout(request, env, url, corsHeaders) {
   const user = await getAuthenticatedUser(request, env);
-  if (!user) return json({ error: "Chưa đăng nhập" }, 401, corsHeaders);
+  if (!user) return json({ error: st("not_logged_in", request) }, 401, corsHeaders);
   let body; try { body = await request.json(); } catch (e) { body = {}; }
   const { tier, period } = body || {};
   if (!["plus", "pro", "super"].includes(tier)) return json({ error: "Gói không hợp lệ" }, 400, corsHeaders);
@@ -2932,7 +2933,7 @@ async function handleVoucherCheckout(request, env, url, corsHeaders) {
 // ===================== QR PAYMENT SYSTEM =====================
 async function handleQrCheckout(request, env, corsHeaders) {
   const user = await getAuthenticatedUser(request, env);
-  if (!user) return json({ error: "Chưa đăng nhập" }, 401, corsHeaders);
+  if (!user) return json({ error: st("not_logged_in", request) }, 401, corsHeaders);
   let body; try { body = await request.json(); } catch (e) { body = {}; }
   const { tier, period } = body || {};
   if (!["plus", "pro", "super"].includes(tier)) return json({ error: "Gói không hợp lệ" }, 400, corsHeaders);
@@ -2979,7 +2980,7 @@ async function handleQrCheckout(request, env, corsHeaders) {
 // === VIETQR — Tạo QR động với số tiền + nội dung chuyển khoản ===
 async function handleQrGenerate(request, env, corsHeaders) {
   const user = await getAuthenticatedUser(request, env);
-  if (!user) return json({ error: "Chưa đăng nhập" }, 401, corsHeaders);
+  if (!user) return json({ error: st("not_logged_in", request) }, 401, corsHeaders);
   let body; try { body = await request.json(); } catch (e) { body = {}; }
   const { tier, period, vndPrice, orderId } = body || {};
   if (!tier || !vndPrice || !orderId) return json({ error: "Thiếu thông tin" }, 400, corsHeaders);
@@ -3021,9 +3022,9 @@ async function handleGetMaintenanceStatus(request, env, corsHeaders) {
   for (var i = 0; i < features.length; i++) { result[features[i]] = (await isMaintenance(env, features[i])) || { active: false, note: "" }; }
   return json({ maintenance: result }, 200, corsHeaders);
 }
-async function checkMaintenance(env, feature, corsHeaders) {
+async function checkMaintenance(env, feature, corsHeaders, request) {
   var m = await isMaintenance(env, feature);
-  if (m && m.active) return json({ error: "Tính năng đang bảo trì" + (m.note ? ": " + m.note : "") }, 503, corsHeaders);
+  if (m && m.active) return json({ error: st("maintenance_feature_prefix", request) + (m.note ? ": " + m.note : "") }, 503, corsHeaders);
   return null;
 }
 
@@ -3098,7 +3099,7 @@ async function handleApproveQrPayment(request, env, corsHeaders) {
 
 async function handleQrStatus(request, env, corsHeaders) {
   const user = await getAuthenticatedUser(request, env);
-  if (!user) return json({ error: "Chưa đăng nhập" }, 401, corsHeaders);
+  if (!user) return json({ error: st("not_logged_in", request) }, 401, corsHeaders);
   const list = await env.LINKS_KV.list({ prefix: "qrpay:" });
   const myPayments = [];
   for (const key of list.keys) {
@@ -3115,7 +3116,7 @@ async function handleQrStatus(request, env, corsHeaders) {
 
 async function handleQrStatusAck(request, env, corsHeaders) {
   const user = await getAuthenticatedUser(request, env);
-  if (!user) return json({ error: "Chưa đăng nhập" }, 401, corsHeaders);
+  if (!user) return json({ error: st("not_logged_in", request) }, 401, corsHeaders);
   let body; try { body = await request.json(); } catch (e) { body = {}; }
   const { orderId } = body || {};
   if (!orderId) return json({ error: "Thiếu orderId" }, 400, corsHeaders);
@@ -3150,9 +3151,23 @@ async function handleRejectQrPayment(request, env, corsHeaders) {
 var SERVER_I18N = {
   vi: { 
     brand:"SHURL", subject:"Voucher SHURL — Mã kích hoạt gói", thanks_1:"Cảm ơn bạn đã sử dụng gói", thanks_2:"của", instruction:"Hãy copy voucher này và dán vào ô nhập voucher ở phần tài khoản để kích hoạt:", activate_note:"Gói voucher", activate_note_2:"được kích hoạt ngay sau khi nhập mã.", warning:"Vui lòng không share mã voucher ra ngoài tránh trường hợp mất.", closing:"Xin cảm ơn bạn đã đóng góp cho nền tảng này phát triển.", signature:"Trân trọng,",
-    require_auth:"Vui lòng đăng nhập để thực hiện thao tác này.", require_admin:"Yêu cầu quyền Quản trị viên (Admin).", enter_user_pass:"Vui lòng nhập tên đăng nhập và mật khẩu.", username_length:"Tên đăng nhập phải từ 8-25 ký tự.", password_policy:"Mật khẩu tối thiểu 9 ký tự và có ít nhất 1 chữ viết hoa.", username_exists:"Tên đăng nhập đã tồn tại trong hệ thống.", enter_user_pass_full:"Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.", wrong_credentials:"Sai tên đăng nhập hoặc mật khẩu.", not_logged_in:"Chưa đăng nhập.", user_not_found:"Không tìm thấy tài khoản.", api_pro_only:"Tính năng API chỉ mở cho gói PRO hoặc SUPER." 
-  }, 
-  en: { brand:"SHURL", subject:"SHURL Voucher — Plan activation code", thanks_1:"Thank you for using the", thanks_2:"plan of", instruction:"Copy this voucher and paste it into the voucher field in your account to activate:", activate_note:"Voucher plan", activate_note_2:"is activated immediately after entering the code.", warning:"Please do not share this voucher code to avoid losing it.", closing:"Thank you for supporting the growth of this platform.", signature:"Best regards," },
+    require_auth:"Vui lòng đăng nhập để thực hiện thao tác này.", require_admin:"Yêu cầu quyền Quản trị viên (Admin).", enter_user_pass:"Vui lòng nhập tên đăng nhập và mật khẩu.", username_length:"Tên đăng nhập phải từ 8-25 ký tự.", password_policy:"Mật khẩu tối thiểu 9 ký tự và có ít nhất 1 chữ viết hoa.", username_exists:"Tên đăng nhập đã tồn tại trong hệ thống.", enter_user_pass_full:"Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.", wrong_credentials:"Sai tên đăng nhập hoặc mật khẩu.", not_logged_in:"Chưa đăng nhập.", user_not_found:"Không tìm thấy tài khoản.", api_pro_only:"Tính năng API chỉ mở cho gói PRO hoặc SUPER.",
+    maintenance_global:"Hệ thống đang bảo trì. Vui lòng quay lại sau.", maintenance_feature_prefix:"Tính năng đang bảo trì",
+    account_locked:"Tài khoản đã bị khóa. Vui lòng liên hệ admin.", totp_wrong:"Mã TOTP không đúng.", login_too_many_attempts:"Quá nhiều lần đăng nhập sai. Vui lòng thử lại sau 15 phút.", google_not_configured:"Đăng nhập Google chưa được cấu hình.",
+    url_required:"URL không được để trống.",
+    pw_page_title:"Link được bảo vệ", pw_page_prompt:"Nhập mật khẩu để tiếp tục", pw_page_placeholder:"Mật khẩu", pw_page_btn:"Vào link →", pw_page_wrong:"Mật khẩu không đúng",
+    link_expired_title:"Link hết hạn", link_expired_desc:"Link này đã hết hạn sử dụng.",
+    link_disabled_title:"Link đã tắt", link_disabled_desc:"Link này đã bị vô hiệu hoá.",
+  },
+  en: { brand:"SHURL", subject:"SHURL Voucher — Plan activation code", thanks_1:"Thank you for using the", thanks_2:"plan of", instruction:"Copy this voucher and paste it into the voucher field in your account to activate:", activate_note:"Voucher plan", activate_note_2:"is activated immediately after entering the code.", warning:"Please do not share this voucher code to avoid losing it.", closing:"Thank you for supporting the growth of this platform.", signature:"Best regards,",
+    require_auth:"Please log in to perform this action.", require_admin:"Administrator access required.", enter_user_pass:"Please enter your username and password.", username_length:"Username must be 8-25 characters.", password_policy:"Password must be at least 9 characters with at least 1 uppercase letter.", username_exists:"This username already exists.", enter_user_pass_full:"Please enter both username and password.", wrong_credentials:"Wrong username or password.", not_logged_in:"Not logged in.", user_not_found:"Account not found.", api_pro_only:"API access is only available on the PRO or SUPER plan.",
+    maintenance_global:"The system is under maintenance. Please check back later.", maintenance_feature_prefix:"This feature is under maintenance",
+    account_locked:"This account has been locked. Please contact an admin.", totp_wrong:"Incorrect TOTP code.", login_too_many_attempts:"Too many failed login attempts. Please try again in 15 minutes.", google_not_configured:"Google sign-in isn't configured yet.",
+    url_required:"URL is required.",
+    pw_page_title:"Protected link", pw_page_prompt:"Enter the password to continue", pw_page_placeholder:"Password", pw_page_btn:"Continue →", pw_page_wrong:"Incorrect password",
+    link_expired_title:"Link expired", link_expired_desc:"This link has expired.",
+    link_disabled_title:"Link disabled", link_disabled_desc:"This link has been disabled.",
+  },
   ko: { brand:"SHURL", subject:"SHURL 바우처 — 플랜 활성화 코드", thanks_1:"사용해 주셔서 감사합니다", thanks_2:"플랜", instruction:"이 바우처를 복사하여 계정의 바우처 입력란에 붙여넣어 활성화하세요:", activate_note:"바우처 플랜", activate_note_2:"은 코드 입력 즉시 활성화됩니다.", warning:"바우처 코드를 외부에 공유하지 마세요.", closing:"플랫폼 성장을 위해 기여해 주셔서 감사합니다.", signature:"감사합니다," },
   zh: { brand:"SHURL", subject:"SHURL 优惠券 — 套餐激活码", thanks_1:"感谢您使用", thanks_2:"的", instruction:"请复制此优惠券并粘贴到账户中的优惠券输入框以激活：", activate_note:"优惠券套餐", activate_note_2:"在输入代码后立即激活。", warning:"请勿将优惠券代码分享给他人，以免丢失。", closing:"感谢您为平台发展做出贡献。", signature:"此致，" },
   hi: { brand:"SHURL", subject:"SHURL वाउचर — प्लान सक्रियण कोड", thanks_1:"का उपयोग करने के लिए धन्यवाद", thanks_2:"प्लान", instruction:"इस वाउचर को कॉपी करें और अपने खाते के वाउचर फ़ील्ड में पेस्ट करें:", activate_note:"वाउचर प्लान", activate_note_2:"कोड दर्ज करने के तुरंत बाद सक्रिय हो जाता है।", warning:"वाउचर कोड किसी के साथ शेयर न करें।", closing:"इस प्लेटफॉर्म के विकास में योगदान के लिए धन्यवाद।", signature:"सादर," },
@@ -3308,7 +3323,7 @@ async function handleGetPromoSettings(request, env, corsHeaders) {
 
 async function handleSavePromoSettings(request, env, corsHeaders) {
   const user = await getAuthenticatedUser(request, env);
-  if (!user) return json({ error: "Chưa đăng nhập" }, 401, corsHeaders);
+  if (!user) return json({ error: st("not_logged_in", request) }, 401, corsHeaders);
   if (user.role !== "admin") return json({ error: "Không có quyền" }, 403, corsHeaders);
   let body;
   try { body = await request.json(); } catch (e) { body = {}; }
@@ -4040,6 +4055,20 @@ var i18n = {
     status:"Trạng thái", created:"Ngày tạo", actions:"Thao tác",
     copy:"Chép", copied:"Đã copy ✓", stats:"Thống kê", edit:"Sửa", del:"Xoá",
     enabled:"Bật", disabled:"Tắt", deleted:"Đã xóa", undo_delete:"Hủy xóa", force_delete:"Xoá ngay",
+    delete_link_title:"Xóa link?", delete_link_desc:"Link sẽ bị gạch và tự xóa sau 24h. Bạn có thể khôi phục trong thời gian này.", btn_ok:"Đồng ý", btn_cancel:"Hủy", maintenance_feature_prefix:"Tính năng đang bảo trì",
+    btn_confirm:"Xác nhận", btn_understood:"Đã hiểu", contact_support_btn:"✉️ Liên hệ hỗ trợ",
+    qr_success_title:"Chúc mừng!", qr_success_desc1:"Tài khoản {user} đã được kích hoạt thành công lên gói {tier}.",
+    qr_success_desc2:"Cảm ơn bạn đã tin tưởng và đồng hành cùng chúng tôi. Sự ủng hộ của bạn giúp {domain} ngày càng phát triển tốt hơn.",
+    qr_success_desc3:"Chúc bạn có trải nghiệm tuyệt vời cùng chúng tôi!<br>Nếu cần hỗ trợ, liên hệ {email} — chúng tôi phản hồi sớm nhất có thể.",
+    qr_fail_title:"Yêu cầu chưa thể xử lý", qr_fail_desc1:"Rất tiếc, giao dịch nâng cấp lên gói {tier} của bạn chưa được xác nhận thành công.",
+    qr_fail_reason_label:"Lý do:", qr_fail_reason_default:"Không tìm thấy giao dịch khớp với nội dung chuyển khoản",
+    qr_fail_desc2:"Vui lòng kiểm tra lại thông tin chuyển khoản, hoặc liên hệ {email} kèm ảnh chụp biên lai để được hỗ trợ nhanh nhất.",
+    stripe_success_title:"Thanh toán thành công!", stripe_success_desc1:"Tài khoản của bạn đã được nâng cấp lên gói {tier}.",
+    stripe_success_desc2:"Gói sẽ hết hạn sau 30 ngày. Bạn có thể gia hạn bất cứ lúc nào.",
+    stripe_cancel_title:"Thanh toán đã hủy", stripe_cancel_desc:"Bạn đã hủy giao dịch. Tài khoản không thay đổi. Bạn có thể thử lại bất cứ lúc nào.",
+    voucher_success_title:"Mua voucher thành công!", voucher_success_desc1:"Voucher code đã được gửi đến email của bạn.",
+    voucher_success_desc2:"Kiểm tra hộp thư (kể cả mục spam) để lấy voucher code. Bạn cũng có thể xem lại trong lịch sử thanh toán.",
+    voucher_cancel_title:"Đã hủy mua voucher", voucher_cancel_desc:"Giao dịch đã bị hủy. Bạn có thể thử lại bất cứ lúc nào.",
     export:"Xuất CSV", optional:"Tùy chọn", no_data:"Chưa có dữ liệu.",
     delete_confirm:"Xoá link /", delete_warning:"? Hành động này không thể hoàn tác.",
     edit_title:"Sửa link /", edit_dest:"URL đích", edit_save:"Lưu thay đổi", edit_cancel:"Huỷ",
@@ -4378,6 +4407,20 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     status:"Status", created:"Created", actions:"Actions",
     copy:"Copy", copied:"Copied ✓", stats:"Analytics", edit:"Edit", del:"Delete",
     enabled:"Enabled", disabled:"Disabled", deleted:"Deleted", undo_delete:"Undo delete", force_delete:"Delete permanently",
+    delete_link_title:"Delete link?", delete_link_desc:"The link will be struck through and auto-deleted after 24h. You can restore it during this time.", btn_ok:"OK", btn_cancel:"Cancel", maintenance_feature_prefix:"This feature is under maintenance",
+    btn_confirm:"Confirm", btn_understood:"Got it", contact_support_btn:"✉️ Contact support",
+    qr_success_title:"Congratulations!", qr_success_desc1:"Account {user} has been successfully upgraded to the {tier} plan.",
+    qr_success_desc2:"Thank you for trusting and supporting us. Your support helps {domain} keep improving.",
+    qr_success_desc3:"We hope you have a great experience with us!<br>If you need support, contact {email} — we'll respond as soon as possible.",
+    qr_fail_title:"Request could not be processed", qr_fail_desc1:"Unfortunately, your upgrade transaction to the {tier} plan hasn't been confirmed.",
+    qr_fail_reason_label:"Reason:", qr_fail_reason_default:"No matching transaction found for the transfer content",
+    qr_fail_desc2:"Please double-check your transfer details, or contact {email} with a screenshot of your receipt for faster support.",
+    stripe_success_title:"Payment successful!", stripe_success_desc1:"Your account has been upgraded to the {tier} plan.",
+    stripe_success_desc2:"The plan expires in 30 days. You can renew it anytime.",
+    stripe_cancel_title:"Payment cancelled", stripe_cancel_desc:"You cancelled the transaction. Your account is unchanged. You can try again anytime.",
+    voucher_success_title:"Voucher purchase successful!", voucher_success_desc1:"The voucher code has been sent to your email.",
+    voucher_success_desc2:"Check your inbox (including spam) for the voucher code. You can also view it later in your payment history.",
+    voucher_cancel_title:"Voucher purchase cancelled", voucher_cancel_desc:"The transaction was cancelled. You can try again anytime.",
     export:"Export CSV", optional:"Optional", no_data:"No data yet.",
     delete_confirm:"Delete link /", delete_warning:"? This action cannot be undone.",
     edit_title:"Edit link /", edit_dest:"Destination URL", edit_save:"Save changes", edit_cancel:"Cancel",
@@ -6298,6 +6341,14 @@ function t(key){
   return lang[key] || i18n.vi[key] || key;
 }
 
+// Like t(), but for strings that need a value embedded mid-sentence — e.g. t("qr_success_desc1")
+// returns "Tài khoản {user} đã..." and tf() swaps {user}/{tier}/etc for the actual (already-esc'd) values.
+function tf(key, vars){
+  var s = t(key);
+  for (var k in vars) { s = s.split("{" + k + "}").join(vars[k]); }
+  return s;
+}
+
 function guideCard(page){
   try { if (localStorage.getItem("shurl_guide_" + page) === "closed") return ""; } catch(e) {}
   if (!document.getElementById("guideCardCSS")) {
@@ -7220,9 +7271,9 @@ function applyMaintenanceCSS(){
     document.head.appendChild(style);
   }
   // Show alert for maintained features when user tries to access
-  if (m.stripe && m.stripe.active) { var sb = document.querySelectorAll("#planbtn_plus, #planbtn_pro, #planbtn_super"); sb.forEach(function(b){ b.onclick = function(){ alert("Tính năng đang bảo trì" + (m.stripe.note ? ": " + m.stripe.note : "")); }; }); }
-  if (m.qr_payment && m.qr_payment.active) { var qb = document.querySelectorAll("button[data-mt=qr_payment]"); qb.forEach(function(b){ b.onclick = function(){ alert("Tính năng đang bảo trì" + (m.qr_payment.note ? ": " + m.qr_payment.note : "")); }; }); }
-  if (m.voucher && m.voucher.active) { var vb = document.querySelectorAll("button[data-mt=voucher]"); vb.forEach(function(b){ b.onclick = function(){ alert("Tính năng đang bảo trì" + (m.voucher.note ? ": " + m.voucher.note : "")); }; }); }
+  if (m.stripe && m.stripe.active) { var sb = document.querySelectorAll("#planbtn_plus, #planbtn_pro, #planbtn_super"); sb.forEach(function(b){ b.onclick = function(){ alert(t("maintenance_feature_prefix") + (m.stripe.note ? ": " + m.stripe.note : "")); }; }); }
+  if (m.qr_payment && m.qr_payment.active) { var qb = document.querySelectorAll("button[data-mt=qr_payment]"); qb.forEach(function(b){ b.onclick = function(){ alert(t("maintenance_feature_prefix") + (m.qr_payment.note ? ": " + m.qr_payment.note : "")); }; }); }
+  if (m.voucher && m.voucher.active) { var vb = document.querySelectorAll("button[data-mt=voucher]"); vb.forEach(function(b){ b.onclick = function(){ alert(t("maintenance_feature_prefix") + (m.voucher.note ? ": " + m.voucher.note : "")); }; }); }
 }
 
 // === ADMIN NOTIFICATIONS ===
@@ -7759,11 +7810,11 @@ function deleteLink(code){
   var box = document.createElement("div");
   box.style.cssText = "background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:360px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(103,91,91,0.3);animation:modalPop 0.25s ease;transform-origin:bottom center;";
   box.innerHTML = '<div style="font-size:40px;margin-bottom:12px;">' + li('trash', 40) + '</div>' +
-    '<h3 style="margin:0 0 8px;color:var(--text);">Xóa link?</h3>' +
-    '<p style="color:var(--muted);font-size:14px;margin-bottom:20px;">Link sẽ bị gạch và tự xóa sau 24h. Bạn có thể khôi phục trong thời gian này.</p>' +
+    '<h3 style="margin:0 0 8px;color:var(--text);">' + t("delete_link_title") + '</h3>' +
+    '<p style="color:var(--muted);font-size:14px;margin-bottom:20px;">' + t("delete_link_desc") + '</p>' +
     '<div style="display:flex;gap:10px;justify-content:center;">' +
-    '<button class="btn btn-danger" id="confirmDelBtn">Đồng ý</button>' +
-    '<button class="btn btn-ghost" id="cancelDelBtn" style="color:var(--muted);">Hủy</button>' +
+    '<button class="btn btn-danger" id="confirmDelBtn">' + t("btn_ok") + '</button>' +
+    '<button class="btn btn-ghost" id="cancelDelBtn" style="color:var(--muted);">' + t("btn_cancel") + '</button>' +
     '</div>';
   modal.appendChild(box);
   document.body.appendChild(modal);
@@ -9065,8 +9116,8 @@ function renderWebhookTab(app){
     '<div id="whMsg" style="margin-top:10px;"></div>' +
     '<button class="btn btn-primary btn-sm" id="btnAddWebhook" style="margin-top:12px;">' + t("wh_add_btn") + '</button>' +
     '</div>' : '') +
-    '<div class="card" style="margin-top:16px;border:1px solid var(--border);"><h2>Hướng dẫn</h2>' +
-    '<p class="hint">Webhook gửi POST request tới URL của bạn mỗi khi có người click vào link. Body request:</p>' +
+    '<div class="card" style="margin-top:16px;border:1px solid var(--border);"><h2>' + t("wh_guide_title") + '</h2>' +
+    '<p class="hint">' + t("wh_guide_desc") + '</p>' +
     '<div style="background:rgba(15,23,42,0.9);border-radius:12px;padding:16px;overflow-x:auto;font-size:12px;color:#a5b4fc;font-family:monospace;line-height:1.6;">{<br>&nbsp;&nbsp;"event": "click",<br>&nbsp;&nbsp;"link": { "code": "abc123", "url": "https://..." },<br>&nbsp;&nbsp;"click": { "ip": "...", "country": "VN", "device": "..." },<br>&nbsp;&nbsp;"timestamp": "2026-09-03T..."<br>}</div></div>' +
     '</div>';
 
@@ -9217,8 +9268,8 @@ function renderCampaignsTab(app){
   app.innerHTML = guideCard("campaigns") + upgradeBanner("campaigns") +
     '<div class="card"><h1>' + li('chart', 14) + ' Campaigns</h1>' +
     (limits.hasCampaignHistory ? '' : '<p class="sub">' + t("campaigns_requires") + '</p>') +
-    '<div id="campaignList"><p class="hint">Đang tải...</p></div>' +
-    '<div class="card" style="margin-top:16px;border:1px solid var(--border);"><h2>Hướng dẫn</h2>' +
+    '<div id="campaignList"><p class="hint">' + t("campaigns_loading") + '</p></div>' +
+    '<div class="card" style="margin-top:16px;border:1px solid var(--border);"><h2>' + t("campaigns_guide_title") + '</h2>' +
     '<p class="hint">' + t("campaigns_guide_desc") + '</p>' +
     '<p class="hint">' + t("campaigns_guide_desc2") + '</p>' +
     '</div></div>';
@@ -9311,7 +9362,7 @@ function renderTeamTab(app){
     '<div id="teamCreateMsg" style="margin-top:10px;"></div>' +
     '<button class="btn btn-primary btn-sm" id="btnCreateTeam" style="margin-top:12px;">' + t("team_create_btn") + '</button>' +
     '</div>' : '') +
-    '<div class="card" style="margin-top:16px;border:1px solid var(--border);"><h2>Hướng dẫn</h2>' +
+    '<div class="card" style="margin-top:16px;border:1px solid var(--border);"><h2>' + t("team_guide_title") + '</h2>' +
     '<p class="hint">' + t("team_guide_desc") + '</p>' +
     '<p class="hint">Super: tối đa ' + (limits.maxTeamMembers || 10) + ' thành viên mỗi team.</p>' +
     '</div>' +
@@ -9431,21 +9482,21 @@ function showQrResultModal(p){
   if (p.status === "approved"){
     card.innerHTML =
       '<div style="font-size:48px;margin-bottom:16px;">🎉</div>' +
-      '<h2 style="margin:0 0 12px;font-size:22px;color:var(--text);">Chúc mừng!</h2>' +
-      '<p style="color:var(--text);font-size:15px;line-height:1.6;margin:0 0 8px;">Tài khoản <strong>' + esc(username) + '</strong> đã được kích hoạt thành công lên gói <strong style="color:#6366f1;">' + tierName + '</strong>.</p>' +
-      '<p style="color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 20px;">Cảm ơn bạn đã tin tưởng và đồng hành cùng chúng tôi. Sự ủng hộ của bạn giúp ' + domain + ' ngày càng phát triển tốt hơn.</p>' +
-      '<p style="color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 24px;">Chúc bạn có trải nghiệm tuyệt vời cùng chúng tôi!<br>Nếu cần hỗ trợ, liên hệ ' + supportEmail + ' — chúng tôi phản hồi sớm nhất có thể.</p>' +
-      '<button id="qrAckBtn" class="btn btn-primary" style="width:100%;justify-content:center;border-radius:12px;padding:14px;font-weight:700;">Xác nhận</button>';
+      '<h2 style="margin:0 0 12px;font-size:22px;color:var(--text);">' + t("qr_success_title") + '</h2>' +
+      '<p style="color:var(--text);font-size:15px;line-height:1.6;margin:0 0 8px;">' + tf("qr_success_desc1", { user: '<strong>' + esc(username) + '</strong>', tier: '<strong style="color:#6366f1;">' + tierName + '</strong>' }) + '</p>' +
+      '<p style="color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 20px;">' + tf("qr_success_desc2", { domain: domain }) + '</p>' +
+      '<p style="color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 24px;">' + tf("qr_success_desc3", { email: supportEmail }) + '</p>' +
+      '<button id="qrAckBtn" class="btn btn-primary" style="width:100%;justify-content:center;border-radius:12px;padding:14px;font-weight:700;">' + t("btn_confirm") + '</button>';
   } else {
     card.innerHTML =
       '<div style="font-size:40px;margin-bottom:16px;">' + li('alert', 40) + '</div>' +
-      '<h2 style="margin:0 0 12px;font-size:20px;color:var(--text);">Yêu cầu chưa thể xử lý</h2>' +
-      '<p style="color:var(--text);font-size:15px;line-height:1.6;margin:0 0 8px;">Rất tiếc, giao dịch nâng cấp lên gói <strong>' + tierName + '</strong> của bạn chưa được xác nhận thành công.</p>' +
-      '<p style="color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 8px;"><strong>Lý do:</strong> ' + (p.rejectReason || "Không tìm thấy giao dịch khớp với nội dung chuyển khoản") + '</p>' +
-      '<p style="color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 24px;">Vui lòng kiểm tra lại thông tin chuyển khoản, hoặc liên hệ ' + supportEmail + ' kèm ảnh chụp biên lai để được hỗ trợ nhanh nhất.</p>' +
+      '<h2 style="margin:0 0 12px;font-size:20px;color:var(--text);">' + t("qr_fail_title") + '</h2>' +
+      '<p style="color:var(--text);font-size:15px;line-height:1.6;margin:0 0 8px;">' + tf("qr_fail_desc1", { tier: '<strong>' + tierName + '</strong>' }) + '</p>' +
+      '<p style="color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 8px;"><strong>' + t("qr_fail_reason_label") + '</strong> ' + (p.rejectReason || t("qr_fail_reason_default")) + '</p>' +
+      '<p style="color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 24px;">' + tf("qr_fail_desc2", { email: supportEmail }) + '</p>' +
       '<div style="display:flex;gap:10px;">' +
-      '<button id="qrAckBtn" class="btn btn-ghost" style="flex:1;justify-content:center;border-radius:12px;padding:14px;font-weight:700;">Đã hiểu</button>' +
-      '<button id="qrSupportBtn" class="btn btn-primary" style="flex:1;justify-content:center;border-radius:12px;padding:14px;font-weight:700;">✉️ Liên hệ hỗ trợ</button>' +
+      '<button id="qrAckBtn" class="btn btn-ghost" style="flex:1;justify-content:center;border-radius:12px;padding:14px;font-weight:700;">' + t("btn_understood") + '</button>' +
+      '<button id="qrSupportBtn" class="btn btn-primary" style="flex:1;justify-content:center;border-radius:12px;padding:14px;font-weight:700;">' + t("contact_support_btn") + '</button>' +
       '</div>';
   }
   modal.appendChild(card);
@@ -9469,10 +9520,10 @@ function showStripeSuccessModal(tierName){
   card.style.cssText = "background:var(--card);border-radius:20px;padding:32px;max-width:440px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:qrPop 0.3s ease;";
   card.innerHTML =
     '<div style="font-size:48px;margin-bottom:16px;">🎉</div>' +
-    '<h2 style="margin:0 0 12px;font-size:22px;color:var(--text);">Thanh toán thành công!</h2>' +
-    '<p style="color:var(--text);font-size:15px;line-height:1.6;margin:0 0 8px;">Tài khoản của bạn đã được nâng cấp lên gói <strong style="color:#6366f1;">' + (tierName || '') + '</strong>.</p>' +
-    '<p style="color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 24px;">Gói sẽ hết hạn sau 30 ngày. Bạn có thể gia hạn bất cứ lúc nào.</p>' +
-    '<button id="stripeAckBtn" class="btn btn-primary" style="width:100%;justify-content:center;border-radius:12px;padding:14px;font-weight:700;">Xác nhận</button>';
+    '<h2 style="margin:0 0 12px;font-size:22px;color:var(--text);">' + t("stripe_success_title") + '</h2>' +
+    '<p style="color:var(--text);font-size:15px;line-height:1.6;margin:0 0 8px;">' + tf("stripe_success_desc1", { tier: '<strong style="color:#6366f1;">' + (tierName || '') + '</strong>' }) + '</p>' +
+    '<p style="color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 24px;">' + t("stripe_success_desc2") + '</p>' +
+    '<button id="stripeAckBtn" class="btn btn-primary" style="width:100%;justify-content:center;border-radius:12px;padding:14px;font-weight:700;">' + t("btn_confirm") + '</button>';
   modal.appendChild(card);
   document.body.appendChild(modal);
   document.getElementById("stripeAckBtn").onclick = function(){ modal.remove(); render(); renderSidebars(); };
@@ -9485,9 +9536,9 @@ function showStripeCancelModal(){
   card.style.cssText = "background:var(--card);border-radius:20px;padding:32px;max-width:440px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:qrPop 0.3s ease;";
   card.innerHTML =
     '<div style="font-size:40px;margin-bottom:16px;">' + li('alert', 40) + '</div>' +
-    '<h2 style="margin:0 0 12px;font-size:20px;color:var(--text);">Thanh toán đã hủy</h2>' +
-    '<p style="color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 24px;">Bạn đã hủy giao dịch. Tài khoản không thay đổi. Bạn có thể thử lại bất cứ lúc nào.</p>' +
-    '<button id="stripeCancelBtn" class="btn btn-ghost" style="width:100%;justify-content:center;border-radius:12px;padding:14px;font-weight:700;">Đã hiểu</button>';
+    '<h2 style="margin:0 0 12px;font-size:20px;color:var(--text);">' + t("stripe_cancel_title") + '</h2>' +
+    '<p style="color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 24px;">' + t("stripe_cancel_desc") + '</p>' +
+    '<button id="stripeCancelBtn" class="btn btn-ghost" style="width:100%;justify-content:center;border-radius:12px;padding:14px;font-weight:700;">' + t("btn_understood") + '</button>';
   modal.appendChild(card);
   document.body.appendChild(modal);
   document.getElementById("stripeCancelBtn").onclick = function(){ modal.remove(); };
@@ -9500,10 +9551,10 @@ function showVoucherSuccessModal(){
   card.style.cssText = "background:var(--card);border-radius:20px;padding:32px;max-width:440px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:qrPop 0.3s ease;";
   card.innerHTML =
     '<div style="font-size:48px;margin-bottom:16px;">🎉</div>' +
-    '<h2 style="margin:0 0 12px;font-size:22px;color:var(--text);">Mua voucher thành công!</h2>' +
-    '<p style="color:var(--text);font-size:15px;line-height:1.6;margin:0 0 8px;">Voucher code đã được gửi đến email của bạn.</p>' +
-    '<p style="color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 24px;">Kiểm tra hộp thư (kể cả mục spam) để lấy voucher code. Bạn cũng có thể xem lại trong lịch sử thanh toán.</p>' +
-    '<button id="voucherAckBtn" class="btn btn-primary" style="width:100%;justify-content:center;border-radius:12px;padding:14px;font-weight:700;">Xác nhận</button>';
+    '<h2 style="margin:0 0 12px;font-size:22px;color:var(--text);">' + t("voucher_success_title") + '</h2>' +
+    '<p style="color:var(--text);font-size:15px;line-height:1.6;margin:0 0 8px;">' + t("voucher_success_desc1") + '</p>' +
+    '<p style="color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 24px;">' + t("voucher_success_desc2") + '</p>' +
+    '<button id="voucherAckBtn" class="btn btn-primary" style="width:100%;justify-content:center;border-radius:12px;padding:14px;font-weight:700;">' + t("btn_confirm") + '</button>';
   modal.appendChild(card);
   document.body.appendChild(modal);
   document.getElementById("voucherAckBtn").onclick = function(){ modal.remove(); render(); renderSidebars(); };
@@ -9516,9 +9567,9 @@ function showVoucherCancelModal(){
   card.style.cssText = "background:var(--card);border-radius:20px;padding:32px;max-width:440px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:qrPop 0.3s ease;";
   card.innerHTML =
     '<div style="font-size:40px;margin-bottom:16px;">' + li('alert', 40) + '</div>' +
-    '<h2 style="margin:0 0 12px;font-size:20px;color:var(--text);">Đã hủy mua voucher</h2>' +
-    '<p style="color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 24px;">Giao dịch đã bị hủy. Bạn có thể thử lại bất cứ lúc nào.</p>' +
-    '<button id="voucherCancelBtn" class="btn btn-ghost" style="width:100%;justify-content:center;border-radius:12px;padding:14px;font-weight:700;">Đã hiểu</button>';
+    '<h2 style="margin:0 0 12px;font-size:20px;color:var(--text);">' + t("voucher_cancel_title") + '</h2>' +
+    '<p style="color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 24px;">' + t("voucher_cancel_desc") + '</p>' +
+    '<button id="voucherCancelBtn" class="btn btn-ghost" style="width:100%;justify-content:center;border-radius:12px;padding:14px;font-weight:700;">' + t("btn_understood") + '</button>';
   modal.appendChild(card);
   document.body.appendChild(modal);
   document.getElementById("voucherCancelBtn").onclick = function(){ modal.remove(); };
