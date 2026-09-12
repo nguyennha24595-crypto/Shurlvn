@@ -3096,7 +3096,7 @@ async function refreshCfAnalyticsCache(env) {
     const start = new Date(now.getTime() - 24 * 3600000);
     const query = "query WorkerStats($accountTag: string!, $scriptName: string!, $start: Time!, $end: Time!) {" +
       " viewer { accounts(filter: { accountTag: $accountTag }) {" +
-      " workersInvocationsAdaptiveGroups(filter: { scriptName: $scriptName, datetimeHour_geq: $start, datetimeHour_leq: $end }, limit: 100, orderBy: [datetimeHour_ASC]) {" +
+      " workersInvocationsAdaptive(filter: { scriptName: $scriptName, datetimeHour_geq: $start, datetimeHour_leq: $end }, limit: 100, orderBy: [datetimeHour_ASC]) {" +
       " dimensions { datetimeHour } sum { requests errors } quantiles { cpuTimeP90 } } } } }";
     const res = await fetch("https://api.cloudflare.com/client/v4/graphql", {
       method: "POST",
@@ -3112,7 +3112,7 @@ async function refreshCfAnalyticsCache(env) {
       return { ok: false, error: data.errors[0].message || "GraphQL error", raw: data.errors };
     }
     const accounts = data.data && data.data.viewer && data.data.viewer.accounts;
-    const groups = (accounts && accounts[0] && accounts[0].workersInvocationsAdaptiveGroups) || [];
+    const groups = (accounts && accounts[0] && accounts[0].workersInvocationsAdaptive) || [];
     let todayRequests = 0, todayErrors = 0;
     let lastCpuP90 = null;
     const hourly = groups.map(function(g){
