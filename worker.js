@@ -3610,45 +3610,40 @@ footer{text-align:center;color:var(--muted2);font-size:12px;padding:30px 20px;}
 .qr-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;text-align:center;}
 .qr-card img{max-width:100%;border-radius:8px;}
 .qr-card .qr-link{font-size:13px;color:var(--indigo);word-break:break-all;margin-top:8px;font-weight:600;}
-/* === AUTH SPLIT CARD (login/register) === */
+/* === AUTH SPLIT CARD (login/register) — diagonal wipe transition, no glow === */
 .auth-wrap{display:flex;justify-content:center;padding:20px 0;}
-.auth-glow{position:relative;width:460px;max-width:100%;border-radius:24px;}
-.auth-glow-ring{position:absolute;inset:0;border-radius:24px;overflow:hidden;z-index:0;pointer-events:none;}
-.auth-glow-ring span{position:absolute;top:0;left:0;width:32px;height:6px;border-radius:8px;background:var(--border);box-shadow:0 0 8px 1px currentColor;transform-origin:230px 260px;transform:scale(1) rotate(calc(var(--i) * (360deg / 50)));animation:authGlowBlink 3s linear infinite;animation-delay:calc(var(--i) * (3s / 50));}
-@keyframes authGlowBlink{0%{background:var(--sky);color:var(--sky);}20%{background:var(--indigo);color:var(--indigo);}40%,100%{background:var(--border);color:var(--border);}}
-.auth-split{position:relative;z-index:1;margin:5px;border-radius:20px;overflow:hidden;background:var(--card-solid);border:1px solid var(--border);box-shadow:var(--shadow);}
-.auth-color{position:absolute;top:0;bottom:0;width:44%;background:linear-gradient(150deg,var(--indigo),var(--purple));color:#fff;display:flex;flex-direction:column;justify-content:center;padding:36px 30px;z-index:2;transform-origin:50% 50%;}
+.auth-split{position:relative;z-index:1;width:460px;max-width:100%;min-width:0;margin:0 auto;border-radius:20px;overflow:hidden;background:var(--card-solid);border:1px solid var(--border);box-shadow:var(--shadow);}
+.auth-layer{min-height:440px;}
+.auth-layer.current{position:relative;}
+.auth-layer.incoming{position:absolute;inset:0;z-index:2;}
+.auth-color{position:absolute;top:0;bottom:0;width:44%;background:linear-gradient(150deg,var(--indigo),var(--purple));color:#fff;display:flex;flex-direction:column;justify-content:center;padding:36px 30px;z-index:2;}
 .auth-color h2{color:#fff;font-size:22px;margin:0 0 10px;}
 .auth-color p{color:rgba(255,255,255,0.85);font-size:13px;line-height:1.6;margin:0 0 20px;}
 .auth-color .btn-ghost-invert{background:rgba(255,255,255,0.14);color:#fff;border:1px solid rgba(255,255,255,0.45);border-radius:10px;padding:9px 20px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;align-self:flex-start;}
 .auth-color .btn-ghost-invert:hover{background:rgba(255,255,255,0.26);}
-.auth-form-side{position:relative;z-index:1;min-height:440px;display:flex;align-items:center;padding:44px 36px;transition:padding-left 0.5s cubic-bezier(.65,0,.35,1), padding-right 0.5s cubic-bezier(.65,0,.35,1);}
+.auth-form-side{position:relative;z-index:1;min-height:440px;display:flex;align-items:center;padding:44px 36px;}
 .auth-form-inner{width:100%;}
-.auth-split.mode-login .auth-color{left:56%;clip-path:polygon(22% 0,100% 0,100% 100%,0 100%);}
-.auth-split.mode-login .auth-form-side{padding-left:36px;padding-right:calc(44% + 26px);}
-.auth-split.mode-register .auth-color{left:0%;clip-path:polygon(0 0,78% 0,100% 100%,0 100%);}
-.auth-split.mode-register .auth-form-side{padding-left:calc(44% + 26px);padding-right:36px;}
-/* Hinge/seesaw switch: the diagonal leans the OPPOSITE way at the midpoint before settling,
-   combined with a horizontal slide + slight skew/rotate — not a plain left/clip-path interpolation. */
-@keyframes authHingeToRegister{
-  0%{ left:56%; clip-path:polygon(22% 0,100% 0,100% 100%,0 100%); transform:skewY(0deg) rotate(0deg); }
-  50%{ left:26%; clip-path:polygon(58% 0,100% 0,42% 100%,0 100%); transform:skewY(-6deg) rotate(-2.5deg); }
-  100%{ left:0%; clip-path:polygon(0 0,78% 0,100% 100%,0 100%); transform:skewY(0deg) rotate(0deg); }
+.auth-layer.mode-login .auth-color{left:56%;clip-path:polygon(22% 0,100% 0,100% 100%,0 100%);}
+.auth-layer.mode-login .auth-form-side{padding-left:36px;padding-right:calc(44% + 26px);}
+.auth-layer.mode-register .auth-color{left:0%;clip-path:polygon(0 0,78% 0,100% 100%,0 100%);}
+.auth-layer.mode-register .auth-form-side{padding-left:calc(44% + 26px);padding-right:36px;}
+/* Diagonal wipe: the incoming layer's OWN clip-path sweeps across at a constant diagonal angle
+   (both edge points move by the same delta, so the slant never changes) — no card-wide translateX,
+   no glow. The layer underneath (old mode) stays fully static until the wipe finishes. */
+@keyframes authWipeInFromRight{
+  0%{ clip-path:polygon(115% 0%, 100% 0%, 100% 100%, 100% 100%); }
+  100%{ clip-path:polygon(0% 0%, 100% 0%, 100% 100%, -15% 100%); }
 }
-@keyframes authHingeToLogin{
-  0%{ left:0%; clip-path:polygon(0 0,78% 0,100% 100%,0 100%); transform:skewY(0deg) rotate(0deg); }
-  50%{ left:30%; clip-path:polygon(42% 0,100% 0,58% 100%,0 100%); transform:skewY(6deg) rotate(2.5deg); }
-  100%{ left:56%; clip-path:polygon(22% 0,100% 0,100% 100%,0 100%); transform:skewY(0deg) rotate(0deg); }
+@keyframes authWipeInFromLeft{
+  0%{ clip-path:polygon(0% 0%, 0% 0%, -15% 100%, 0% 100%); }
+  100%{ clip-path:polygon(0% 0%, 115% 0%, 100% 100%, 0% 100%); }
 }
-.auth-color.hinge-to-register{animation:authHingeToRegister 0.5s cubic-bezier(.65,0,.35,1) both;}
-.auth-color.hinge-to-login{animation:authHingeToLogin 0.5s cubic-bezier(.65,0,.35,1) both;}
-.auth-wrap{min-width:0;}
-.auth-glow{min-width:0;}
+.auth-layer.wipe-in-right{animation:authWipeInFromRight 0.7s cubic-bezier(.65,0,.35,1) both;}
+.auth-layer.wipe-in-left{animation:authWipeInFromLeft 0.7s cubic-bezier(.65,0,.35,1) both;}
 @media(max-width:640px){
-  .auth-glow{width:100%;}
-  .auth-color{position:relative;width:100%;left:0!important;clip-path:none!important;padding:26px 22px;transition:none;animation:none!important;transform:none!important;}
-  .auth-split{display:flex;flex-direction:column;}
-  .auth-split.mode-register{flex-direction:column-reverse;}
+  .auth-color{position:relative;width:100%;left:0!important;clip-path:none!important;padding:26px 22px;}
+  .auth-layer{display:flex;flex-direction:column;}
+  .auth-layer.mode-register{flex-direction:column-reverse;}
   .auth-form-side{padding:26px 22px!important;min-height:0;}
 }
 </style>
@@ -7653,12 +7648,6 @@ function copyQrUrl(){
 }
 
 // ---------- AUTH SPLIT CARD (login/register share one animated shell) ----------
-function authGlowSpans(){
-  var s = "";
-  for (var i = 0; i < 50; i++) { s += '<span style="--i:' + i + ';"></span>'; }
-  return s;
-}
-
 function authColorContent(mode){
   if (mode === "login") {
     return '<h2>' + t("auth_welcome_back") + '</h2><p>' + t("auth_welcome_back_desc") + '</p>' +
@@ -7752,35 +7741,61 @@ function bindAuthForm(mode){
   if (mode === "login") bindLoginForm(); else bindRegisterForm();
 }
 
+function authLayerHtml(mode){
+  return '<div class="auth-color">' + authColorContent(mode) + '</div>' +
+    '<div class="auth-form-side"><div class="auth-form-inner">' +
+      (mode === "login" ? loginFormHtml() : registerFormHtml()) +
+    '</div></div>';
+}
+
 function renderAuthShell(app, mode){
   app.innerHTML =
-    '<div class="auth-wrap"><div class="auth-glow">' +
-    '<div class="auth-glow-ring">' + authGlowSpans() + '</div>' +
-    '<div class="auth-split mode-' + mode + '" id="authSplit">' +
-      '<div class="auth-color" id="authColor">' + authColorContent(mode) + '</div>' +
-      '<div class="auth-form-side"><div class="auth-form-inner" id="authFormInner">' +
-        (mode === "login" ? loginFormHtml() : registerFormHtml()) +
-      '</div></div>' +
+    '<div class="auth-wrap">' +
+    '<div class="auth-split" id="authSplit">' +
+      '<div class="auth-layer current mode-' + mode + '">' + authLayerHtml(mode) + '</div>' +
     '</div>' +
-    '</div></div>';
+    '</div>';
   bindAuthForm(mode);
 }
 
+var authSwitching = false;
 function switchAuthMode(target){
+  if (authSwitching) return;
   var splitEl = document.getElementById("authSplit");
-  var colorEl = document.getElementById("authColor");
-  var formInnerEl = document.getElementById("authFormInner");
-  if (!splitEl || !colorEl || !formInnerEl) return;
-  var hingeClass = target === "register" ? "hinge-to-register" : "hinge-to-login";
-  // Restart the hinge animation cleanly even if the user clicks back and forth quickly
-  colorEl.classList.remove("hinge-to-register", "hinge-to-login");
-  void colorEl.offsetWidth;
-  splitEl.className = "auth-split mode-" + target;
-  colorEl.classList.add(hingeClass);
-  colorEl.innerHTML = authColorContent(target);
-  formInnerEl.innerHTML = target === "login" ? loginFormHtml() : registerFormHtml();
+  if (!splitEl) return;
+  var currentLayer = splitEl.querySelector(".auth-layer.current");
+  if (!currentLayer) return;
+  var fromMode = currentLayer.classList.contains("mode-login") ? "login" : "register";
+  if (fromMode === target) return;
+
+  // Mobile: panels stack vertically (no diagonal to wipe across) — just swap content instantly.
+  var isMobile = window.matchMedia && window.matchMedia("(max-width: 640px)").matches;
+  if (isMobile) {
+    currentLayer.className = "auth-layer current mode-" + target;
+    currentLayer.innerHTML = authLayerHtml(target);
+    bindAuthForm(target);
+    try { history.replaceState(null, "", "#/" + target); } catch (e) { location.hash = "#/" + target; }
+    return;
+  }
+
+  authSwitching = true;
+  var wipeClass = target === "register" ? "wipe-in-right" : "wipe-in-left";
+  var newLayer = document.createElement("div");
+  newLayer.className = "auth-layer incoming mode-" + target + " " + wipeClass;
+  newLayer.innerHTML = authLayerHtml(target);
+  splitEl.appendChild(newLayer);
   bindAuthForm(target);
-  setTimeout(function(){ colorEl.classList.remove("hinge-to-register", "hinge-to-login"); }, 520);
+  var finished = false;
+  function finish(){
+    if (finished) return;
+    finished = true;
+    if (currentLayer.parentNode) currentLayer.remove();
+    newLayer.classList.remove("incoming", wipeClass);
+    newLayer.classList.add("current");
+    authSwitching = false;
+  }
+  newLayer.addEventListener("animationend", finish, { once: true });
+  setTimeout(finish, 750); // safety net in case animationend doesn't fire for any reason
   try { history.replaceState(null, "", "#/" + target); } catch (e) { location.hash = "#/" + target; }
 }
 
