@@ -775,7 +775,7 @@ async function handleGoogleAuthCallback(request, env, corsHeaders) {
   const expectedState = cookies[OAUTH_STATE_COOKIE];
 
   function redirectToLogin(errCode) {
-    const loginUrl = url.origin + "/#/login" + (errCode ? "?google_error=" + encodeURIComponent(errCode) : "");
+    const loginUrl = url.origin + "/" + (errCode ? "?google_error=" + encodeURIComponent(errCode) : "") + "#/login";
     return new Response(null, {
       status: 302,
       headers: { "Location": loginUrl, "Set-Cookie": clearOauthStateCookieHeader() }
