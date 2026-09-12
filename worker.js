@@ -3610,6 +3610,33 @@ footer{text-align:center;color:var(--muted2);font-size:12px;padding:30px 20px;}
 .qr-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;text-align:center;}
 .qr-card img{max-width:100%;border-radius:8px;}
 .qr-card .qr-link{font-size:13px;color:var(--indigo);word-break:break-all;margin-top:8px;font-weight:600;}
+/* === AUTH SPLIT CARD (login/register) === */
+.auth-wrap{display:flex;justify-content:center;padding:20px 0;}
+.auth-glow{position:relative;width:460px;max-width:100%;border-radius:24px;}
+.auth-glow-ring{position:absolute;inset:0;border-radius:24px;overflow:hidden;z-index:0;pointer-events:none;}
+.auth-glow-ring span{position:absolute;top:0;left:0;width:32px;height:6px;border-radius:8px;background:var(--border);box-shadow:0 0 8px 1px currentColor;transform-origin:230px 260px;transform:scale(1) rotate(calc(var(--i) * (360deg / 50)));animation:authGlowBlink 3s linear infinite;animation-delay:calc(var(--i) * (3s / 50));}
+@keyframes authGlowBlink{0%{background:var(--sky);color:var(--sky);}20%{background:var(--indigo);color:var(--indigo);}40%,100%{background:var(--border);color:var(--border);}}
+.auth-split{position:relative;z-index:1;margin:5px;border-radius:20px;overflow:hidden;background:var(--card-solid);border:1px solid var(--border);box-shadow:var(--shadow);}
+.auth-color{position:absolute;top:0;bottom:0;width:44%;background:linear-gradient(150deg,var(--indigo),var(--purple));color:#fff;display:flex;flex-direction:column;justify-content:center;padding:36px 30px;z-index:2;transition:left 0.6s cubic-bezier(.65,0,.35,1), clip-path 0.6s cubic-bezier(.65,0,.35,1);}
+.auth-color h2{color:#fff;font-size:22px;margin:0 0 10px;}
+.auth-color p{color:rgba(255,255,255,0.85);font-size:13px;line-height:1.6;margin:0 0 20px;}
+.auth-color .btn-ghost-invert{background:rgba(255,255,255,0.14);color:#fff;border:1px solid rgba(255,255,255,0.45);border-radius:10px;padding:9px 20px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;align-self:flex-start;}
+.auth-color .btn-ghost-invert:hover{background:rgba(255,255,255,0.26);}
+.auth-form-side{position:relative;z-index:1;min-height:440px;display:flex;align-items:center;padding:44px 36px;transition:padding-left 0.6s ease, padding-right 0.6s ease;}
+.auth-form-inner{width:100%;}
+.auth-split.mode-login .auth-color{left:56%;clip-path:polygon(22% 0,100% 0,100% 100%,0 100%);}
+.auth-split.mode-login .auth-form-side{padding-left:36px;padding-right:calc(44% + 26px);}
+.auth-split.mode-register .auth-color{left:0%;clip-path:polygon(0 0,78% 0,100% 100%,0 100%);}
+.auth-split.mode-register .auth-form-side{padding-left:calc(44% + 26px);padding-right:36px;}
+.auth-wrap{min-width:0;}
+.auth-glow{min-width:0;}
+@media(max-width:640px){
+  .auth-glow{width:100%;}
+  .auth-color{position:relative;width:100%;left:0!important;clip-path:none!important;padding:26px 22px;transition:none;}
+  .auth-split{display:flex;flex-direction:column;}
+  .auth-split.mode-register{flex-direction:column-reverse;}
+  .auth-form-side{padding:26px 22px!important;min-height:0;}
+}
 </style>
 </head>
 <body>
@@ -3660,6 +3687,8 @@ var i18n = {
     // ===== AUTH =====
     login_sub:"Chào mừng quay lại SHURL.", login_security:"Bảo mật bởi Cloudflare · Tạo tài khoản để bắt đầu",
     no_account:"Chưa có tài khoản?", have_account:"Đã có tài khoản?", demo_accounts:" ",
+    auth_welcome_back:"Chào mừng trở lại!", auth_welcome_back_desc:"Đăng nhập để tiếp tục quản lý Short URL, QR Code và chiến dịch của bạn.",
+    auth_hello_friend:"Xin chào, bạn mới!", auth_hello_friend_desc:"Tạo tài khoản miễn phí để bắt đầu rút gọn link và theo dõi hiệu quả.",
     register_sub:"Tạo tài khoản miễn phí để quản lý link.", register_free:"Đăng ký miễn phí",
     reg_username:"Tên đăng nhập (3-25 ký tự)", reg_email:"Email (tuỳ chọn)", reg_password:"Mật khẩu (tối thiểu 9 ký tự và có ít nhất 1 chữ viết hoa)",
     reg_newpassword:"Mật khẩu mới",
@@ -3985,6 +4014,8 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     // ===== AUTH =====
     login_sub:"Welcome back to SHURL.", login_security:"Secured byflare · Create an account to get started",
     no_account:"No account yet?", have_account:"Already have an account?", demo_accounts:" ",
+    auth_welcome_back:"Welcome Back!", auth_welcome_back_desc:"Log in to keep managing your Short URLs, QR codes, and campaigns.",
+    auth_hello_friend:"Hello, Friend!", auth_hello_friend_desc:"Create a free account to start shortening links and tracking performance.",
     register_sub:"Create a free account to manage your links.", register_free:"Sign up free",
     reg_username:"Username (3-25 characters)", reg_email:"Email (optional)", reg_password:"Password (min. 9 characters with at least 1 uppercase letter)",
     reg_newpassword:"New password",
@@ -7607,11 +7638,24 @@ function copyQrUrl(){
   });
 }
 
-// ---------- AUTH ----------
-function renderLogin(app){
-  app.innerHTML =
-    '<div class="card" style="max-width:420px;margin:0 auto;">' +
-    '<h1>' + t("login") + '</h1><p class="sub">' + t("login_sub") + '</p>' +
+// ---------- AUTH SPLIT CARD (login/register share one animated shell) ----------
+function authGlowSpans(){
+  var s = "";
+  for (var i = 0; i < 50; i++) { s += '<span style="--i:' + i + ';"></span>'; }
+  return s;
+}
+
+function authColorContent(mode){
+  if (mode === "login") {
+    return '<h2>' + t("auth_welcome_back") + '</h2><p>' + t("auth_welcome_back_desc") + '</p>' +
+      '<button type="button" class="btn-ghost-invert" onclick="switchAuthMode(&#39;register&#39;)">' + t("register") + '</button>';
+  }
+  return '<h2>' + t("auth_hello_friend") + '</h2><p>' + t("auth_hello_friend_desc") + '</p>' +
+    '<button type="button" class="btn-ghost-invert" onclick="switchAuthMode(&#39;login&#39;)">' + t("login") + '</button>';
+}
+
+function loginFormHtml(){
+  return '<h1>' + t("login") + '</h1><p class="sub">' + t("login_sub") + '</p>' +
     '<form id="loginForm">' +
       '<label>' + t("reg_username") + '</label><input type="text" id="l_user" required>' +
       '<label>' + t("reg_password") + '</label><input type="password" id="l_pass" required>' +
@@ -7622,12 +7666,28 @@ function renderLogin(app){
       '<div style="margin-top:18px;"><button class="btn btn-primary" type="submit" style="width:100%;justify-content:center;">' + t("login") + '</button></div>' +
     '</form>' +
     '<p class="hint" style="margin-top:16px;display:flex;justify-content:space-between;">' +
-      '<span>' + t("no_account") + ' <a href="#/register">' + t("register") + '</a></span>' +
+      '<span>' + t("no_account") + ' <a href="javascript:void(0)" onclick="switchAuthMode(&#39;register&#39;)">' + t("register") + '</a></span>' +
       '<a href="#/forgot-password">' + t("forgot_password") + '</a>' +
     '</p>' +
-    '<p class="hint">' + t("login_security") + '</p>' +
-    '</div>';
-  document.getElementById("loginForm").addEventListener("submit", function(e){
+    '<p class="hint">' + t("login_security") + '</p>';
+}
+
+function registerFormHtml(){
+  return '<h1>' + t("register") + '</h1><p class="sub">' + t("register_sub") + '</p>' +
+    '<form id="regForm">' +
+      '<label>' + t("reg_username") + '</label><input type="text" id="r_user" required>' +
+      '<label>' + t("reg_email") + '</label><input type="email" id="r_email">' +
+      '<label>' + t("reg_password") + '</label><input type="password" id="r_pass" required>' +
+      '<div id="regMsg"></div>' +
+      '<div style="margin-top:18px;"><button class="btn btn-primary" type="submit" style="width:100%;justify-content:center;">' + t("register_free") + '</button></div>' +
+    '</form>' +
+    '<p class="hint" style="margin-top:16px;">' + t("have_account") + ' <a href="javascript:void(0)" onclick="switchAuthMode(&#39;login&#39;)">' + t("login") + '</a></p>';
+}
+
+function bindLoginForm(){
+  var formEl = document.getElementById("loginForm");
+  if (!formEl) return;
+  formEl.addEventListener("submit", function(e){
     e.preventDefault();
     var msg = document.getElementById("loginMsg");
     msg.innerHTML = "";
@@ -7657,25 +7717,10 @@ function renderLogin(app){
   });
 }
 
-function renderResetPassword(app){
-  app.innerHTML = '<div class="card"><p class="sub">Đang cập nhật...</p></div>';
-}
-
-
-function renderRegister(app){
-  app.innerHTML =
-    '<div class="card" style="max-width:420px;margin:0 auto;">' +
-    '<h1>' + t("register") + '</h1><p class="sub">' + t("register_sub") + '</p>' +
-    '<form id="regForm">' +
-      '<label>' + t("reg_username") + '</label><input type="text" id="r_user" required>' +
-      '<label>' + t("reg_email") + '</label><input type="email" id="r_email">' +
-      '<label>' + t("reg_password") + '</label><input type="password" id="r_pass" required>' +
-      '<div id="regMsg"></div>' +
-'<div style="margin-top:18px;"><button class="btn btn-primary" type="submit" style="width:100%;justify-content:center;">' + t("register_free") + '</button></div>' +
-    '</form>' +
-'<p class="hint" style="margin-top:16px;">' + t("have_account") + ' <a href="#/login">' + t("login") + '</a></p>' +
-    '</div>';
-  document.getElementById("regForm").addEventListener("submit", function(e){
+function bindRegisterForm(){
+  var formEl = document.getElementById("regForm");
+  if (!formEl) return;
+  formEl.addEventListener("submit", function(e){
     e.preventDefault();
     var msg = document.getElementById("regMsg");
     msg.innerHTML = "";
@@ -7688,6 +7733,44 @@ function renderRegister(app){
     .catch(function(err){ msg.innerHTML = '<div class="msg msg-error">' + esc(err.message) + '</div>'; });
   });
 }
+
+function bindAuthForm(mode){
+  if (mode === "login") bindLoginForm(); else bindRegisterForm();
+}
+
+function renderAuthShell(app, mode){
+  app.innerHTML =
+    '<div class="auth-wrap"><div class="auth-glow">' +
+    '<div class="auth-glow-ring">' + authGlowSpans() + '</div>' +
+    '<div class="auth-split mode-' + mode + '" id="authSplit">' +
+      '<div class="auth-color" id="authColor">' + authColorContent(mode) + '</div>' +
+      '<div class="auth-form-side"><div class="auth-form-inner" id="authFormInner">' +
+        (mode === "login" ? loginFormHtml() : registerFormHtml()) +
+      '</div></div>' +
+    '</div>' +
+    '</div></div>';
+  bindAuthForm(mode);
+}
+
+function switchAuthMode(target){
+  var splitEl = document.getElementById("authSplit");
+  var colorEl = document.getElementById("authColor");
+  var formInnerEl = document.getElementById("authFormInner");
+  if (!splitEl || !colorEl || !formInnerEl) return;
+  splitEl.className = "auth-split mode-" + target;
+  colorEl.innerHTML = authColorContent(target);
+  formInnerEl.innerHTML = target === "login" ? loginFormHtml() : registerFormHtml();
+  bindAuthForm(target);
+  try { history.replaceState(null, "", "#/" + target); } catch (e) { location.hash = "#/" + target; }
+}
+
+function renderLogin(app){ renderAuthShell(app, "login"); }
+
+function renderResetPassword(app){
+  app.innerHTML = '<div class="card"><p class="sub">Đang cập nhật...</p></div>';
+}
+
+function renderRegister(app){ renderAuthShell(app, "register"); }
 
 // ---------- DASHBOARD ----------
 function renderDashboard(app){
