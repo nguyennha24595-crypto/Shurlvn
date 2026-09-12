@@ -204,6 +204,8 @@ export default {
       if (path === "api/auth/2fa/setup" && method === "POST") return handleSetup2fa(request, env, corsHeaders);
       if (path === "api/auth/2fa/verify" && method === "POST") return handleVerify2fa(request, env, corsHeaders);
       if (path === "api/auth/2fa/disable" && method === "POST") return handleDisable2fa(request, env, corsHeaders);
+      if (path === "api/auth/google" && method === "GET") return handleGoogleAuthStart(request, env, corsHeaders);
+      if (path === "api/auth/google/callback" && method === "GET") return handleGoogleAuthCallback(request, env, corsHeaders);
 
       // ===== 2. CORE LINK MANAGEMENT (dùng bởi giao diện web, qua cookie) =====
       if (path === "api/links" && method === "GET") return handleListLinks(request, env, url, corsHeaders);
@@ -731,6 +733,140 @@ async function handleLogout(request, env, corsHeaders) {
     await env.LINKS_KV.delete("session:" + sessionToken);
   }
   return json({ ok: true }, 200, corsHeaders, { "Set-Cookie": clearSessionCookieHeader() });
+}
+
+const OAUTH_STATE_COOKIE = "shurl_oauth_state";
+
+function clearOauthStateCookieHeader() {
+  return `${OAUTH_STATE_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Secure; Max-Age=0`;
+}
+
+async function handleGoogleAuthStart(request, env, corsHeaders) {
+  if (!env.GOOGLE_CLIENT_ID) {
+    return json({ error: "Đăng nhập Google chưa được cấu hình." }, 500, corsHeaders);
+  }
+  const url = new URL(request.url);
+  const redirectUri = url.origin + "/api/auth/google/callback";
+  const state = randomHex(16);
+
+  const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+  authUrl.searchParams.set("client_id", env.GOOGLE_CLIENT_ID);
+  authUrl.searchParams.set("redirect_uri", redirectUri);
+  authUrl.searchParams.set("response_type", "code");
+  authUrl.searchParams.set("scope", "openid email profile");
+  authUrl.searchParams.set("state", state);
+  authUrl.searchParams.set("prompt", "select_account");
+
+  return new Response(null, {
+    status: 302,
+    headers: {
+      "Location": authUrl.toString(),
+      "Set-Cookie": `${OAUTH_STATE_COOKIE}=${state}; Path=/; HttpOnly; SameSite=Lax; Secure; Max-Age=600`
+    }
+  });
+}
+
+async function handleGoogleAuthCallback(request, env, corsHeaders) {
+  const url = new URL(request.url);
+  const code = url.searchParams.get("code");
+  const state = url.searchParams.get("state");
+  const errorParam = url.searchParams.get("error");
+  const cookies = parseCookies(request);
+  const expectedState = cookies[OAUTH_STATE_COOKIE];
+
+  function redirectToLogin(errCode) {
+    const loginUrl = url.origin + "/#/login" + (errCode ? "?google_error=" + encodeURIComponent(errCode) : "");
+    return new Response(null, {
+      status: 302,
+      headers: { "Location": loginUrl, "Set-Cookie": clearOauthStateCookieHeader() }
+    });
+  }
+
+  if (errorParam) return redirectToLogin(errorParam);
+  if (!code || !state || !expectedState || state !== expectedState) return redirectToLogin("invalid_state");
+  if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) return redirectToLogin("not_configured");
+
+  const redirectUri = url.origin + "/api/auth/google/callback";
+
+  let tokenData;
+  try {
+    const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        code: code,
+        client_id: env.GOOGLE_CLIENT_ID,
+        client_secret: env.GOOGLE_CLIENT_SECRET,
+        redirect_uri: redirectUri,
+        grant_type: "authorization_code"
+      }).toString()
+    });
+    tokenData = await tokenRes.json();
+    if (!tokenRes.ok || !tokenData.access_token) throw new Error("token_exchange_failed");
+  } catch (e) {
+    return redirectToLogin("token_exchange_failed");
+  }
+
+  let profile;
+  try {
+    const profileRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: { "Authorization": "Bearer " + tokenData.access_token }
+    });
+    profile = await profileRes.json();
+    if (!profileRes.ok || !profile.sub) throw new Error("profile_fetch_failed");
+  } catch (e) {
+    return redirectToLogin("profile_fetch_failed");
+  }
+
+  if (!profile.email || profile.email_verified === false) {
+    return redirectToLogin("email_not_verified");
+  }
+
+  const googleEmail = String(profile.email).trim().toLowerCase();
+  const googleSub = String(profile.sub);
+
+  let username = await env.LINKS_KV.get("googleid:" + googleSub);
+  let user = username ? await getUser(env, username) : null;
+
+  if (!user) {
+    // Lần đầu đăng nhập Google — thử liên kết với tài khoản đã có cùng email (đã được Google xác minh),
+    // nếu không có thì tạo tài khoản mới.
+    const allUsers = await listAllUsers(env);
+    const existingByEmail = allUsers.find(function (u) { return u.email && u.email.trim().toLowerCase() === googleEmail; });
+    if (existingByEmail) {
+      user = existingByEmail;
+    } else {
+      let base = googleEmail.split("@")[0].toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 20);
+      if (base.length < 3) base = (base + "user").slice(0, 20);
+      let candidate = base;
+      let suffix = 0;
+      while (await getUser(env, candidate)) {
+        suffix++;
+        candidate = (base + suffix).slice(0, 25);
+      }
+      user = {
+        id: "usr_" + randomHex(8),
+        username: candidate,
+        email: profile.email,
+        role: "free",
+        createdAt: new Date().toISOString(),
+        authProvider: "google"
+      };
+      await putUser(env, user);
+    }
+    await env.LINKS_KV.put("googleid:" + googleSub, user.username.toLowerCase());
+  }
+
+  if (user.banned) return redirectToLogin("account_banned");
+
+  const sessionToken = randomHex(32);
+  await env.LINKS_KV.put("session:" + sessionToken, user.username.toLowerCase(), { expirationTtl: SESSION_TTL });
+
+  const headers = new Headers();
+  headers.set("Location", url.origin + "/#/dashboard");
+  headers.append("Set-Cookie", setSessionCookieHeader(sessionToken, SESSION_TTL));
+  headers.append("Set-Cookie", clearOauthStateCookieHeader());
+  return new Response(null, { status: 302, headers: headers });
 }
 
 async function handleMe(request, env, corsHeaders) {
@@ -3737,7 +3873,7 @@ var i18n = {
     dashboard:"Bảng điều khiển", account:"Tài khoản", api:"API", bulk:"Bulk", admin:"Quản trị",
     // ===== AUTH =====
     login_sub:"Chào mừng quay lại SHURL.", login_security:"Bảo mật bởi Cloude · Tạo tài khoản để bắt đầu",
-    auth_or:"hoặc", auth_google_login:"Đăng nhập với Google", auth_google_soon:"Sắp ra mắt",
+    auth_or:"hoặc", auth_google_login:"Đăng nhập với Google", google_login_error:"Đăng nhập Google thất bại. Vui lòng thử lại.",
     no_account:"Chưa có tài khoản?", have_account:"Đã có tài khoản?", demo_accounts:" ",
     auth_welcome_back:"Chào mừng trở lại!", auth_welcome_back_desc:"Đăng nhập để tiếp tục quản lý Short URL, QR Code và chiến dịch của bạn.",
     auth_hello_friend:"Xin chào, bạn mới!", auth_hello_friend_desc:"Tạo tài khoản miễn phí để bắt đầu rút gọn link và theo dõi hiệu quả.",
@@ -4075,7 +4211,7 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     dashboard:"Dashboard", account:"Account", api:"API", bulk:"Bulk", admin:"Admin",
     // ===== AUTH =====
     login_sub:"Welcome back to SHURL.", login_security:"Secured by Cloude · Create an account to get started",
-    auth_or:"or", auth_google_login:"Sign in with Google", auth_google_soon:"Coming soon",
+    auth_or:"or", auth_google_login:"Sign in with Google", google_login_error:"Google sign-in failed. Please try again.",
     no_account:"No account yet?", have_account:"Already have an account?", demo_accounts:" ",
     auth_welcome_back:"Welcome Back!", auth_welcome_back_desc:"Log in to keep managing your Short URLs, QR codes, and campaigns.",
     auth_hello_friend:"Hello, Friend!", auth_hello_friend_desc:"Create a free account to start shortening links and tracking performance.",
@@ -7706,7 +7842,7 @@ function loginFormHtml(){
       '<span style="font-size:12px;color:var(--muted);">' + t("auth_or") + '</span>' +
       '<div style="flex:1;height:1px;background:var(--border);"></div>' +
     '</div>' +
-    '<button type="button" class="btn btn-ghost" onclick="googleAuthPlaceholder()" style="width:100%;justify-content:center;gap:10px;display:flex;align-items:center;">' +
+    '<button type="button" class="btn btn-ghost" onclick="startGoogleAuth()" style="width:100%;justify-content:center;gap:10px;display:flex;align-items:center;">' +
       '<svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">' +
         '<path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"/>' +
         '<path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z"/>' +
@@ -7734,11 +7870,19 @@ function registerFormHtml(){
     '<p class="hint" style="margin-top:16px;">' + t("have_account") + ' <a href="javascript:void(0)" onclick="switchAuthMode(&#39;login&#39;)">' + t("login") + '</a></p>';
 }
 
-function googleAuthPlaceholder(){ alert(t("auth_google_soon")); }
+function startGoogleAuth(){ window.location.href = "/api/auth/google"; }
 
 function bindLoginForm(){
   var formEl = document.getElementById("loginForm");
   if (!formEl) return;
+
+  if (window.location.search.indexOf("google_error=") !== -1) {
+    var msgEl = document.getElementById("loginMsg");
+    if (msgEl) msgEl.innerHTML = '<div class="msg msg-error">' + esc(t("google_login_error")) + '</div>';
+    var cleanUrl = window.location.origin + window.location.pathname + window.location.hash;
+    window.history.replaceState({}, document.title, cleanUrl);
+  }
+
   formEl.addEventListener("submit", function(e){
     e.preventDefault();
     var msg = document.getElementById("loginMsg");
