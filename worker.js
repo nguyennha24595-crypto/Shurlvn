@@ -1535,7 +1535,10 @@ async function handleRestoreLink(request, env, code, corsHeaders) {
   const raw = await env.LINKS_KV.get("link:" + code);
   if (!raw) return json({ error: "Link không tồn tại" }, 404, corsHeaders);
   const link = JSON.parse(raw);
-  if (link.owner !== user.username && user.role !== "admin") return json({ error: "Không có quyền" }, 403, corsHeaders);
+  if (link.owner !== user.username && user.role !== "admin") {
+    const inTeam = user.teamId ? await isUserInSameTeam(env, user.username, link.owner) : false;
+    if (!inTeam) return json({ error: "Không có quyền" }, 403, corsHeaders);
+  }
   link.isDeleted = false;
   delete link.deletedAt;
   await env.LINKS_KV.put("link:" + code, JSON.stringify(link));
@@ -1548,7 +1551,10 @@ async function handleForceDeleteLink(request, env, code, corsHeaders) {
   const raw = await env.LINKS_KV.get("link:" + code);
   if (!raw) return json({ error: "Link không tồn tại" }, 404, corsHeaders);
   const link = JSON.parse(raw);
-  if (link.owner !== user.username && user.role !== "admin") return json({ error: "Không có quyền" }, 403, corsHeaders);
+  if (link.owner !== user.username && user.role !== "admin") {
+    const inTeam = user.teamId ? await isUserInSameTeam(env, user.username, link.owner) : false;
+    if (!inTeam) return json({ error: "Không có quyền" }, 403, corsHeaders);
+  }
   await env.LINKS_KV.delete("link:" + code);
   // Xoá click data
   await env.LINKS_KV.delete("clicks:" + code);
@@ -3623,9 +3629,9 @@ footer{text-align:center;color:var(--muted2);font-size:12px;padding:30px 20px;}
 .auth-color .btn-ghost-invert:hover{background:rgba(255,255,255,0.26);}
 .auth-form-side{position:relative;z-index:1;min-height:440px;display:flex;align-items:center;padding:44px 36px;}
 .auth-form-inner{width:100%;}
-.auth-layer.mode-login .auth-color{left:56%;clip-path:polygon(22% 0,100% 0,100% 100%,0 100%);}
+.auth-layer.mode-login .auth-color{left:56%;clip-path:polygon(14% 0,100% 0,100% 100%,0 100%);}
 .auth-layer.mode-login .auth-form-side{padding-left:36px;padding-right:calc(44% + 26px);}
-.auth-layer.mode-register .auth-color{left:0%;clip-path:polygon(0 0,78% 0,100% 100%,0 100%);}
+.auth-layer.mode-register .auth-color{left:0%;clip-path:polygon(0 0,86% 0,100% 100%,0 100%);}
 .auth-layer.mode-register .auth-form-side{padding-left:calc(44% + 26px);padding-right:36px;}
 /* Diagonal wipe: the incoming layer's OWN clip-path sweeps across at a constant diagonal angle
    (both edge points move by the same delta, so the slant never changes) — no card-wide translateX,
