@@ -6928,9 +6928,23 @@ function switchLang(lang){
   try { localStorage.setItem("shurl_lang", lang); } catch(e) {}
   langSubmenuOpen = false;
   langDropdownOpen = false;
+  guestLangDropdownOpen = false;
   render();
   var m = document.getElementById("sbUserMenu");
   if (m) m.classList.remove("show");
+}
+
+var guestLangDropdownOpen = false;
+function toggleGuestLangDropdown(e){
+  if (e) e.stopPropagation();
+  guestLangDropdownOpen = !guestLangDropdownOpen;
+  renderNav();
+}
+function closeGuestLangDropdownHandler(e){
+  if (guestLangDropdownOpen && !e.target.closest("#guestLangWrap")) {
+    guestLangDropdownOpen = false;
+    renderNav();
+  }
 }
 // === MAINTENANCE STATUS (frontend) ===
 state.maintenance = {};
@@ -7120,6 +7134,19 @@ function renderNav() {
       hHtml += '<div class="sb-user-menu-item" onclick="doLogout();closeUserMenu();" style="color:var(--btn-danger-color);">' + li("x", 16) + ' ' + tr("logout", "Đăng xuất") + '</div>';
       hHtml += '</div></div>';
     } else {
+      hHtml += '<div style="position:relative;" id="guestLangWrap">';
+      hHtml += '<button class="sb-icon-btn" onclick="toggleGuestLangDropdown(event)" title="' + tr("language", "Ngôn ngữ") + '">' + li("globe", 18) + '</button>';
+      if (guestLangDropdownOpen) {
+        hHtml += '<div class="lang-dropdown">';
+        for (var gi = 0; gi < LANGS.length; gi++) {
+          var gl = LANGS[gi];
+          var gActive = gl === currentLang;
+          hHtml += '<div class="lang-item ' + (gActive ? "active" : "") + '" onclick="switchLang(&#39;' + gl + '&#39;)">' +
+            (gActive ? li("check", 14) + ' ' : '') + LANG_LABELS[gl] + '</div>';
+        }
+        hHtml += '</div>';
+      }
+      hHtml += '</div>';
       hHtml += '<button class="sb-icon-btn" onclick="navigate(&#39;login&#39;)" title="' + tr("login", "Đăng nhập") + '">' + li("user", 18) + '</button>';
       hHtml += '<button class="sb-icon-btn" onclick="navigate(&#39;register&#39;)" title="' + tr("register", "Đăng ký") + '">' + li("plus", 18) + '</button>';
     }
@@ -7131,6 +7158,8 @@ function renderNav() {
     }
     document.removeEventListener("click", closeUserMenuHandler);
     document.addEventListener("click", closeUserMenuHandler);
+    document.removeEventListener("click", closeGuestLangDropdownHandler);
+    document.addEventListener("click", closeGuestLangDropdownHandler);
     var bell = document.getElementById("adminBell");
     if (bell) { bell.onclick = function() { toggleAdminNotifications(); }; fetchAdminNotifications(); }
     var userBell = document.getElementById("userBell");
