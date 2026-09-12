@@ -3613,7 +3613,7 @@ footer{text-align:center;color:var(--muted2);font-size:12px;padding:30px 20px;}
 /* === AUTH SPLIT CARD (login/register) — diagonal wipe transition, no glow === */
 .auth-wrap{display:flex;justify-content:center;padding:20px 0;}
 .auth-split{position:relative;z-index:1;width:460px;max-width:100%;min-width:0;margin:0 auto;border-radius:20px;overflow:hidden;background:var(--card-solid);border:1px solid var(--border);box-shadow:var(--shadow);}
-.auth-layer{min-height:440px;}
+.auth-layer{min-height:440px;background:var(--card-solid);}
 .auth-layer.current{position:relative;}
 .auth-layer.incoming{position:absolute;inset:0;z-index:2;}
 .auth-color{position:absolute;top:0;bottom:0;width:44%;background:linear-gradient(150deg,var(--indigo),var(--purple));color:#fff;display:flex;flex-direction:column;justify-content:center;padding:36px 30px;z-index:2;}
@@ -3730,7 +3730,8 @@ var i18n = {
     home:"Trang chủ", nav_home:"Trang chủ", plans:"Bảng giá", login:"Đăng nhập", register:"Đăng ký", logout:"Đăng xuất", language:"Ngôn ngữ",
     dashboard:"Bảng điều khiển", account:"Tài khoản", api:"API", bulk:"Bulk", admin:"Quản trị",
     // ===== AUTH =====
-    login_sub:"Chào mừng quay lại SHURL.", login_security:"Bảo mật bởi Cloudflare · Tạo tài khoản để bắt đầu",
+    login_sub:"Chào mừng quay lại SHURL.", login_security:"Bảo mật bởi Cloude · Tạo tài khoản để bắt đầu",
+    auth_or:"hoặc", auth_google_register:"Đăng ký với Google", auth_google_soon:"Sắp ra mắt",
     no_account:"Chưa có tài khoản?", have_account:"Đã có tài khoản?", demo_accounts:" ",
     auth_welcome_back:"Chào mừng trở lại!", auth_welcome_back_desc:"Đăng nhập để tiếp tục quản lý Short URL, QR Code và chiến dịch của bạn.",
     auth_hello_friend:"Xin chào, bạn mới!", auth_hello_friend_desc:"Tạo tài khoản miễn phí để bắt đầu rút gọn link và theo dõi hiệu quả.",
@@ -4067,7 +4068,8 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     home:"Home", nav_home:"Home", plans:"Pricing", login:"Log in", register:"Sign up", logout:"Log out", language:"Language",
     dashboard:"Dashboard", account:"Account", api:"API", bulk:"Bulk", admin:"Admin",
     // ===== AUTH =====
-    login_sub:"Welcome back to SHURL.", login_security:"Secured byflare · Create an account to get started",
+    login_sub:"Welcome back to SHURL.", login_security:"Secured by Cloude · Create an account to get started",
+    auth_or:"or", auth_google_register:"Sign up with Google", auth_google_soon:"Coming soon",
     no_account:"No account yet?", have_account:"Already have an account?", demo_accounts:" ",
     auth_welcome_back:"Welcome Back!", auth_welcome_back_desc:"Log in to keep managing your Short URLs, QR codes, and campaigns.",
     auth_hello_friend:"Hello, Friend!", auth_hello_friend_desc:"Create a free account to start shortening links and tracking performance.",
@@ -7097,11 +7099,11 @@ function renderNav() {
   if (state.user) {
     html += '<div class="sb-section-label">Tools</div>';
     html += sbItem("bulk", "package", "Bulk");
-    if (isProOrAbove(state.user)) html += sbItem("webhooks", "webhook", "Webhooks");
+    if (isProOrAbove(state.user)) html += sbItem("webhooks", "zap", "Webhooks");
     if (isProOrAbove(state.user)) html += sbItem("export", "download", "Export");
-    if (state.limits && state.limits.hasCampaignHistory) html += sbItem("campaigns", "megaphone", "Campaigns");
+    if (state.limits && state.limits.hasCampaignHistory) html += sbItem("campaigns", "target", "Campaigns");
     if (state.limits && state.limits.hasTeam) html += sbItem("team", "users", "Team");
-    html += sbItem("api", "plug", "API");
+    html += sbItem("api", "code2", "API");
   }
   html += '<div class="sb-section-label">System</div>';
   html += sbItem("pricing", "ticket", tr("plans", "Bảng giá"));
@@ -7112,6 +7114,9 @@ function renderNav() {
 
   el.innerHTML = html;
   if (footerEl) footerEl.innerHTML = renderLangSwitcher();
+
+  var searchBox = document.getElementById("sbSearchBox");
+  if (searchBox) searchBox.style.display = (route === "dashboard") ? "" : "none";
 
   if (headerRight) {
     var hHtml = "";
@@ -7184,7 +7189,18 @@ function toggleTheme() {
 function toggleSidebar() { /* removed - sidebar now expands on hover */ }
 function openSidebarMobile() { var sb = document.getElementById("sidebar"); var ov = document.getElementById("sbOverlay"); if (sb) sb.classList.add("mobile-open"); if (ov) ov.classList.add("show"); }
 function closeSidebarMobile() { var sb = document.getElementById("sidebar"); var ov = document.getElementById("sbOverlay"); if (sb) sb.classList.remove("mobile-open"); if (ov) ov.classList.remove("show"); }
-function sbSearchLinks(val) { var t = document.getElementById("linksTable"); if (!t) return; var r = t.querySelectorAll("tbody tr"); var q = (val || "").toLowerCase(); r.forEach(function(x) { x.style.display = (x.textContent.toLowerCase().indexOf(q) !== -1) ? "" : "none"; }); }
+function sbSearchLinks(val) {
+  var t = document.getElementById("linksBody");
+  if (!t) return;
+  var q = (val || "").toLowerCase();
+  t.querySelectorAll("tr").forEach(function(x) {
+    if (x.classList.contains("row-actions")) return;
+    var match = x.textContent.toLowerCase().indexOf(q) !== -1;
+    x.style.display = match ? "" : "none";
+    var next = x.nextElementSibling;
+    if (next && next.classList.contains("row-actions")) next.style.display = match ? "" : "none";
+  });
+}
 
 function render(){
   if (window.location.search.includes("upgrade=")) {
@@ -7571,9 +7587,6 @@ function bindRowActions(){
   });
 }
 
-var lastCreatedCode = null;
-var lastCreatedShortUrl = null;
-
 function updatePreview(){
   var url = document.getElementById("c_url").value.trim();
   var alias = document.getElementById("c_code").value.trim();
@@ -7603,16 +7616,6 @@ document.addEventListener("input", function(e){
   }
 });
 
-function genQrFromCreated(){
-  if (!lastCreatedCode){ alert("Vui lòng tạo link trước"); return; }
-  var shortUrl = lastCreatedShortUrl || (location.origin + "/" + lastCreatedCode);
-  var color = document.getElementById("qrColor").value.replace("#", "");
-  var size = document.getElementById("qrSize").value;
-  var display = document.getElementById("qrDisplay");
-  display.style.width = size + "px";
-  display.style.height = size + "px";
-  display.innerHTML = '<img id="qrImg" src="https://api.qrserver.com/v1/create-qr-code/?size=' + size + "x" + size + "&data=" + encodeURIComponent(shortUrl) + "&color=" + color + '" style="width:100%;height:100%;" alt="QR">';
-}
 var bulkQrData = [];
 
 function generateBulkQR(){
@@ -7671,51 +7674,6 @@ function downloadBulkQR(){
   URL.revokeObjectURL(a.href);
 }
 
-function updateQrColor(){
-  if (!lastCreatedCode) return;
-  var shortUrl = lastCreatedShortUrl || (location.origin + "/" + lastCreatedCode);
-  var color = document.getElementById("qrColor").value.replace("#", "");
-  var size = document.getElementById("qrSize").value;
-  var img = document.getElementById("qrImg");
-  if (img) img.src = "https://api.qrserver.com/v1/create-qr-code/?size=" + size + "x" + size + "&data=" + encodeURIComponent(shortUrl) + "&color=" + color;
-}
-
-function updateQrSize(){
-  if (!lastCreatedCode) return;
-  var shortUrl = lastCreatedShortUrl || (location.origin + "/" + lastCreatedCode);
-  var color = document.getElementById("qrColor").value.replace("#", "");
-  var size = document.getElementById("qrSize").value;
-  var display = document.getElementById("qrDisplay");
-  display.style.width = size + "px";
-  display.style.height = size + "px";
-  var img = document.getElementById("qrImg");
-  if (img) img.src = "https://api.qrserver.com/v1/create-qr-code/?size=" + size + "x" + size + "&data=" + encodeURIComponent(shortUrl) + "&color=" + color;
-}
-
-function downloadCreatedQr(){
-  if (!lastCreatedCode) return;
-  var shortUrl = lastCreatedShortUrl || (location.origin + "/" + lastCreatedCode);
-  var color = document.getElementById("qrColor").value.replace("#", "");
-  var size = document.getElementById("qrSize").value;
-  var a = document.createElement("a");
-  a.href = "https://api.qrserver.com/v1/create-qr-code/?size=" + size + "x" + size + "&data=" + encodeURIComponent(shortUrl) + "&color=" + color;
-  a.download = "qr_" + lastCreatedCode + ".png";
-  a.target = "_blank";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-}
-
-function copyQrUrl(){
-  if (!lastCreatedShortUrl) return;
-  navigator.clipboard.writeText(lastCreatedShortUrl).then(function(){
-    var el = document.getElementById("qrShortUrl");
-    var orig = el.textContent;
-    el.textContent = " ✓ Đã copy!";
-    setTimeout(function(){ el.textContent = orig; }, 1500);
-  });
-}
-
 // ---------- AUTH SPLIT CARD (login/register share one animated shell) ----------
 function authColorContent(mode){
   if (mode === "login") {
@@ -7753,8 +7711,24 @@ function registerFormHtml(){
       '<div id="regMsg"></div>' +
       '<div style="margin-top:18px;"><button class="btn btn-primary" type="submit" style="width:100%;justify-content:center;">' + t("register_free") + '</button></div>' +
     '</form>' +
+    '<div style="display:flex;align-items:center;gap:10px;margin:18px 0;">' +
+      '<div style="flex:1;height:1px;background:var(--border);"></div>' +
+      '<span style="font-size:12px;color:var(--muted);">' + t("auth_or") + '</span>' +
+      '<div style="flex:1;height:1px;background:var(--border);"></div>' +
+    '</div>' +
+    '<button type="button" class="btn btn-ghost" onclick="googleAuthPlaceholder()" style="width:100%;justify-content:center;gap:10px;display:flex;align-items:center;">' +
+      '<svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">' +
+        '<path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"/>' +
+        '<path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z"/>' +
+        '<path fill="#FBBC05" d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24s.85 6.91 2.34 9.88l7.35-5.7z"/>' +
+        '<path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z"/>' +
+      '</svg>' +
+      t("auth_google_register") +
+    '</button>' +
     '<p class="hint" style="margin-top:16px;">' + t("have_account") + ' <a href="javascript:void(0)" onclick="switchAuthMode(&#39;login&#39;)">' + t("login") + '</a></p>';
 }
+
+function googleAuthPlaceholder(){ alert(t("auth_google_soon")); }
 
 function bindLoginForm(){
   var formEl = document.getElementById("loginForm");
@@ -7918,28 +7892,7 @@ function renderDashboard(app){
         '</div>' : '') +
       '<div id="createMsg"></div>' +
       '<div style="margin-top:18px;"><button class="btn btn-primary" type="submit">' + t("create_new") + '</button></div>' +
-      '</form></div>' +
-      '<div class="card">' +
-      '<h2>QR Code</h2>' +
-      '<p class="hint" style="margin-bottom:16px;">Tạo QR Code cho link rút gọn. Bấm "Tạo link" trước, sau đó bấm "Tạo QR".</p>' +
-      '<div style="display:flex;gap:20px;align-items:start;flex-wrap:wrap;">' +
-      '<div style="display:flex;flex-direction:column;gap:10px;flex-shrink:0;width:160px;">' +
-      '<button class="btn btn-ghost" id="btnGenQr" disabled style="opacity:0.5;">' + li('qr', 14) + ' Tạo QR</button>' +
-      '<div style="display:flex;align-items:center;gap:8px;"><label style="font-size:13px;white-space:nowrap;">Màu</label><input type="color" id="qrColor" value="#000000" style="width:40px;height:32px;border:1px solid var(--input-border);border-radius:6px;cursor:pointer;background:none;" onchange="updateQrColor()" disabled></div>' +
-      '<div><label style="font-size:13px;display:block;margin-bottom:4px;">Cỡ</label><select id="qrSize" onchange="updateQrSize()" style="width:100%;padding:6px;border:1px solid var(--input-border);border-radius:6px;background:var(--input-bg);color:var(--text);font-size:13px;" disabled><option value="150">150px</option><option value="200" selected>200px</option><option value="300">300px</option><option value="400">400px</option></select></div>' +
-      '<button class="btn btn-ghost btn-sm" id="btnDownloadQr" onclick="downloadCreatedQr()" disabled style="opacity:0.5;">' + li('upload', 14) + ' Tải PNG</button>' +
-      '</div>' +
-      '<div style="flex:1;min-width:200px;">' +
-      '<div id="qrDisplay" style="width:200px;height:200px;background:#fff;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);margin:0 auto;">' +
-      '<span style="color:var(--muted);font-size:13px;text-align:center;padding:20px;">Chưa có QR<br>Bấm "Tạo QR" sau khi tạo link</span>' +
-      '</div>' +
-      '<div id="qrInfo" style="display:none;margin-top:12px;text-align:center;">' +
-      '<div id="qrShortUrl" style="font-size:14px;font-weight:600;color:#818cf8;word-break:break-all;cursor:pointer;" onclick="copyQrUrl()"></div>' +
-      '<div style="font-size:12px;color:var(--muted);margin-top:4px;">Bấm vào link để copy</div>' +
-      '</div>' +
-      '</div>' +
-      '</div>' +
-      '</div>';
+      '</form></div>';
   }
 
   // ====== Bảng link — header (render 1 lần) ======
@@ -8068,27 +8021,11 @@ function renderDashboard(app){
     if (domEl && domEl.value.trim()) body.customDomain = domEl.value.trim();
     api("/api/links", "POST", body).then(function(data){
       var shortUrl = data.link ? data.link.shortUrl : null;
-      lastCreatedCode = data.link ? data.link.code : null;
-      lastCreatedShortUrl = shortUrl;
       msg.innerHTML = '<div class="msg msg-ok"> ✓ Đã tạo: <a href="' + shortUrl + '" target="_blank" style="color:#818cf8;">' + shortUrl + '</a></div>';
       var previewBox = document.getElementById("linkPreview");
       if (previewBox){
         previewBox.style.display = "block";
         document.getElementById("previewUrl").innerHTML = '<a href="' + shortUrl + '" target="_blank" style="color:#818cf8;text-decoration:none;">' + shortUrl + '</a>';
-      }
-      if (lastCreatedCode){
-        document.getElementById("btnGenQr").disabled = false;
-        document.getElementById("btnGenQr").style.opacity = "1";
-        document.getElementById("btnGenQr").onclick = genQrFromCreated;
-        document.getElementById("qrColor").disabled = false;
-        document.getElementById("qrSize").disabled = false;
-        document.getElementById("btnDownloadQr").disabled = false;
-        document.getElementById("btnDownloadQr").style.opacity = "1";
-        var info = document.getElementById("qrInfo");
-        if (info){
-          info.style.display = "block";
-          document.getElementById("qrShortUrl").textContent = "" + shortUrl;
-        }
       }
       // V3: Thêm link mới trực tiếp vào state và render ngay — không cần reload
       if (data.link){
@@ -10494,6 +10431,9 @@ function li(icon, size) {
     card: '<rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>',
     package: '<path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
     plug: '<path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/>',
+    zap: '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
+    target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+    code2: '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
     chart: '<line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/>',
     shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="M12 8v4"/><path d="M12 16h.01"/>',
     building: '<path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/>',
