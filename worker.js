@@ -292,6 +292,12 @@ export default {
         const refreshResult = await refreshCfAnalyticsCache(env);
         return json(refreshResult, refreshResult.ok ? 200 : 502, corsHeaders);
       }
+      if (path === "api/admin/purge-expired-links" && method === "POST") {
+        const authedUserPurge = await getAuthenticatedUser(request, env);
+        if (!authedUserPurge || authedUserPurge.role !== "admin") return requireAdminResponse(corsHeaders, request);
+        const purgeResult = await purgeExpiredLinks(env);
+        return json(purgeResult, 200, corsHeaders);
+      }
       if (path === "api/webhook/stripe" && method === "POST") return handleStripeWebhook(request, env, corsHeaders);
 
       // ===== 4d. PASSWORD LINK VERIFY =====
@@ -360,6 +366,7 @@ export default {
 
   async scheduled(event, env, ctx) {
     ctx.waitUntil(refreshCfAnalyticsCache(env));
+    ctx.waitUntil(purgeExpiredLinks(env));
   }
 };
 
@@ -3241,6 +3248,22 @@ async function handleSavePromoSettings(request, env, corsHeaders) {
   try { body = await request.json(); } catch (e) { body = {}; }
   await env.LINKS_KV.put("promo:settings", JSON.stringify(body));
   return json({ ok: true }, 200, corsHeaders);
+}
+
+// ===================== DỌN DẸP LINK (cron) =====================
+// Xóa vĩnh viễn các link đã ở trong "thùng rác" (isDeleted=true) quá 24h,
+// đúng như lời hứa hiển thị cho user lúc bấm xóa ("Sẽ xóa sau 24h").
+async function purgeExpiredLinks(env) {
+  const cutoffMs = Date.now() - 24 * 3600 * 1000;
+  const links = await listAllLinks(env);
+  let purged = 0;
+  for (const link of links) {
+    if (link.isDeleted && link.deletedAt && new Date(link.deletedAt).getTime() < cutoffMs) {
+      await deleteLinkKV(env, link.code);
+      purged++;
+    }
+  }
+  return { ok: true, checked: links.length, purged };
 }
 
 // ===================== CLOUDFLARE ANALYTICS (Workers requests/errors/CPU) =====================
