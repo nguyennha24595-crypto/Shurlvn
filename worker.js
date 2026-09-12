@@ -385,6 +385,45 @@ function html(body, status, extraHeaders) {
   });
 }
 
+// Server-side escaping for HTML generated directly by the Worker (redirect/pixel/warning pages) —
+// distinct from the client-side esc() helper embedded in the SPA bundle, which only runs in the browser.
+function escHtml(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+// Safely embeds a value as a JS string literal inside an inline <script> tag: JSON.stringify
+// escapes quotes/backslashes/control chars, and the extra "<" -> "<" pass stops a value like
+// "</script>" from closing the surrounding <script> tag at the HTML-parser level (before any JS runs).
+function escJsString(s) {
+  return JSON.stringify(String(s == null ? "" : s)).replace(/</g, "\\u003C");
+}
+
+// Blocklist-based SSRF guard for user-supplied webhook URLs — blocks the obvious internal/
+// loopback/link-local/cloud-metadata targets. Doesn't defend against DNS rebinding (would need
+// resolving the hostname and re-checking at fetch time), but stops the direct, common case.
+function isBlockedWebhookHost(hostname) {
+  const h = String(hostname || "").toLowerCase().replace(/^\[|\]$/g, "");
+  if (!h) return true;
+  if (h === "localhost" || h.endsWith(".localhost") || h.endsWith(".local") || h.endsWith(".internal")) return true;
+  const m = h.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (m) {
+    const a = parseInt(m[1], 10), b = parseInt(m[2], 10);
+    if (a === 127 || a === 10 || a === 0) return true;               // loopback, 10.0.0.0/8, 0.0.0.0/8
+    if (a === 172 && b >= 16 && b <= 31) return true;                 // 172.16.0.0/12
+    if (a === 192 && b === 168) return true;                          // 192.168.0.0/16
+    if (a === 169 && b === 254) return true;                          // link-local, incl. cloud metadata (169.254.169.254)
+    return false;
+  }
+  if (h === "::1" || h === "::") return true;
+  if (h.startsWith("fe80:") || h.startsWith("fc") || h.startsWith("fd")) return true; // IPv6 link-local / unique-local
+  return false;
+}
+
 function bytesToHex(bytes) {
   return Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
 }
@@ -393,6 +432,13 @@ function randomHex(numBytes) {
   const arr = new Uint8Array(numBytes);
   crypto.getRandomValues(arr);
   return bytesToHex(arr);
+}
+
+// CSPRNG 6-digit code (e.g. password reset) — Math.random() is not cryptographically secure.
+function randomSixDigitCode() {
+  const buf = new Uint32Array(1);
+  crypto.getRandomValues(buf);
+  return String(100000 + (buf[0] % 900000));
 }
 
 async function hashPassword(password, saltHex) {
@@ -648,6 +694,7 @@ async function getAuthenticatedUser(request, env) {
       if (username) {
         const user = await getUser(env, username);
         if (user) {
+          if (user.banned) return null;
           if (user.tierExpiresAt && user.role !== "admin" && new Date(user.tierExpiresAt) < new Date()) {
             user.role = "free";
             user.tierExpiresAt = null;
@@ -710,6 +757,9 @@ async function handleRegister(request, env, corsHeaders) {
   });
 }
 
+const LOGIN_MAX_ATTEMPTS = 10;
+const LOGIN_LOCKOUT_TTL = 900; // 15 phút
+
 async function handleLogin(request, env, corsHeaders) {
   let body;
   try { body = await request.json(); } catch (e) { body = {}; }
@@ -720,8 +770,21 @@ async function handleLogin(request, env, corsHeaders) {
   }
 
   const cleanUser = username.trim().toLowerCase();
+  // Khóa theo username (không chỉ theo IP) — chặn brute-force dò mật khẩu 1 tài khoản
+  // bằng cách đổi IP để né rate-limit chung.
+  const attemptsKey = "login_attempts:" + cleanUser;
+  const attempts = parseInt(await env.LINKS_KV.get(attemptsKey) || "0");
+  if (attempts >= LOGIN_MAX_ATTEMPTS) {
+    return json({ error: "Quá nhiều lần đăng nhập sai. Vui lòng thử lại sau 15 phút." }, 429, corsHeaders);
+  }
+
+  async function recordFailedAttempt() {
+    await env.LINKS_KV.put(attemptsKey, String(attempts + 1), { expirationTtl: LOGIN_LOCKOUT_TTL });
+  }
+
   const user = await getUser(env, cleanUser);
   if (!user) {
+    await recordFailedAttempt();
     return json({ error: st("invalid_credentials", request) }, 401, corsHeaders);
   }
   if (user.banned) {
@@ -729,6 +792,7 @@ async function handleLogin(request, env, corsHeaders) {
   }
   const hash = await hashPassword(password, user.salt);
   if (hash !== user.hash) {
+    await recordFailedAttempt();
     return json({ error: st("invalid_credentials", request) }, 401, corsHeaders);
   }
 
@@ -739,9 +803,12 @@ async function handleLogin(request, env, corsHeaders) {
     }
     const expectedCode = await generateTotpCode(user.totpSecret);
     if (totpCode !== expectedCode){
+      await recordFailedAttempt();
       return json({ error: "Mã TOTP không đúng" }, 401, corsHeaders);
     }
   }
+
+  await env.LINKS_KV.delete(attemptsKey);
 
   const sessionToken = randomHex(32);
   await env.LINKS_KV.put("session:" + sessionToken, cleanUser, { expirationTtl: SESSION_TTL });
@@ -854,31 +921,28 @@ async function handleGoogleAuthCallback(request, env, corsHeaders) {
   let user = username ? await getUser(env, username) : null;
 
   if (!user) {
-    // Lần đầu đăng nhập Google — thử liên kết với tài khoản đã có cùng email (đã được Google xác minh),
-    // nếu không có thì tạo tài khoản mới.
-    const allUsers = await listAllUsers(env);
-    const existingByEmail = allUsers.find(function (u) { return u.email && u.email.trim().toLowerCase() === googleEmail; });
-    if (existingByEmail) {
-      user = existingByEmail;
-    } else {
-      let base = googleEmail.split("@")[0].toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 20);
-      if (base.length < 3) base = (base + "user").slice(0, 20);
-      let candidate = base;
-      let suffix = 0;
-      while (await getUser(env, candidate)) {
-        suffix++;
-        candidate = (base + suffix).slice(0, 25);
-      }
-      user = {
-        id: "usr_" + randomHex(8),
-        username: candidate,
-        email: profile.email,
-        role: "free",
-        createdAt: new Date().toISOString(),
-        authProvider: "google"
-      };
-      await putUser(env, user);
+    // Lần đầu đăng nhập Google — KHÔNG tự gộp vào tài khoản có sẵn theo email, vì đăng ký
+    // thường (handleRegister) không xác minh email: kẻ xấu có thể đăng ký trước bằng email
+    // của nạn nhân, rồi khi nạn nhân đăng nhập Google bằng email đó sẽ bị gộp vào tài khoản
+    // kẻ xấu đã tạo sẵn (mà kẻ xấu vẫn có mật khẩu truy cập). Luôn tạo tài khoản mới, việc
+    // liên kết tài khoản có sẵn (nếu muốn) nên là thao tác chủ động của user khi đã đăng nhập.
+    let base = googleEmail.split("@")[0].toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 20);
+    if (base.length < 3) base = (base + "user").slice(0, 20);
+    let candidate = base;
+    let suffix = 0;
+    while (await getUser(env, candidate)) {
+      suffix++;
+      candidate = (base + suffix).slice(0, 25);
     }
+    user = {
+      id: "usr_" + randomHex(8),
+      username: candidate,
+      email: profile.email,
+      role: "free",
+      createdAt: new Date().toISOString(),
+      authProvider: "google"
+    };
+    await putUser(env, user);
     await env.LINKS_KV.put("googleid:" + googleSub, user.username.toLowerCase());
   }
 
@@ -1067,7 +1131,7 @@ async function handleForgotPassword(request, env, corsHeaders) {
     if (!user) return json({ success: true });
     if (!user.email) return json({ error: "Tài khoản chưa có email khôi phục" }, 400, corsHeaders);
 
-    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const code = randomSixDigitCode();
     await env.LINKS_KV.put("pw_reset:" + username, JSON.stringify({
       code: code,
       attempts: 0
@@ -2477,26 +2541,28 @@ function renderPixelPage(destUrl, pixels) {
     if (p.type === "facebook" && p.id) {
       scripts +=
         "!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');" +
-        "fbq('init','" + p.id + "');fbq('track','PageView');";
-      noScripts += '<img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=' + p.id + '&ev=PageView&noscript=1"/>';
+        "fbq('init'," + escJsString(p.id) + ");fbq('track','PageView');";
+      noScripts += '<img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=' + encodeURIComponent(p.id) + '&ev=PageView&noscript=1"/>';
     } else if (p.type === "ga" && p.id) {
       scripts +=
-        "var ga=document.createElement('script');ga.src='https://www.googletagmanager.com/gtag/js?id=" + p.id + "';ga.async=true;document.head.appendChild(ga);" +
-        "window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','" + p.id + "');";
+        "var ga=document.createElement('script');ga.src=" + escJsString("https://www.googletagmanager.com/gtag/js?id=" + p.id) + ";ga.async=true;document.head.appendChild(ga);" +
+        "window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config'," + escJsString(p.id) + ");";
     } else if (p.type === "tiktok" && p.id) {
       scripts +=
-        "!function(w,d,t){w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=['page','track','identify','instances','debug','on','off','once','ready','alias','group','enableCookie','disableCookie'];ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e};ttq.load=function(e,n){var i='https://analytics.tiktok.com/i18n/pixel/events.js';ttq._i=ttq._i||{};ttq._i[e]=[];ttq._i[e]._u=i;ttq._t=ttq._t||{};ttq._t[e]=+new Date;ttq._o=ttq._o||{};ttq._o[e]=n||{};var o=d.createElement('script');o.type='text/javascript';o.async=!0;o.src=i+'?sdkid='+e+'&lib='+t;var a=d.getElementsByTagName('script')[0];a.parentNode.insertBefore(o,a)};ttq.load('" + p.id + "');ttq.page()}(window,document,'ttq');";
+        "!function(w,d,t){w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=['page','track','identify','instances','debug','on','off','once','ready','alias','group','enableCookie','disableCookie'];ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e};ttq.load=function(e,n){var i='https://analytics.tiktok.com/i18n/pixel/events.js';ttq._i=ttq._i||{};ttq._i[e]=[];ttq._i[e]._u=i;ttq._t=ttq._t||{};ttq._t[e]=+new Date;ttq._o=ttq._o||{};ttq._o[e]=n||{};var o=d.createElement('script');o.type='text/javascript';o.async=!0;o.src=i+'?sdkid='+e+'&lib='+t;var a=d.getElementsByTagName('script')[0];a.parentNode.insertBefore(o,a)};ttq.load(" + escJsString(p.id) + ");ttq.page()}(window,document,'ttq');";
     }
   }
+  var destUrlAttr = escHtml(destUrl);
+  var destUrlJs = escJsString(destUrl);
   return html(
     '<!DOCTYPE html><html><head><meta charset="utf-8">' +
     '<meta name="viewport" content="width=device-width,initial-scale=1">' +
-    '<meta http-equiv="refresh" content="1;url=' + destUrl + '">' +
+    '<meta http-equiv="refresh" content="1;url=' + destUrlAttr + '">' +
     '<title>Đang chuyển hướng...</title></head><body>' +
     '<script>' + scripts + '</script>' +
-    '<noscript>' + noScripts + '<meta http-equiv="refresh" content="0;url=' + destUrl + '"></noscript>' +
-    '<p style="font-family:system-ui;text-align:center;padding:40px;">Đang chuyển hướng... <a href="' + destUrl + '">Bấm vào đây nếu không tự chuyển</a></p>' +
-    '<script>setTimeout(function(){location.href="' + destUrl + '";},800);</script>' +
+    '<noscript>' + noScripts + '<meta http-equiv="refresh" content="0;url=' + destUrlAttr + '"></noscript>' +
+    '<p style="font-family:system-ui;text-align:center;padding:40px;">Đang chuyển hướng... <a href="' + destUrlAttr + '">Bấm vào đây nếu không tự chuyển</a></p>' +
+    '<script>setTimeout(function(){location.href=' + destUrlJs + ';},800);</script>' +
     '</body></html>',
     200
   );
@@ -11500,7 +11566,12 @@ async function handleCreateWebhook(request, env, corsHeaders) {
   const { url: hookUrl, name, event } = body || {};
   if (!hookUrl) return json({ success: false, error: "Webhook URL is required" }, 400, corsHeaders);
   if (!hookUrl.startsWith("https://")) return json({ success: false, error: "Webhook URL must use HTTPS" }, 400, corsHeaders);
-  
+  let hookHostname;
+  try { hookHostname = new URL(hookUrl).hostname; } catch (e) { return json({ success: false, error: "Invalid webhook URL" }, 400, corsHeaders); }
+  if (isBlockedWebhookHost(hookHostname)) {
+    return json({ success: false, error: "Webhook URL không được trỏ tới địa chỉ nội bộ" }, 400, corsHeaders);
+  }
+
   const key = "webhooks:" + authedUser.username.toLowerCase();
   const existingRaw = await env.LINKS_KV.get(key);
   const hooks = existingRaw ? JSON.parse(existingRaw) : [];
@@ -11892,7 +11963,7 @@ async function handleAdminBanUser(request, env, corsHeaders) {
   user.bannedAt = banned ? new Date().toISOString() : null;
   user.bannedBy = banned ? authedUser.username : null;
   await putUser(env, user);
-  // If banning, delete all active sessions
+  // If banning, delete all active sessions and revoke the API token
   if (banned) {
     let cursor;
     do {
@@ -11906,6 +11977,9 @@ async function handleAdminBanUser(request, env, corsHeaders) {
       cursor = page.cursor;
       if (page.list_complete) break;
     } while (cursor);
+    if (user.apiToken) {
+      await env.LINKS_KV.delete("apitoken:" + user.apiToken);
+    }
   }
   await addAuditLog(env, authedUser, banned ? "BAN_USER" : "UNBAN_USER", { username, reason: user.bannedReason }, request);
   return json({ ok: true, message: banned ? "Đã khóa user " + username : "Đã mở khóa user " + username, user: safeUser(user) }, 200, corsHeaders);
