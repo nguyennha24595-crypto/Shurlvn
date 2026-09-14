@@ -2456,6 +2456,172 @@ async function handleExportWorker(request, env, corsHeaders) {
 // ===================== BLOG (server-rendered, indexable by Google) =====================
 const BLOG_POSTS = [
   {
+    slug: "rut-gon-link-hang-loat",
+    title: "Rút Gọn Link Hàng Loạt (Bulk) — Xử Lý Cả Trăm Link Trong 1 Lần",
+    description: "Hướng dẫn rút gọn nhiều link cùng lúc bằng tính năng Bulk trên Shurlvn.com, kèm cách đặt alias và campaign riêng cho từng link ngay trong 1 lần nhập.",
+    date: "2026-09-14",
+    contentHtml: `
+      <p>Nếu công việc của bạn cần rút gọn hàng chục, hàng trăm đường link cùng lúc — ví dụ danh sách sản phẩm, link tài liệu cho từng chi nhánh — việc tạo từng link một sẽ rất mất thời gian. Tính năng <b>Rút gọn hàng loạt (Bulk)</b> trên Shurlvn.com giúp bạn xử lý toàn bộ chỉ trong một lần nhập.</p>
+
+      <h2>Tính năng này dành cho ai?</h2>
+      <p>Rút gọn hàng loạt là tính năng từ gói <b>Plus</b> trở lên (Plus, Pro, Super). Mỗi gói có giới hạn số link tối đa cho một lần xử lý khác nhau — gói càng cao, giới hạn mỗi lần càng lớn.</p>
+
+      <h2>Cách sử dụng</h2>
+      <h3>Bước 1: Vào mục Bulk trong Dashboard</h3>
+      <p>Sau khi đăng nhập, chọn mục <b>Bulk</b> ở thanh điều hướng bên trái.</p>
+
+      <h3>Bước 2: Nhập danh sách link theo đúng định dạng</h3>
+      <p>Mỗi dòng là một link, có thể kèm thêm alias (tên rút gọn riêng) và tên campaign, phân tách nhau bằng dấu phẩy. Alias và campaign là tuỳ chọn, có thể bỏ trống nếu muốn hệ thống tự đặt tên.</p>
+      <div class="mockup">
+        <div class="mockup-topbar"><span class="mockup-dot"></span><span class="mockup-dot"></span><span class="mockup-dot"></span><span class="mockup-url">shurlvn.com</span></div>
+        <div class="mockup-body">
+          <div class="mockup-brand">SHORT URL</div>
+          <p class="mockup-card-title">Tạo hàng loạt</p>
+          <p class="mockup-card-sub">Nhập mỗi URL trên 1 dòng. Giới hạn tối đa 300 link/lần.</p>
+          <div class="mockup-input">https://vi-du.com/san-pham-a,sp-a,Q1-Sale<br>https://vi-du.com/san-pham-b,sp-b,Q1-Sale<br>https://vi-du.com/san-pham-c</div>
+          <div class="mockup-btn">Tạo hàng loạt</div>
+        </div>
+      </div>
+      <p class="mockup-caption">Định dạng: URL,alias,campaign — alias và campaign có thể bỏ trống</p>
+
+      <h3>Bước 3: Nhận kết quả và tải về Excel</h3>
+      <p>Hệ thống xử lý toàn bộ danh sách và hiển thị link rút gọn tương ứng cho từng dòng, kèm thông báo dòng nào bị lỗi (nếu có, ví dụ URL sai định dạng hoặc alias đã bị trùng). Bạn có thể tải luôn toàn bộ kết quả ra file Excel để lưu trữ hoặc gửi cho đồng nghiệp.</p>
+
+      <blockquote>💡 <b>Mẹo:</b> Nên đặt tên campaign giống nhau cho các link thuộc cùng một chiến dịch marketing — sau này bạn có thể lọc và xem thống kê gộp theo từng campaign trong mục Analytics.</blockquote>
+
+      <h2>Lưu ý khi dùng</h2>
+      <ul>
+        <li>Vượt quá giới hạn số link/lần của gói hiện tại sẽ bị báo lỗi — chia nhỏ danh sách thành nhiều lần nhập nếu cần</li>
+        <li>Alias trùng với link đã tồn tại sẽ bị báo lỗi cho dòng đó, các dòng còn lại vẫn được xử lý bình thường</li>
+        <li>Nên kiểm tra lại vài link ngẫu nhiên trong kết quả trước khi gửi hàng loạt cho khách hàng</li>
+      </ul>
+    `
+  },
+  {
+    slug: "dat-ten-link-tuy-chinh",
+    title: "Đặt Tên Link Tuỳ Chỉnh (Custom Alias) Để Link Dễ Nhớ, Dễ Nhận Diện",
+    description: "Hướng dẫn đặt tên riêng cho link rút gọn trên Shurlvn.com thay vì để hệ thống tự sinh ngẫu nhiên — giúp link chuyên nghiệp và dễ nhớ hơn.",
+    date: "2026-09-14",
+    contentHtml: `
+      <p>Một link dạng <b>shurlvn.com/x7Yq2</b> hoạt động tốt, nhưng khó nhớ và không truyền tải được nội dung bên trong. Với tính năng <b>đặt tên link tuỳ chỉnh (custom alias)</b>, bạn có thể biến nó thành <b>shurlvn.com/khuyen-mai-thang9</b> — vừa dễ nhớ, vừa dễ đọc khi chia sẻ bằng lời.</p>
+
+      <h2>Ai dùng được tính năng này?</h2>
+      <p>Khác với các tính năng nâng cao khác, đặt tên tuỳ chỉnh có sẵn ngay từ <b>tài khoản miễn phí</b> — chỉ cần đăng ký tài khoản (không cần nâng cấp gói trả phí) là dùng được. Khách chưa đăng nhập thì chưa thấy được ô này.</p>
+
+      <h2>Cách đặt tên link tuỳ chỉnh</h2>
+      <p>Khi tạo link mới (ở trang chủ hoặc trong Dashboard), điền vào ô "Tên rút gọn tuỳ chỉnh" cái tên bạn muốn — chỉ nên dùng chữ, số và dấu gạch ngang để tránh lỗi.</p>
+      <div class="mockup">
+        <div class="mockup-topbar"><span class="mockup-dot"></span><span class="mockup-dot"></span><span class="mockup-dot"></span><span class="mockup-url">shurlvn.com</span></div>
+        <div class="mockup-body">
+          <div class="mockup-brand">SHORT URL</div>
+          <p class="mockup-card-title">SHURL</p>
+          <label class="mockup-label">URL cần rút gọn</label>
+          <div class="mockup-input">https://vi-du.com/chuong-trinh-khuyen-mai-thang-9</div>
+          <label class="mockup-label">Tên rút gọn tuỳ chỉnh</label>
+          <div class="mockup-input">khuyen-mai-thang9</div>
+          <div class="mockup-btn">Rút gọn ngay</div>
+          <div class="mockup-result"><span class="link">shurlvn.com/khuyen-mai-thang9</span><span class="copy">Chép</span></div>
+        </div>
+      </div>
+      <p class="mockup-caption">Đặt tên gợi nhớ thay vì để hệ thống tự sinh ký tự ngẫu nhiên</p>
+
+      <h2>Vài gợi ý khi đặt tên</h2>
+      <ul>
+        <li>Ưu tiên tên ngắn, liên quan trực tiếp tới nội dung (ví dụ: <i>bao-gia-2026</i>, <i>tuyen-dung-hn</i>)</li>
+        <li>Tránh khoảng trắng và ký tự có dấu — hệ thống sẽ báo lỗi hoặc tự loại bỏ ký tự không hợp lệ</li>
+        <li>Mỗi tên chỉ dùng được một lần trên toàn hệ thống — nếu báo trùng, hãy thử thêm hậu tố như năm hoặc phòng ban</li>
+        <li>Một số từ khoá nhạy cảm (liên quan thương hiệu lớn, ngân hàng...) bị chặn để chống giả mạo, dùng tên khác nếu gặp trường hợp này</li>
+      </ul>
+    `
+  },
+  {
+    slug: "bao-ve-link-bang-mat-khau",
+    title: "Bảo Vệ Link Bằng Mật Khẩu — Chỉ Người Có Mật Khẩu Mới Xem Được",
+    description: "Hướng dẫn đặt mật khẩu bảo vệ cho link rút gọn trên Shurlvn.com để giới hạn ai được truy cập nội dung — tính năng từ gói Pro trở lên.",
+    date: "2026-09-14",
+    contentHtml: `
+      <p>Không phải link nào cũng nên công khai cho tất cả mọi người bấm vào — ví dụ tài liệu nội bộ, link họp riêng tư, hay ưu đãi chỉ dành cho một nhóm khách hàng nhất định. Với tính năng <b>bảo vệ link bằng mật khẩu</b> trên Shurlvn, chỉ ai có mật khẩu mới xem được nội dung đích.</p>
+
+      <h2>Tính năng này dành cho ai?</h2>
+      <p>Bảo vệ link bằng mật khẩu là tính năng từ gói <b>Pro</b> trở lên (Pro, Super). Ô nhập mật khẩu vẫn hiển thị cho mọi tài khoản đã đăng nhập, nhưng chỉ thực sự có hiệu lực với gói Pro trở lên — tài khoản Free/Plus điền vào ô này sẽ không có tác dụng bảo vệ.</p>
+
+      <h2>Cách đặt mật khẩu cho link</h2>
+      <p>Khi tạo link mới ở trang chủ (sau khi đăng nhập), điền mật khẩu bạn muốn vào ô "Bảo vệ bằng mật khẩu" — để trống nếu không cần bảo vệ.</p>
+      <div class="mockup">
+        <div class="mockup-topbar"><span class="mockup-dot"></span><span class="mockup-dot"></span><span class="mockup-dot"></span><span class="mockup-url">shurlvn.com</span></div>
+        <div class="mockup-body">
+          <div class="mockup-brand">SHORT URL</div>
+          <p class="mockup-card-title">SHURL</p>
+          <label class="mockup-label">URL cần rút gọn</label>
+          <div class="mockup-input">https://vi-du.com/tai-lieu-noi-bo</div>
+          <label class="mockup-label">Bảo vệ bằng mật khẩu (tùy chọn)</label>
+          <div class="mockup-input">••••••••</div>
+          <div class="mockup-btn">Rút gọn ngay</div>
+        </div>
+      </div>
+      <p class="mockup-caption">Để trống ô mật khẩu nếu không cần giới hạn truy cập</p>
+
+      <h2>Trải nghiệm của người nhận link</h2>
+      <p>Khi ai đó bấm vào link đã được bảo vệ, thay vì được chuyển thẳng tới trang đích, họ sẽ thấy màn hình yêu cầu nhập mật khẩu trước:</p>
+      <div class="mockup">
+        <div class="mockup-topbar"><span class="mockup-dot"></span><span class="mockup-dot"></span><span class="mockup-dot"></span><span class="mockup-url">shurlvn.com/tai-lieu-noi-bo</span></div>
+        <div class="mockup-body">
+          <p class="mockup-card-title">🔒 Link được bảo vệ</p>
+          <p class="mockup-card-sub">Nhập mật khẩu để tiếp tục</p>
+          <div class="mockup-input ph">Mật khẩu</div>
+          <div class="mockup-btn">Vào link →</div>
+        </div>
+      </div>
+      <p class="mockup-caption">Màn hình yêu cầu mật khẩu mà người nhận link sẽ thấy</p>
+
+      <h2>Lưu ý khi dùng</h2>
+      <ul>
+        <li>Chia sẻ mật khẩu qua một kênh khác với kênh gửi link (ví dụ gửi link qua email, đọc mật khẩu qua điện thoại) để tăng bảo mật</li>
+        <li>Gói Super còn giới hạn thêm số lần nhập sai mật khẩu liên tiếp để chống dò mật khẩu tự động</li>
+        <li>Đổi mật khẩu định kỳ nếu link được chia sẻ cho nhóm lớn hoặc dùng trong thời gian dài</li>
+      </ul>
+    `
+  },
+  {
+    slug: "dat-ngay-het-han-cho-link",
+    title: "Đặt Ngày Hết Hạn Cho Link — Tự Động Vô Hiệu Hoá Đúng Lúc",
+    description: "Hướng dẫn đặt ngày hết hạn cho link rút gọn trên Shurlvn.com để link tự động ngừng hoạt động sau chương trình khuyến mãi hoặc sự kiện — tính năng gói Pro trở lên.",
+    date: "2026-09-14",
+    contentHtml: `
+      <p>Nhiều link chỉ có giá trị trong một khoảng thời gian nhất định — link đăng ký sự kiện, link mã giảm giá theo đợt, link tải tài liệu tạm thời. Thay vì phải nhớ tự tay xoá hoặc vô hiệu hoá link sau khi hết hạn dùng, bạn có thể để Shurlvn tự động làm việc đó đúng ngày bạn chọn.</p>
+
+      <h2>Tính năng này dành cho ai?</h2>
+      <p>Đặt ngày hết hạn tuỳ chỉnh là tính năng từ gói <b>Pro</b> trở lên (Pro, Super). Riêng với <b>khách chưa đăng nhập</b> tạo link (không tài khoản), link sẽ tự động hết hạn sau <b>30 ngày</b> kể từ lúc tạo — đây là cơ chế mặc định áp dụng chung, không tuỳ chỉnh được. Tài khoản Free/Plus tạo link thì link tồn tại không giới hạn thời gian, nhưng cũng chưa tự đặt được ngày hết hạn riêng như Pro trở lên.</p>
+
+      <h2>Cách đặt ngày hết hạn cho link</h2>
+      <p>Khi tạo link mới (với tài khoản Pro trở lên), điền vào ô "Ngày hết hạn" ngày bạn muốn link ngừng hoạt động.</p>
+      <div class="mockup">
+        <div class="mockup-topbar"><span class="mockup-dot"></span><span class="mockup-dot"></span><span class="mockup-dot"></span><span class="mockup-url">shurlvn.com</span></div>
+        <div class="mockup-body">
+          <div class="mockup-brand">SHORT URL</div>
+          <p class="mockup-card-title">SHURL</p>
+          <label class="mockup-label">URL cần rút gọn</label>
+          <div class="mockup-input">https://vi-du.com/su-kien-thang-9</div>
+          <label class="mockup-label">Ngày hết hạn (tùy chọn)</label>
+          <div class="mockup-input">30/09/2026</div>
+          <div class="mockup-btn">Rút gọn ngay</div>
+        </div>
+      </div>
+      <p class="mockup-caption">Sau ngày này, link sẽ tự động ngừng chuyển hướng</p>
+
+      <p>Sau ngày hết hạn, người bấm vào link sẽ thấy thông báo link đã hết hạn thay vì được chuyển tới trang đích — tránh trường hợp khách hàng bấm vào một chương trình khuyến mãi đã kết thúc từ lâu.</p>
+
+      <blockquote>💡 <b>Mẹo:</b> Kết hợp ngày hết hạn với tên đặt theo đợt (ví dụ <i>sale-thang9</i>) để dễ dọn dẹp và theo dõi lịch sử các chương trình đã chạy trong mục Campaigns.</blockquote>
+
+      <h2>Lưu ý khi dùng</h2>
+      <ul>
+        <li>Link hết hạn không bị xoá khỏi hệ thống — bạn vẫn xem được thống kê lượt click trước đó trong Dashboard</li>
+        <li>Có thể chỉnh sửa lại ngày hết hạn sau khi tạo link nếu chương trình được gia hạn</li>
+        <li>Nên đặt ngày hết hạn muộn hơn thời điểm kết thúc chương trình thực tế một chút, để tránh link tắt sớm khi vẫn còn người truy cập</li>
+      </ul>
+    `
+  },
+  {
     slug: "tao-ma-qr-mien-phi-doi-mau",
     title: "Tạo Mã QR Miễn Phí, Tuỳ Chỉnh Màu Sắc Trong Vài Giây Với Shurlvn",
     description: "Hướng dẫn tạo mã QR miễn phí từ link hoặc văn bản, đổi màu và kích thước tuỳ ý bằng công cụ QR của Shurlvn.com — không cần đăng ký, có ví dụ QR thật.",
