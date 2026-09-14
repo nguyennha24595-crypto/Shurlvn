@@ -350,7 +350,7 @@ export default {
       if (!path) {
         return new Response(renderAppHtml(), { headers: {
           "Content-Type": "text/html; charset=utf-8",
-          "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.resend.com https://api.stripe.com; frame-src https://pagead2.googlesyndication.com;"
+          "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.resend.com https://api.stripe.com https://www.googletagmanager.com https://www.google-analytics.com https://googleads.g.doubleclick.net; frame-src https://pagead2.googlesyndication.com;"
         } });
       }
       // ===== 8b. FAVICON =====
@@ -358,16 +358,31 @@ export default {
         return new Response(null, { status: 204 });
       }
       if (path === "sitemap.xml") {
+        const today = new Date().toISOString().split("T")[0];
+        const urls = [
+          { loc: "https://shurlvn.com/", changefreq: "daily", priority: "1.0", lastmod: today },
+          { loc: "https://shurlvn.com/blog", changefreq: "weekly", priority: "0.8", lastmod: today }
+        ].concat(BLOG_POSTS.map(p => ({ loc: "https://shurlvn.com/blog/" + p.slug, changefreq: "monthly", priority: "0.7", lastmod: p.date })));
         const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://shurlvn.com/</loc>
-    <lastmod>` + new Date().toISOString().split("T")[0] + `</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-  </url>
+` + urls.map(u => `  <url>
+    <loc>${u.loc}</loc>
+    <lastmod>${u.lastmod}</lastmod>
+    <changefreq>${u.changefreq}</changefreq>
+    <priority>${u.priority}</priority>
+  </url>`).join("\n") + `
 </urlset>`;
         return new Response(sitemap, { headers: { "Content-Type": "application/xml; charset=utf-8" } });
+      }
+      // ===== 8c. BLOG (server-rendered, indexable) =====
+      if (path === "blog") {
+        return html(renderBlogIndexPage());
+      }
+      if (path.startsWith("blog/")) {
+        const slug = path.slice(5);
+        const post = BLOG_POSTS.find(p => p.slug === slug);
+        if (post) return html(renderBlogPostPage(post));
+        return html('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Không tìm thấy bài viết</title></head><body style="font-family:system-ui;text-align:center;padding:60px;"><h1>404</h1><p>Bài viết không tồn tại.</p><a href="/blog">← Xem tất cả bài viết</a></body></html>', 404);
       }
       // ===== 9. SHORTLINK REDIRECT (/:code) =====
       return await handleRedirect(request, env, url, path, ctx);
@@ -2438,6 +2453,119 @@ async function handleExportWorker(request, env, corsHeaders) {
 }
 
 
+// ===================== BLOG (server-rendered, indexable by Google) =====================
+const BLOG_POSTS = [
+  {
+    slug: "cach-cai-dat-windows-11",
+    title: "Hướng Dẫn Cách Cài Đặt Windows 11 Bằng USB Nhanh Nhất (Cập Nhật 2026)",
+    description: "Hướng dẫn từng bước cài đặt Windows 11 bằng USB: kiểm tra cấu hình, tải ISO, tạo USB boot bằng Rufus và cài đặt hoàn chỉnh — đơn giản, dễ làm theo.",
+    date: "2026-09-14",
+    contentHtml: `
+      <p>Windows 11 mang đến giao diện hiện đại, hiệu năng mượt mà và nhiều tính năng bảo mật vượt trội so với người tiền nhiệm. Nếu bạn đang muốn tự tay nâng cấp hệ điều hành cho máy tính của mình mà không cần mang ra tiệm, bài viết dưới đây sẽ hướng dẫn bạn toàn bộ quy trình cài đặt Windows 11 bằng USB, từ A đến Z, chỉ trong vài bước đơn giản.</p>
+
+      <h2>Bước 1: Kiểm tra xem máy tính của bạn có "chạy" được Windows 11 không</h2>
+      <p>Trước khi tải bất cứ thứ gì, hãy dành 2 phút kiểm tra cấu hình máy. Vào <b>Settings &gt; System &gt; About</b>, bạn sẽ thấy các thông tin cơ bản như dòng CPU, dung lượng RAM và loại hệ thống (32-bit hay 64-bit). Đây là bước quan trọng vì Windows 11 có yêu cầu phần cứng khắt khe hơn Windows 10, đặc biệt là về chip bảo mật TPM 2.0 và Secure Boot. Bỏ qua bước này có thể khiến bạn tải nhầm phiên bản hoặc cài đặt thất bại giữa chừng.</p>
+
+      <h2>Bước 2: Tải file ISO Windows 11 chính chủ từ Microsoft</h2>
+      <p>Truy cập trang tải xuống chính thức của Microsoft, chọn ngôn ngữ phù hợp và tải bản Windows 11 64-bit — đây cũng là phiên bản duy nhất mà Microsoft hiện phân phối cho hệ điều hành này. File ISO khá nặng (thường trên 5GB) nên hãy đảm bảo đường truyền internet ổn định trong lúc tải.</p>
+      <blockquote>💡 <b>Mẹo nhỏ:</b> Đường link tải ISO từ Microsoft khá dài và khó nhớ, bạn có thể dùng công cụ rút gọn link miễn phí tại <a href="https://shurlvn.com" target="_blank" rel="noopener">shurlvn.com</a> để tạo short-link hoặc lưu lại dưới dạng mã QR quét trên điện thoại nhanh chóng — cực tiện khi bạn cần gửi link cho đồng nghiệp hoặc lưu lại để tải trên máy khác mà không phải gõ lại cả đường dẫn dài ngoằn ngoèo.</blockquote>
+
+      <h2>Bước 3: Tạo USB Boot bằng Rufus</h2>
+      <p>Sau khi có file ISO, bạn cần một chiếc USB (tối thiểu 8GB) và phần mềm Rufus để biến nó thành USB cài đặt. Cắm USB vào máy, mở Rufus lên và thực hiện theo thứ tự:</p>
+      <ul>
+        <li>Chọn đúng USB ở mục thiết bị</li>
+        <li>Trỏ tới file ISO Windows 11 vừa tải</li>
+        <li>Chọn phân vùng <b>GPT</b> nếu máy dùng UEFI, hoặc <b>MBR</b> nếu máy dùng BIOS đời cũ</li>
+        <li>Định dạng hệ thống file là <b>NTFS</b> hoặc <b>FAT32</b></li>
+      </ul>
+      <p>Sau khi bấm Start, Rufus sẽ tự động xử lý phần còn lại, thường chỉ mất vài phút tùy tốc độ USB.</p>
+      <blockquote>💡 <b>Mẹo tiện lợi:</b> Bạn cần chia sẻ link tải file ISO hoặc bộ phần mềm Rufus cho bạn bè? Hãy dùng ngay <a href="https://shurlvn.com" target="_blank" rel="noopener">Rút Gọn Link Shurlvn</a> để biến đường link dài ngoằn ngoèo thành link ngắn gọn chỉ trong 3 giây!</blockquote>
+
+      <h2>Bước 4: Cài đặt Windows 11 từ USB</h2>
+      <p>Khởi động lại máy tính và boot vào USB vừa tạo (thường bằng cách nhấn F12, F2 hoặc Del khi máy vừa mở, tùy dòng máy). Khi màn hình cài đặt hiện ra:</p>
+      <ol>
+        <li>Nhấn <b>Install now</b></li>
+        <li>Nhập key bản quyền (hoặc chọn "Tôi không có key" để cài trước, kích hoạt sau)</li>
+        <li>Chọn phiên bản <b>Windows 11 Pro</b></li>
+        <li>Đồng ý điều khoản sử dụng</li>
+        <li>Chọn kiểu cài đặt <b>Custom</b></li>
+        <li>Chọn ổ đĩa muốn cài Windows vào</li>
+      </ol>
+      <p>Quá trình cài đặt sẽ tự động diễn ra và mất khoảng 10–30 phút, tùy cấu hình máy.</p>
+
+      <h2>Một vài lưu ý trước khi bắt tay vào làm</h2>
+      <ul>
+        <li>Sao lưu dữ liệu quan trọng trước khi cài, phòng trường hợp chọn nhầm ổ đĩa</li>
+        <li>Đảm bảo mạng internet ổn định trong suốt quá trình</li>
+        <li>Tạm tắt phần mềm diệt virus để tránh xung đột khi tạo USB boot</li>
+        <li>Nếu dùng laptop, hãy cắm sạc đầy đủ, tránh cài dở dang do hết pin</li>
+        <li>Ghi lại key bản quyền (nếu có) ở nơi dễ tìm</li>
+      </ul>
+    `
+  }
+];
+
+function renderBlogLayout(titleText, descriptionText, canonicalPath, bodyHtml) {
+  const t = escHtml(titleText), d = escHtml(descriptionText);
+  return `<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${t}</title>
+<meta name="description" content="${d}">
+<link rel="canonical" href="https://shurlvn.com${canonicalPath}">
+<meta property="og:type" content="article">
+<meta property="og:title" content="${t}">
+<meta property="og:description" content="${d}">
+<meta property="og:url" content="https://shurlvn.com${canonicalPath}">
+<style>
+body{margin:0;background:#0b0f1a;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.7;}
+.wrap{max-width:760px;margin:0 auto;padding:24px 20px 60px;}
+header{padding:18px 0;border-bottom:1px solid rgba(148,163,184,0.15);margin-bottom:28px;}
+header a{font-weight:800;font-size:20px;background:linear-gradient(135deg,#818cf8,#c084fc);-webkit-background-clip:text;background-clip:text;color:transparent;text-decoration:none;}
+h1{font-size:28px;line-height:1.3;margin:0 0 10px;color:#f8fafc;}
+h2{font-size:20px;margin:30px 0 10px;color:#f1f5f9;}
+p,li{font-size:16px;color:#cbd5e1;}
+.meta{color:#94a3b8;font-size:13px;margin-bottom:24px;}
+a{color:#818cf8;}
+blockquote{background:rgba(99,102,241,0.1);border-left:3px solid #818cf8;border-radius:8px;margin:20px 0;padding:14px 18px;color:#e2e8f0;}
+.cta{margin-top:40px;background:linear-gradient(135deg,rgba(99,102,241,0.18),rgba(192,132,252,0.18));border:1px solid rgba(99,102,241,0.35);border-radius:16px;padding:28px;text-align:center;}
+.cta h3{margin:0 0 10px;color:#f8fafc;font-size:20px;}
+.cta a{display:inline-block;margin-top:10px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;text-decoration:none;font-weight:700;padding:12px 26px;border-radius:10px;}
+.postlist a{color:#f1f5f9;text-decoration:none;font-weight:700;font-size:18px;}
+.postlist li{list-style:none;margin-bottom:22px;}
+footer{margin-top:50px;text-align:center;color:#64748b;font-size:13px;}
+footer a{color:#94a3b8;}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><a href="/">SHORT URL</a></header>
+${bodyHtml}
+<footer><a href="/">← Về trang chủ SHURL</a> · <a href="/blog">Xem tất cả bài viết</a></footer>
+</div>
+</body>
+</html>`;
+}
+
+function renderBlogIndexPage() {
+  const items = BLOG_POSTS.map(p =>
+    `<li><a href="/blog/${escHtml(p.slug)}">${escHtml(p.title)}</a><p class="meta">${escHtml(p.date)}</p><p>${escHtml(p.description)}</p></li>`
+  ).join("");
+  const body = `<h1>Blog SHURL</h1><p class="meta">Mẹo và hướng dẫn công nghệ, kèm theo cách dùng SHURL để chia sẻ link nhanh gọn hơn.</p><ul class="postlist">${items}</ul>`;
+  return renderBlogLayout("Blog SHURL — Mẹo công nghệ & rút gọn link", "Tổng hợp bài viết hướng dẫn công nghệ và mẹo dùng SHURL để rút gọn link, tạo mã QR miễn phí.", "/blog", body);
+}
+
+function renderBlogPostPage(post) {
+  const body = `<h1>${escHtml(post.title)}</h1><p class="meta">Cập nhật: ${escHtml(post.date)}</p>${post.contentHtml}` +
+    `<div class="cta"><h3>🚀 Trải nghiệm công cụ Rút gọn link &amp; Tạo mã QR miễn phí tại Shurlvn.com ngay hôm nay!</h3>` +
+    `<p>Rút gọn mọi đường link dài thành link ngắn gọn, dễ nhớ, kèm mã QR tạo tức thì — hoàn toàn miễn phí, không cần đăng ký.</p>` +
+    `<a href="https://shurlvn.com">Dùng thử Shurlvn.com miễn phí</a></div>`;
+  return renderBlogLayout(post.title, post.description, "/blog/" + post.slug, body);
+}
+
+
 // ===================== REDIRECT & SAFETY WARNING =====================
 async function handleRedirect(request, env, url, path, ctx) {
   const raw = await env.LINKS_KV.get("link:" + path);
@@ -3997,7 +4125,7 @@ footer{text-align:center;color:var(--muted2);font-size:12px;padding:30px 20px;}
       <div id="app" class="fade-in"></div>
       <div id="sidebarLeft" style="display:none;"></div>
       <div id="sidebarRight" style="display:none;"></div>
-      <footer><span id="footerTagline"></span><br><a href="https://mail.google.com/mail/?view=cm&fs=1&to=nguyennha24595@gmail.com&su=SHURL%20Support" target="_blank"><span id="footerContact"></span>: nguyennha24595@gmail.com</a><br><a href="#/terms" id="footerTermsLink"></a> · <a href="#/privacy" id="footerPrivacyLink"></a><br>🇻🇳 Trường Sa | Hoàng Sa là của Việt Nam</footer>
+      <footer><span id="footerTagline"></span><br><a href="https://mail.google.com/mail/?view=cm&fs=1&to=nguyennha24595@gmail.com&su=SHURL%20Support" target="_blank"><span id="footerContact"></span>: nguyennha24595@gmail.com</a><br><a href="/blog" id="footerBlogLink"></a> · <a href="#/terms" id="footerTermsLink"></a> · <a href="#/privacy" id="footerPrivacyLink"></a><br>🇻🇳 Trường Sa | Hoàng Sa là của Việt Nam</footer>
     </main>
   </div>
 </div>
@@ -4241,7 +4369,7 @@ var i18n = {
     // ===== MISC =====
     days:"ngày", hours:"giờ", minutes:"phút", loading:"Đang tải...", footer_tagline:"Nền tảng rút gọn link đa tầng · An toàn · Nhanh chóng",
     footer_contact:"Liên hệ",
-    footer_terms:"Điều khoản sử dụng", footer_privacy:"Chính sách bảo mật", legal_last_updated:"Cập nhật lần cuối",
+    footer_terms:"Điều khoản sử dụng", footer_privacy:"Chính sách bảo mật", footer_blog:"Blog", legal_last_updated:"Cập nhật lần cuối",
     terms_title:"Điều khoản sử dụng", terms_subtitle:"Quy định sử dụng dịch vụ SHORT URL.",
     privacy_title:"Chính sách bảo mật", privacy_subtitle:"Cách SHORT URL thu thập, sử dụng và bảo vệ thông tin của bạn.",
     register_legal_notice:"Bằng việc đăng ký, bạn đồng ý với", and:"và",
@@ -4607,7 +4735,7 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     // ===== MISC =====
     days:"days", hours:"hours", minutes:"minutes", loading:"Loading...", footer_tagline:"Multi-tier link shortening platform · Secure · Fast",
     footer_contact:"Contact",
-    footer_terms:"Terms of Service", footer_privacy:"Privacy Policy", legal_last_updated:"Last updated",
+    footer_terms:"Terms of Service", footer_privacy:"Privacy Policy", footer_blog:"Blog", legal_last_updated:"Last updated",
     terms_title:"Terms of Service", terms_subtitle:"Rules for using the SHORT URL service.",
     privacy_title:"Privacy Policy", privacy_subtitle:"How SHORT URL collects, uses, and protects your information.",
     register_legal_notice:"By signing up, you agree to our", and:"and",
@@ -11726,10 +11854,12 @@ function renderFooter(){
   var fc = document.getElementById("footerContact");
   var fTerms = document.getElementById("footerTermsLink");
   var fPrivacy = document.getElementById("footerPrivacyLink");
+  var fBlog = document.getElementById("footerBlogLink");
   if (ft) ft.textContent = "SHURL — " + t("footer_tagline");
   if (fc) fc.textContent = t("footer_contact");
   if (fTerms) fTerms.textContent = t("footer_terms");
   if (fPrivacy) fPrivacy.textContent = t("footer_privacy");
+  if (fBlog) fBlog.textContent = t("footer_blog");
 }
 
 // ---------- INIT ----------
