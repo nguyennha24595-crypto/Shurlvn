@@ -4113,6 +4113,7 @@ var i18n = {
     // ===== UPGRADE =====
     upgrade_pro:"Nâng cấp Pro", upgrade_super:"Nâng cấp Super", upgrade_plus:"Nâng cấp Plus",
     upgrade_to_unlock:"Nâng cấp để mở khoá tính năng này",
+    feature_requires_account:"Tính năng chỉ dành cho tài khoản đăng ký / Pro / Super.",
     upgrade_banner_title:"Nâng cấp để mở khoá tính năng này",
     upgrade_banner_desc:"Pro: 200 link/ngày, bulk, API · Super: 600 link/ngày, custom domain",
     upgrade_banner_btn:"Nâng cấp →",
@@ -4477,6 +4478,7 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     // ===== UPGRADE =====
     upgrade_pro:"Upgrade Pro", upgrade_super:"Upgrade Super", upgrade_plus:"Upgrade Plus",
     upgrade_to_unlock:"Upgrade to unlock this feature",
+    feature_requires_account:"Feature available for registered / Pro / Super accounts only.",
     upgrade_banner_title:"Upgrade to unlock this feature",
     upgrade_banner_desc:"Pro: 200 links/day, bulk, API · Super: 600 links/day, custom domain",
     upgrade_banner_btn:"Upgrade →",
@@ -6774,6 +6776,16 @@ function fmtNum(n){ n = n || 0; return n.toLocaleString("vi-VN"); }
 function isProOrAbove(user){
   return user && (user.role === "pro" || user.role === "super" || user.role === "admin");
 }
+function lockedFeatureCard(titleHtml){
+  var cta = state.user
+    ? '<a class="btn btn-primary btn-sm" href="#/pricing">' + t("upgrade_banner_btn") + '</a>'
+    : '<button class="btn btn-primary btn-sm" onclick="navRegister()">' + t("home_promo_btn1") + '</button>' +
+      '<button class="btn btn-ghost btn-sm" style="margin-left:8px;" onclick="navLogin()">' + t("home_promo_btn2") + '</button>';
+  return '<div class="card">' + titleHtml +
+    '<p class="hint">' + li('lock_icon', 12) + ' ' + t("feature_requires_account") + '</p>' +
+    '<div style="margin-top:12px;">' + cta + '</div>' +
+    '</div>';
+}
 function roleLabel(r){
   return t("role_" + r) || r;
 }
@@ -7435,8 +7447,8 @@ function renderNav() {
   html += sbItem("bulkqr", "qr", "QR Codes");
   html += '<div class="sb-section-label">Tools</div>';
   html += sbItem("bulk", "package", "Bulk");
-  html += sbItem("webhooks", "zap", "Webhooks" + (isProOrAbove(state.user) ? "" : " 🔒"));
-  html += sbItem("export", "download", "Export" + (isProOrAbove(state.user) ? "" : " 🔒"));
+  html += sbItem("webhooks", "zap", "Webhooks");
+  html += sbItem("export", "download", "Export");
   if (state.limits && state.limits.hasCampaignHistory) html += sbItem("campaigns", "target", "Campaigns");
   if (state.limits && state.limits.hasTeam) html += sbItem("team", "users", "Team");
   html += sbItem("api", "code2", "API");
@@ -7546,7 +7558,7 @@ function render(){
   renderNav();
   renderSidebars();
   var app = document.getElementById("app");
-  var authRoutes = ["dashboard","bulk","api","webhooks","export","team","campaigns","admin","account"];
+  var authRoutes = ["dashboard","team","campaigns","admin","account"];
   if (authRoutes.indexOf(route) !== -1 && !state.user){ navigate("login"); return; }
   var majorRoutes = ["home","bulkqr","login","register","forgot-password","dashboard","bulk","api","webhooks","export","team","campaigns","account","pricing","admin","terms","privacy"];
   var isMajor = majorRoutes.indexOf(route) !== -1 || route.indexOf("reset-password") === 0;
@@ -8499,7 +8511,7 @@ function openEditModal(link){
 function renderBulk(app){
   var limits = state.limits || {};
   if (!limits.hasBulkShorten){
-    app.innerHTML = upgradeBanner("bulkqr") + '<div class="card"><h1>' + t("bulk_title") + '</h1><p class="sub">' + t("upgrade_to_unlock") + '</p></div>';
+    app.innerHTML = upgradeBanner("bulkqr") + lockedFeatureCard('<h1>' + t("bulk_title") + '</h1>');
     return;
   }
   app.innerHTML = upgradeBanner("bulkqr") +
@@ -9082,6 +9094,10 @@ function buildCurlExample(origin, token){
 function renderApiTab(app){
   var limits = state.limits || {};
   var origin = location.origin;
+  if (!state.user){
+    app.innerHTML = lockedFeatureCard('<h1>' + t("api_title") + '</h1>');
+    return;
+  }
   var tokenBlock = state.user.apiToken
     ? '<div class="copybox"><span class="u">' + esc(state.user.apiToken) + '</span><button class="btn btn-ghost btn-sm" id="btnCopyToken">' + t("copy") + '</button></div>'
     : '<p class="hint">' + t("api_no_token") + '</p>';
@@ -9153,7 +9169,7 @@ function renderApiTab(app){
 function renderWebhookTab(app){
   var limits = state.limits || {};
   if (!isProOrAbove(state.user)){
-    app.innerHTML = upgradeBanner("webhooks") + '<div class="card"><h1>' + li('webhook', 14) + ' Webhooks</h1><p class="sub">' + t("upgrade_to_unlock") + '</p></div>';
+    app.innerHTML = upgradeBanner("webhooks") + lockedFeatureCard('<h1>' + li('webhook', 14) + ' Webhooks</h1>');
     return;
   }
   app.innerHTML = guideCard("webhooks") + upgradeBanner("webhooks") +
@@ -9241,7 +9257,7 @@ function renderWebhookTab(app){
 function renderExportTab(app){
   var limits = state.limits || {};
   if (!isProOrAbove(state.user)){
-    app.innerHTML = upgradeBanner("export") + '<div class="card"><h1>' + li('download', 14) + ' ' + t("export_tab_title") + '</h1><p class="sub">' + t("upgrade_to_unlock") + '</p></div>';
+    app.innerHTML = upgradeBanner("export") + lockedFeatureCard('<h1>' + li('download', 14) + ' ' + t("export_tab_title") + '</h1>');
     return;
   }
   app.innerHTML = guideCard("export") + upgradeBanner("export") +
