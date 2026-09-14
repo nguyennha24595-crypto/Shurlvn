@@ -2456,6 +2456,183 @@ async function handleExportWorker(request, env, corsHeaders) {
 // ===================== BLOG (server-rendered, indexable by Google) =====================
 const BLOG_POSTS = [
   {
+    slug: "rut-gon-link-affiliate-khong-bi-chan-facebook",
+    title: "Vì Sao Link Affiliate Shopee/TikTok Hay Bị Facebook Chặn — Và Cách Khắc Phục",
+    description: "Lý do link affiliate Shopee, Lazada, TikTok Shop dễ bị Facebook hạn chế hiển thị, và cách dùng link rút gọn kèm tên miền riêng trên Shurlvn để giảm rủi ro.",
+    date: "2026-09-14",
+    contentHtml: `
+      <p>Nếu bạn làm affiliate marketing cho Shopee, Lazada hay TikTok Shop, chắc hẳn đã từng gặp cảnh: đăng bài kèm link sản phẩm lên Facebook xong thấy lượt tiếp cận (reach) tụt thảm hại, hoặc tệ hơn là bài viết bị ẩn, cảnh báo "liên kết không an toàn". Đây là nỗi đau rất phổ biến của dân affiliate. Bài viết này giải thích vì sao và cách giảm thiểu rủi ro đó.</p>
+
+      <h2>Vì sao link affiliate hay bị Facebook "để ý"?</h2>
+      <ul>
+        <li><b>Link gốc quá dài và rối:</b> link affiliate thường có hàng loạt tham số theo dõi (tracking ID, subid...) khiến link trông dài loằng ngoằng, dễ bị thuật toán xếp vào nhóm "đáng ngờ"</li>
+        <li><b>Domain rút gọn dùng chung bị lạm dụng:</b> các dịch vụ rút gọn link miễn phí phổ biến từng bị nhiều đối tượng lợi dụng để phát tán link lừa đảo, khiến Facebook có xu hướng thận trọng hơn với TOÀN BỘ domain rút gọn đó — kể cả khi link của bạn hoàn toàn hợp lệ, bạn vẫn bị vạ lây vì dùng chung tên miền với những link xấu của người khác</li>
+        <li><b>Đăng lặp lại cùng một link nhiều lần trong thời gian ngắn:</b> hành vi này giống spam, dù nội dung là hợp pháp</li>
+      </ul>
+
+      <h2>Shurlvn giúp gì cho vấn đề này?</h2>
+      <h3>1. Rút gọn link để loại bỏ tham số rối mắt</h3>
+      <p>Thay vì dán nguyên link affiliate dài với hàng chục ký tự tracking, bạn rút gọn lại bằng Shurlvn thành một link ngắn, sạch sẽ — vẫn giữ nguyên đích đến và tracking ID phía sau (người dùng không thấy tham số nhưng hệ thống affiliate vẫn ghi nhận hoa hồng bình thường).</p>
+
+      <h3>2. Dùng tên miền riêng để không bị "vạ lây" từ người dùng khác</h3>
+      <p>Đây là điểm quan trọng nhất: khi bạn dùng domain rút gọn CHUNG (kể cả shurlvn.com hay bất kỳ dịch vụ rút gọn phổ biến nào khác), uy tín domain đó phụ thuộc vào hành vi của TẤT CẢ người dùng khác. Với tính năng <a href="/blog/tao-ten-mien-rieng-cho-link">tên miền riêng (custom domain)</a> của gói Super, link của bạn sẽ mang tên miền của chính bạn — độ uy tín hoàn toàn tách biệt, không phụ thuộc vào việc người khác có lạm dụng domain rút gọn chung hay không.</p>
+      <div class="mockup">
+        <div class="mockup-topbar"><span class="mockup-dot"></span><span class="mockup-dot"></span><span class="mockup-dot"></span><span class="mockup-url">shurlvn.com</span></div>
+        <div class="mockup-body">
+          <div class="mockup-brand">SHORT URL</div>
+          <p class="mockup-card-title">SHURL</p>
+          <label class="mockup-label">URL cần rút gọn</label>
+          <div class="mockup-input">https://shopee.vn/product/xxxx?af_id=...&sub_id=...&utm_...</div>
+          <label class="mockup-label">Tên miền riêng</label>
+          <div class="mockup-input">shop.tenbandcuaban.com</div>
+          <div class="mockup-btn">Rút gọn ngay</div>
+        </div>
+      </div>
+      <p class="mockup-caption">Link Shopee dài, rối mắt được rút gọn dưới chính tên miền của bạn</p>
+
+      <h3>3. Theo dõi hiệu quả bằng Facebook Pixel ngay trên link rút gọn</h3>
+      <p>Với tài khoản Pro trở lên, bạn có thể gắn Facebook Pixel ID trực tiếp vào link rút gọn khi tạo — mỗi lượt click sẽ được Pixel ghi nhận, giúp bạn tối ưu quảng cáo và đo lường chuyển đổi chính xác hơn mà không cần chỉnh sửa gì ở trang đích.</p>
+
+      <blockquote>💡 <b>Lưu ý quan trọng:</b> Không có công cụ nào đảm bảo 100% link không bao giờ bị hạn chế — thuật toán của Facebook xét nhiều yếu tố (nội dung bài viết, lịch sử tài khoản, tốc độ đăng bài...). Dùng tên miền riêng giúp <i>giảm rủi ro</i> do bị vạ lây từ domain dùng chung, chứ không phải "vé miễn trừ" tuyệt đối.</blockquote>
+
+      <h2>Vài mẹo thực tế thêm cho dân affiliate</h2>
+      <ul>
+        <li>Không đăng lại y hệt một link nhiều lần liên tục trong thời gian ngắn</li>
+        <li>Đặt tên alias gợi nhớ sản phẩm (vd: <i>shop.tenbandcuaban.com/tai-nghe-sale</i>) thay vì để mã ngẫu nhiên, vừa chuyên nghiệp vừa dễ khiến người xem tin tưởng bấm vào</li>
+        <li>Nếu chạy nhiều sản phẩm cùng lúc, dùng tính năng <a href="/blog/rut-gon-link-hang-loat">rút gọn hàng loạt</a> để tạo toàn bộ link chỉ trong một lần nhập</li>
+      </ul>
+    `
+  },
+  {
+    slug: "utm-tracking-la-gi-ket-hop-rut-gon-link",
+    title: "UTM Tracking Là Gì? Cách Kết Hợp UTM Với Link Rút Gọn Để Đo Lường Chiến Dịch Chính Xác",
+    description: "UTM Tracking là gì và cách kết hợp UTM với công cụ rút gọn link Shurlvn để đo lường chính xác hiệu quả quảng cáo Facebook, Google — xem rõ nguồn traffic đến từ đâu.",
+    date: "2026-09-14",
+    contentHtml: `
+      <p>Bạn chạy quảng cáo trên cả Facebook lẫn Google, đăng thêm vài bài trên các hội nhóm — nhưng cuối tháng nhìn vào Google Analytics lại không biết chính xác đơn hàng nào đến từ kênh nào? Đó là lúc bạn cần đến UTM Tracking.</p>
+
+      <h2>UTM Tracking là gì?</h2>
+      <p>UTM (Urchin Tracking Module) là các tham số nhỏ được gắn thêm vào cuối một URL, giúp công cụ phân tích (như Google Analytics, Facebook Ads Manager) biết chính xác lượt truy cập đến từ đâu. Có 5 tham số UTM phổ biến:</p>
+      <ul>
+        <li><b>utm_source</b> — nguồn traffic (vd: facebook, google, zalo)</li>
+        <li><b>utm_medium</b> — kênh/hình thức (vd: cpc, social, email)</li>
+        <li><b>utm_campaign</b> — tên chiến dịch (vd: sale-thang9)</li>
+        <li><b>utm_term</b> — từ khoá (thường dùng cho quảng cáo tìm kiếm)</li>
+        <li><b>utm_content</b> — phân biệt các phiên bản quảng cáo/nội dung khác nhau trong cùng chiến dịch</li>
+      </ul>
+      <p>Vấn đề là một URL gắn đủ 5 tham số UTM thường dài và xấu, không thể đăng trực tiếp lên bài quảng cáo hay in trên standee. Đây là lúc kết hợp với công cụ rút gọn link phát huy tác dụng.</p>
+
+      <h2>Cách tạo link vừa có UTM vừa được rút gọn trên Shurlvn</h2>
+      <p>Shurlvn tích hợp sẵn UTM Builder ngay trong màn hình tạo link — bạn không cần tự ghép chuỗi tham số bằng tay.</p>
+      <div class="mockup">
+        <div class="mockup-topbar"><span class="mockup-dot"></span><span class="mockup-dot"></span><span class="mockup-dot"></span><span class="mockup-url">shurlvn.com</span></div>
+        <div class="mockup-body">
+          <div class="mockup-brand">SHORT URL</div>
+          <p class="mockup-card-title">SHURL</p>
+          <label class="mockup-label">URL cần rút gọn</label>
+          <div class="mockup-input">https://vi-du.com/san-pham</div>
+          <label class="mockup-label">Nguồn (utm_source)</label>
+          <div class="mockup-input">facebook</div>
+          <label class="mockup-label">Kênh (utm_medium)</label>
+          <div class="mockup-input">cpc</div>
+          <div class="mockup-btn">Áp dụng UTM</div>
+        </div>
+      </div>
+      <p class="mockup-caption">Điền UTM Builder, Shurlvn tự ghép vào link đích trước khi rút gọn</p>
+      <p>Sau khi áp dụng, link đích thực tế sẽ mang đầy đủ tham số UTM (ví dụ <span style="font-family:monospace;">?utm_source=facebook&utm_medium=cpc&utm_campaign=sale-thang9</span>), nhưng bạn chỉ cần chia sẻ một link rút gọn ngắn gọn — khi khách bấm vào, họ vẫn được chuyển tới đúng trang đích kèm đầy đủ tham số UTM để Google Analytics hay Facebook Ads Manager của bạn ghi nhận chính xác.</p>
+
+      <h2>Xem thêm lượt click và nguồn truy cập ngay trên Shurlvn</h2>
+      <p>Song song với việc UTM chảy về công cụ phân tích của riêng bạn, Shurlvn còn ghi lại một lớp thống kê độc lập ngay trên link rút gọn — không cần chờ báo cáo từ nơi khác:</p>
+      <ul>
+        <li><b>Nguồn giới thiệu (referrer):</b> link được bấm từ trang/ứng dụng nào (Facebook, Zalo, trực tiếp...)</li>
+        <li><b>Thiết bị và trình duyệt:</b> điện thoại hay máy tính, Chrome hay Safari...</li>
+        <li><b>Quốc gia truy cập</b></li>
+        <li><b>Lịch sử từng lượt click theo thời gian thực</b></li>
+      </ul>
+      <p>Vào mục thống kê chi tiết của từng link trong Dashboard để xem các biểu đồ này.</p>
+
+      <blockquote>💡 <b>Mẹo:</b> Đặt tên campaign giống với utm_campaign khi tạo link (ví dụ cùng là "sale-thang9") — sau đó bạn có thể vào mục Campaigns để xem tổng lượt click gộp của toàn bộ link thuộc cùng một chiến dịch, tiện so sánh hiệu quả giữa các đợt chạy quảng cáo.</blockquote>
+
+      <h2>Lưu ý khi dùng UTM</h2>
+      <ul>
+        <li>Thống nhất quy tắc đặt tên UTM trong cả team (chữ thường, không dấu, không khoảng trắng) để tránh Google Analytics tách thành nhiều dòng khác nhau cho cùng một nguồn</li>
+        <li>Không gắn UTM cho link nội bộ giữa các trang trên chính website của bạn — chỉ dùng cho link dẫn từ bên ngoài vào</li>
+        <li>utm_campaign nên đặt trùng với tên chiến dịch nội bộ để dễ đối chiếu báo cáo sau này</li>
+      </ul>
+    `
+  },
+  {
+    slug: "loi-ich-branded-link-cho-doanh-nghiep",
+    title: "Branded Link Là Gì? Vì Sao Doanh Nghiệp Nên Dùng Link Mang Tên Miền Riêng",
+    description: "Phân tích lợi ích của Branded Link (link rút gọn mang tên miền riêng của doanh nghiệp) so với link rút gọn dùng domain chung — về uy tín, nhận diện thương hiệu và bảo mật.",
+    date: "2026-09-14",
+    contentHtml: `
+      <p>Với một cá nhân, một link dạng <b>shurlvn.com/abc123</b> đã đủ dùng. Nhưng với doanh nghiệp đang xây dựng thương hiệu, mỗi điểm chạm với khách hàng — kể cả một đường link ngắn — đều là cơ hội để củng cố (hoặc làm giảm) niềm tin. Đó là lý do khái niệm <b>Branded Link</b> (link mang tên miền riêng của doanh nghiệp) ngày càng được các thương hiệu chú trọng.</p>
+
+      <h2>Branded Link là gì?</h2>
+      <p>Thay vì dùng domain rút gọn dùng chung với hàng nghìn người dùng khác, Branded Link sử dụng chính tên miền (hoặc tên miền phụ) của doanh nghiệp bạn — ví dụ <b>di.tencongty.com/km-thang9</b> thay vì <b>shurlvn.com/aXb92k</b>.</p>
+
+      <h2>So sánh Branded Link và link rút gọn dùng chung</h2>
+      <div class="cmp-table-wrap"><table class="cmp-table">
+        <tr><th></th><th>Link rút gọn dùng chung</th><th>Branded Link</th></tr>
+        <tr><td>Nhận diện thương hiệu</td><td class="no">Không có, trông giống mọi link rút gọn khác</td><td class="yes">Ngay lập tức nhận ra là link của doanh nghiệp bạn</td></tr>
+        <tr><td>Độ tin cậy với người nhận</td><td class="no">Người dùng dè dặt hơn với domain lạ</td><td class="yes">Tên miền quen thuộc giúp tăng tỷ lệ click</td></tr>
+        <tr><td>Uy tín domain</td><td class="no">Phụ thuộc hành vi của TẤT CẢ người dùng khác trên cùng domain</td><td class="yes">Độc lập, chỉ phụ thuộc vào chính bạn</td></tr>
+        <tr><td>Đồng bộ đa kênh</td><td class="no">Mỗi kênh (email, MXH, in ấn) có thể trông rời rạc</td><td class="yes">Cùng một tên miền xuất hiện xuyên suốt mọi kênh</td></tr>
+      </table></div>
+
+      <h2>Ba lợi ích cụ thể cho doanh nghiệp</h2>
+      <h3>1. Tăng tỷ lệ click (CTR)</h3>
+      <p>Người dùng có xu hướng ngần ngại bấm vào link từ domain họ không quen biết, đặc biệt trong bối cảnh lừa đảo qua link ngày càng phổ biến. Một link mang đúng tên miền công ty tạo cảm giác an toàn hơn hẳn.</p>
+
+      <h3>2. Củng cố nhận diện thương hiệu ở từng điểm chạm nhỏ</h3>
+      <p>Từ email marketing, bài đăng mạng xã hội, đến mã QR in trên bao bì sản phẩm — mọi đường link đều là cơ hội nhắc khách hàng nhớ tới tên thương hiệu, thay vì nhắc tới tên một dịch vụ rút gọn link trung gian.</p>
+
+      <h3>3. Không bị ảnh hưởng bởi việc người khác lạm dụng domain chung</h3>
+      <p>Một số nền tảng (đặc biệt là mạng xã hội) có xu hướng thận trọng hơn với các domain rút gọn bị nhiều người dùng lạm dụng cho mục đích xấu. Dùng tên miền riêng giúp uy tín link của bạn hoàn toàn tách biệt khỏi hành vi của người dùng khác.</p>
+
+      <h2>Doanh nghiệp cần gì để bắt đầu?</h2>
+      <p>Trên Shurlvn, tính năng tên miền riêng dành cho gói <b>Super</b> và cần trỏ DNS tên miền của bạn về hạ tầng SHURL. Xem hướng dẫn chi tiết từng bước tại bài viết <a href="/blog/tao-ten-mien-rieng-cho-link">Tạo Tên Miền Riêng Cho Link Rút Gọn</a>.</p>
+    `
+  },
+  {
+    slug: "so-sanh-bitly-tinyurl-shurlvn",
+    title: "So Sánh Bitly, TinyURL Và Shurlvn — Nên Chọn Công Cụ Rút Gọn Link Nào?",
+    description: "So sánh khách quan 3 công cụ rút gọn link phổ biến Bitly, TinyURL và Shurlvn về tính năng, tên miền riêng, mã QR, thống kê và ngôn ngữ giao diện.",
+    date: "2026-09-14",
+    contentHtml: `
+      <p>Thị trường công cụ rút gọn link có khá nhiều lựa chọn, mỗi cái mạnh một kiểu. Bài viết này so sánh khách quan ba cái tên quen thuộc với người dùng Việt Nam: <b>Bitly</b>, <b>TinyURL</b> và <b>Shurlvn</b> — để bạn chọn đúng công cụ cho nhu cầu của mình.</p>
+
+      <div class="cmp-table-wrap"><table class="cmp-table">
+        <tr><th></th><th>Bitly</th><th>TinyURL</th><th>Shurlvn</th></tr>
+        <tr><td>Miễn phí sử dụng cơ bản</td><td class="yes">Có (giới hạn)</td><td class="yes">Có</td><td class="yes">Có</td></tr>
+        <tr><td>Cần đăng ký tài khoản</td><td>Có, để dùng đủ tính năng</td><td class="no">Không bắt buộc</td><td class="no">Không bắt buộc (khách vẫn rút gọn được)</td></tr>
+        <tr><td>Tạo mã QR miễn phí</td><td>Giới hạn ở gói trả phí</td><td class="no">Không có sẵn</td><td class="yes">Có, tuỳ chỉnh màu/kích thước, miễn phí</td></tr>
+        <tr><td>Thống kê click (referrer, thiết bị, quốc gia)</td><td>Có, đầy đủ hơn ở gói trả phí</td><td class="no">Rất hạn chế</td><td class="yes">Có sẵn cho tài khoản đăng ký</td></tr>
+        <tr><td>Tên miền riêng (branded domain)</td><td>Yêu cầu nâng cấp gói trả phí</td><td class="no">Không hỗ trợ</td><td>Yêu cầu gói Super</td></tr>
+        <tr><td>Giao diện tiếng Việt</td><td class="no">Không</td><td class="no">Không</td><td class="yes">Có, mặc định tiếng Việt</td></tr>
+        <tr><td>Hạ tầng</td><td>Máy chủ riêng</td><td>Máy chủ riêng</td><td>Cloudflare Workers (mạng lưới máy chủ biên toàn cầu)</td></tr>
+      </table></div>
+
+      <h2>Bitly phù hợp với ai?</h2>
+      <p>Bitly là cái tên lâu đời, phổ biến toàn cầu, phù hợp với doanh nghiệp quốc tế cần tích hợp sâu vào các nền tảng marketing lớn. Nhược điểm là giao diện chỉ có tiếng Anh, và nhiều tính năng nâng cao (branded domain, thống kê chi tiết) yêu cầu nâng cấp gói trả phí khá sớm.</p>
+
+      <h2>TinyURL phù hợp với ai?</h2>
+      <p>TinyURL đơn giản đến mức tối đa — phù hợp nếu bạn chỉ cần rút gọn một link nhanh, dùng một lần, không cần theo dõi thống kê hay quản lý lâu dài. Đổi lại, gần như không có công cụ quản lý, không mã QR, không thống kê chi tiết.</p>
+
+      <h2>Vì sao nhiều người dùng Việt Nam chọn Shurlvn?</h2>
+      <ul>
+        <li><b>Giao diện tiếng Việt mặc định</b> — dễ dùng cho người mới, không cần đoán nghĩa thuật ngữ tiếng Anh</li>
+        <li><b>Miễn phí ngay cả khi chưa đăng ký</b> — khách vãng lai vẫn rút gọn được 5 link/ngày, có tài khoản Free thì nhiều tính năng hơn (đặt tên tuỳ chỉnh, thống kê...) mà không cần trả phí</li>
+        <li><b>Mã QR tuỳ chỉnh màu sắc miễn phí</b> — nhiều đối thủ giới hạn tính năng này ở gói trả phí</li>
+        <li><b>Chạy trên hạ tầng Cloudflare</b> — tận dụng mạng lưới máy chủ biên (edge network) phủ khắp toàn cầu, giúp tốc độ phản hồi nhanh dù người dùng ở bất kỳ đâu</li>
+      </ul>
+
+      <h2>Kết luận</h2>
+      <p>Không có công cụ nào "tốt nhất" cho mọi trường hợp — Bitly mạnh về hệ sinh thái quốc tế, TinyURL nhanh gọn cho nhu cầu dùng một lần, còn Shurlvn phù hợp nhất nếu bạn muốn một công cụ tiếng Việt, miễn phí ngay từ đầu, có sẵn mã QR và thống kê cơ bản mà không phải trả phí ngay từ những tính năng đầu tiên.</p>
+    `
+  },
+  {
     slug: "rut-gon-link-hang-loat",
     title: "Rút Gọn Link Hàng Loạt (Bulk) — Xử Lý Cả Trăm Link Trong 1 Lần",
     description: "Hướng dẫn rút gọn nhiều link cùng lúc bằng tính năng Bulk trên Shurlvn.com, kèm cách đặt alias và campaign riêng cho từng link ngay trong 1 lần nhập.",
@@ -2924,6 +3101,15 @@ footer a{color:#64748b;}
 .qr-row figure{margin:0;text-align:center;}
 .qr-row img{margin:0 0 8px;}
 .qr-row figcaption{font-size:12px;color:#64748b;}
+.cmp-table-wrap{overflow-x:auto;margin:20px 0;}
+.cmp-table{width:100%;border-collapse:collapse;font-size:14px;}
+.cmp-table th,.cmp-table td{border:1px solid #e2e8f0;padding:10px 12px;text-align:left;}
+.cmp-table th{background:#f1f5f9;color:#0f172a;font-weight:700;}
+.cmp-table td:first-child{font-weight:600;color:#0f172a;white-space:nowrap;}
+.cmp-table .yes{color:#16a34a;font-weight:700;}
+.cmp-table .no{color:#94a3b8;}
+.cmp-table td:last-child,.cmp-table th:last-child{background:rgba(99,102,241,0.06);}
+.cmp-table th:last-child{background:rgba(99,102,241,0.15);}
 </style>
 </head>
 <body>
