@@ -7643,6 +7643,10 @@ if (hasPromo){
     } else {
       html += '<div style="font-size:32px;font-weight:800;margin:8px 0 4px;">' + p.price + '<small style="font-size:13px;font-weight:400;color:var(--muted);">' + p.unit + '</small></div>';
     }
+    if (basePrice > 0){
+      var vndForCard = Math.round((hasPromo ? parseFloat(newPrice) : basePrice) * VN_EXCHANGE_RATE);
+      html += '<div style="font-size:13px;color:var(--muted);margin-top:-2px;margin-bottom:8px;">~' + vndForCard.toLocaleString("vi-VN") + ' VNĐ</div>';
+    }
     html += '<div style="font-size:12px;color:var(--muted);margin-bottom:16px;min-height:36px;">' + p.desc + '</div>';
     var btnId = "planbtn_" + p.tier;
     if (p.tier === "free"){
@@ -7838,7 +7842,7 @@ function updateVnPrice() {
   
   var vndPrice = Math.round(usdPrice * VN_EXCHANGE_RATE);
   var display = document.getElementById("vnPriceDisplay");
-  if (display) display.innerText = "~" + vndPrice.toLocaleString() + " VNĐ";
+  if (display) display.innerText = "~" + vndPrice.toLocaleString("vi-VN") + " VNĐ";
 }
 
 function showQrModal(tier) {
@@ -7912,7 +7916,7 @@ function showQrModal(tier) {
       }
       
       var vndPrice = Math.round(usdPrice * VN_EXCHANGE_RATE);
-      document.getElementById("qrAmount").textContent = vndPrice.toLocaleString();
+      document.getElementById("qrAmount").textContent = vndPrice.toLocaleString("vi-VN");
       
       var tierPrefix = tier === "plus" ? "PL" : tier === "pro" ? "PR" : "SU";
       var orderId = tierPrefix + "-" + Math.random().toString(36).substring(2, 8).toUpperCase();
