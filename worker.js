@@ -4670,7 +4670,7 @@ footer{text-align:center;color:var(--muted2);font-size:12px;padding:30px 20px;}
 .qr-csv-drop{border:1px dashed var(--input-border);border-radius:10px;padding:14px;text-align:center;font-size:13px;color:var(--muted);margin-top:10px;}
 @media(max-width:900px){
   .qr-workspace{grid-template-columns:1fr;}
-  .qr-preview-card{position:static;order:-1;}
+  .qr-preview-card{position:static;}
   .qr-utm-grid{grid-template-columns:1fr;}
 }
 </style>
@@ -5008,7 +5008,7 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     utm_source:"Nguồn (utm_source)", utm_medium:"Kênh (utm_medium)", utm_term:"Từ khóa (utm_term)", utm_content:"Nội dung (utm_content)",
     export_filter_campaign_label:"Lọc theo Campaign", export_filter_all:"Tất cả campaign",
     admin_ban:"Khóa", admin_unban:"Mở khóa", admin_banned:"Bị khóa", admin_active:"Bình thường", admin_expires:"Hết hạn:", admin_notify:"Gửi thông báo", admin_delete_user:"Xóa user", admin_ban_user:"Khóa user", admin_unban_user:"Mở khóa",
-    guide_close:"Đóng hướng dẫn",
+    guide_close:"Đóng hướng dẫn", guide_show_steps:"Xem hướng dẫn",
     guide_home_title:"Bắt đầu với SHORT URL",
     guide_home_desc:"Tạo link ngắn, QR Code và quản lý hoạt động của bạn từ một nơi.",
     guide_home_step1:"Tạo Short URL — Rút gọn một URL dài thành link dễ chia sẻ.",
@@ -5390,7 +5390,7 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     utm_source:"Source (utm_source)", utm_medium:"Medium (utm_medium)", utm_term:"Term (utm_term)", utm_content:"Content (utm_content)",
     export_filter_campaign_label:"Filter by Campaign", export_filter_all:"All campaigns",
     admin_ban:"Ban", admin_unban:"Unban", admin_banned:"Banned", admin_active:"Active", admin_expires:"Expires:", admin_notify:"Send notification", admin_delete_user:"Delete user", admin_ban_user:"Ban user", admin_unban_user:"Unban user",
-    guide_close:"Close guide",
+    guide_close:"Close guide", guide_show_steps:"Show guide",
     guide_home_title:"Get started with SHORT URL",
     guide_home_desc:"Create short links, QR Codes and manage your activity from one place.",
     guide_home_step1:"Create Short URL — Shorten a long URL into an easy-to-share link.",
@@ -7123,10 +7123,16 @@ function guideCard(page){
       '.guide-desc{font-size:13px;color:var(--muted);margin:0;line-height:1.5;}' +
       '.guide-close{flex-shrink:0;background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;line-height:1;}' +
       '.guide-close:hover{background:var(--hover-row);color:var(--text);}' +
-      '.guide-steps{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}' +
+      '.guide-toggle{flex-shrink:0;background:none;border:none;color:var(--indigo);font-size:12px;font-weight:600;cursor:pointer;padding:4px 0;display:flex;align-items:center;gap:4px;}' +
+      '.guide-toggle svg{transition:transform 0.2s ease;}' +
+      '.guide-card.expanded .guide-toggle svg{transform:rotate(180deg);}' +
+      '.guide-steps,.guide-footer{display:none;}' +
+      '.guide-card.expanded .guide-steps{display:flex;}' +
+      '.guide-card.expanded .guide-footer{display:flex;}' +
+      '.guide-steps{flex-direction:column;gap:8px;margin-bottom:14px;}' +
       '.guide-step{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--text);line-height:1.5;}' +
       '.guide-step-num{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--indigo);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;}' +
-      '.guide-footer{display:flex;gap:10px;flex-wrap:wrap;}' +
+      '.guide-footer{gap:10px;flex-wrap:wrap;}' +
       '@media(max-width:640px){.guide-card{flex-direction:column;}.guide-illustration{width:100%;height:60px;}}';
     document.head.appendChild(s);
   }
@@ -7187,7 +7193,10 @@ function guideCard(page){
     '<div class="guide-content">' +
       '<div class="guide-header">' +
         '<div><h3 class="guide-title">' + (titles[page] || "") + '</h3><p class="guide-desc">' + (descs[page] || "") + '</p></div>' +
+        '<div style="display:flex;align-items:center;gap:4px;">' +
+        '<button class="guide-toggle" onclick="toggleGuide(&#39;' + page + '&#39;)">' + t("guide_show_steps") + ' <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button>' +
         '<button class="guide-close" onclick="closeGuide(&#39;' + page + '&#39;)" title="' + t("guide_close") + '">&times;</button>' +
+        '</div>' +
       '</div>' +
       '<div class="guide-steps">' + stepsHtml + '</div>' +
       '<div class="guide-footer">' + ctaHtml + '</div>' +
@@ -7199,6 +7208,10 @@ function closeGuide(page){
   var el = document.getElementById("guide_" + page);
   if (el) el.style.display = "none";
   try { localStorage.setItem("shurl_guide_" + page, "closed"); } catch(e) {}
+}
+function toggleGuide(page){
+  var el = document.getElementById("guide_" + page);
+  if (el) el.classList.toggle("expanded");
 }
 
 function fetchUserNotifications() {
