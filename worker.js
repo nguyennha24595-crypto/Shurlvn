@@ -3572,7 +3572,7 @@ function renderAppHtml() {
 .lang-dropdown .lang-item{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:8px;font-size:13px;cursor:pointer;color:var(--text);}
 .lang-dropdown .lang-item:hover{background:rgba(99,102,241,0.15);}
 .lang-dropdown .lang-item.active{color:var(--lang-active-color);font-weight:700;}
-#app{transition:opacity 0.45s ease;}
+#app{transition:opacity 0.13s ease;}
 @keyframes modalPop{from{opacity:0;transform:translateY(20px) scale(0.95);}to{opacity:1;transform:translateY(0) scale(1);}}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
 .fade-in{animation:fadeInUp 0.25s ease-out;}
@@ -3683,7 +3683,7 @@ function renderAppHtml() {
 .sb-user-menu-item svg{color:var(--muted);flex-shrink:0;}
 .sb-user-menu-sep{height:1px;background:var(--border);margin:4px 0;}
 .sb-content{flex:1;padding:20px;overflow-x:hidden;}
-.sb-content #app{transition:opacity 0.45s ease;}
+.sb-content #app{transition:opacity 0.13s ease;}
 .sb-overlay{display:none;position:fixed;inset:0;background:var(--overlay-bg);backdrop-filter:blur(4px);z-index:25;}
 .sb-overlay.show{display:block;}
 .upsell-card{background:var(--upsell-bg);border:1px solid var(--upsell-border);border-radius:16px;padding:20px;overflow:visible;position:relative;}
@@ -6481,8 +6481,8 @@ function closeGuide(page){
 }
 
 function fetchUserNotifications() {
-  if (!state.user) return;
-  api("/api/notifications", "GET").then(function(data) {
+  if (!state.user) return Promise.resolve();
+  return api("/api/notifications", "GET").then(function(data) {
     var count = data.unreadCount || 0;
     var badge = document.getElementById("userBellCount");
     if (badge) {
@@ -6509,8 +6509,10 @@ function closeUserNotifPanel() {
 function toggleUserNotifications() {
   var existing = document.getElementById("userNotifPanel");
   if (existing) { closeUserNotifPanel(); return; }
-  // Fetch fresh data from server before showing panel
-  fetchUserNotifications();
+  // Show optimistically with cached data, then refresh once fresh data arrives
+  fetchUserNotifications().then(function() {
+    if (document.getElementById("userNotifPanel")) { closeUserNotifPanel(); toggleUserNotifications(); }
+  });
   var notifs = state.userNotifs || [];
   var panel = document.createElement("div");
   panel.id = "userNotifPanel";
@@ -7976,19 +7978,21 @@ function generateBulkQR(){
   preview.innerHTML = '<h3>' + tf("bulkqr_result_heading", { count: lines.length }) + '</h3>' +
     '<div style="overflow-x:auto;"><table><thead><tr><th>' + t("bulkqr_col_link") + '</th><th>' + t("bulkqr_col_qr") + '</th></tr></thead><tbody id="bqrTableBody">';
 
-  lines.forEach(function(link, idx){
-    var shortUrl = link.replace("https://", "").replace("http://", "");
-    while (shortUrl.endsWith("/")){ shortUrl = shortUrl.slice(0, -1); }
-    var qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + encodeURIComponent(link) + "&color=" + color;
-    bulkQrData.push({ link: shortUrl, qrUrl: qrUrl, color: color });
-    var row = '<tr><td style="word-break:break-all;">' + esc(shortUrl) + '</td>' +
-      '<td><img src="' + qrUrl + '" style="width:80px;height:80px;background:#fff;border-radius:4px;" alt="QR"></td></tr>';
-    document.getElementById("bqrTableBody").insertAdjacentHTML("beforeend", row);
-  });
+  setTimeout(function(){
+    var rows = lines.map(function(link, idx){
+      var shortUrl = link.replace("https://", "").replace("http://", "");
+      while (shortUrl.endsWith("/")){ shortUrl = shortUrl.slice(0, -1); }
+      var qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + encodeURIComponent(link) + "&color=" + color;
+      bulkQrData.push({ link: shortUrl, qrUrl: qrUrl, color: color });
+      return '<tr><td style="word-break:break-all;">' + esc(shortUrl) + '</td>' +
+        '<td><img src="' + qrUrl + '" style="width:80px;height:80px;background:#fff;border-radius:4px;" alt="QR" loading="lazy"></td></tr>';
+    });
+    document.getElementById("bqrTableBody").innerHTML = rows.join("");
 
-  document.getElementById("bqrMsg").innerHTML = '<div class="msg msg-ok">' + tf("bulkqr_done", { count: lines.length }) + '</div>';
-  document.getElementById("bqrDlBtn").disabled = false;
-  document.getElementById("bqrDlBtn").style.opacity = "1";
+    document.getElementById("bqrMsg").innerHTML = '<div class="msg msg-ok">' + tf("bulkqr_done", { count: lines.length }) + '</div>';
+    document.getElementById("bqrDlBtn").disabled = false;
+    document.getElementById("bqrDlBtn").style.opacity = "1";
+  }, 20);
 }
 
 function downloadBulkQR(){
@@ -8354,6 +8358,8 @@ function renderDashboard(app){
   refreshLinkList = renderLinkRows;
   function handleCreateSubmit(e){
     e.preventDefault();
+    var submitBtn = e.target.querySelector('button[type="submit"]');
+    if (submitBtn){ if (submitBtn.disabled) return; submitBtn.disabled = true; submitBtn.style.opacity = "0.6"; }
     var msg = document.getElementById("createMsg");
     msg.innerHTML = "";
     var campaign = document.getElementById("c_campaign").value.trim();
@@ -8403,6 +8409,8 @@ function renderDashboard(app){
       }
     }).catch(function(err){
       msg.innerHTML = '<div class="msg msg-error">' + esc(err.message) + '</div>';
+    }).then(function(){
+      if (submitBtn){ submitBtn.disabled = false; submitBtn.style.opacity = "1"; }
     });
   }
 
@@ -8512,9 +8520,12 @@ function renderBulk(app){
     '<div id="bulkResult"></div>' +
     '</div>';
   document.getElementById("bulkSubmit").onclick = function(){
+    var submitBtn = document.getElementById("bulkSubmit");
+    if (submitBtn.disabled) return;
     var lines = document.getElementById("bulkInput").value.split("\\n").map(function(l){ return l.trim(); }).filter(Boolean);
     var msg = document.getElementById("bulkMsg");
     if (lines.length === 0){ msg.innerHTML = '<div class="msg msg-error">' + t("bulk_empty") + '</div>'; return; }
+    submitBtn.disabled = true; submitBtn.style.opacity = "0.6";
     var urls = lines.map(function(line){
       var parts = line.split(",").map(function(p){ return p.trim(); });
       var item = { url: parts[0] };
@@ -8548,7 +8559,9 @@ function renderBulk(app){
         a.download = "bulk_links_" + new Date().toISOString().slice(0,10) + ".xls";
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
       };
-    }).catch(function(err){ msg.innerHTML = '<div class="msg msg-error">' + esc(err.message) + '</div>'; });
+    }).catch(function(err){ msg.innerHTML = '<div class="msg msg-error">' + esc(err.message) + '</div>'; }).then(function(){
+      submitBtn.disabled = false; submitBtn.style.opacity = "1";
+    });
   };
 }
 
