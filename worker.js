@@ -4275,6 +4275,12 @@ function renderAppHtml() {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SHORT Link — Multi-tier link shortening platform · Safe · Fast</title>
+<meta name="description" content="Rút gọn link và tạo mã QR miễn phí, không cần đăng ký. Thống kê lượt click chi tiết, đặt tên link tuỳ chỉnh, giao diện tiếng Việt — nhanh và an toàn.">
+<link rel="canonical" href="https://shurlvn.com/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="SHORT Link — Multi-tier link shortening platform · Safe · Fast">
+<meta property="og:description" content="Rút gọn link và tạo mã QR miễn phí, không cần đăng ký. Thống kê lượt click chi tiết, đặt tên link tuỳ chỉnh, giao diện tiếng Việt — nhanh và an toàn.">
+<meta property="og:url" content="https://shurlvn.com/">
 <link rel="icon" type="image/png" href="/favicon.ico">
 <style>
 .lang-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:9999px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--input-border);background:transparent;color:var(--muted);position:relative;font-family:inherit;}
