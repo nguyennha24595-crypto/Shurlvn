@@ -2456,6 +2456,85 @@ async function handleExportWorker(request, env, corsHeaders) {
 // ===================== BLOG (server-rendered, indexable by Google) =====================
 const BLOG_POSTS = [
   {
+    slug: "cach-rut-gon-link-mien-phi",
+    title: "Cách Rút Gọn Link (Cắt Link) Miễn Phí Chỉ Trong Vài Giây Với Shurlvn",
+    description: "Link rút gọn là gì, vì sao nên dùng, và hướng dẫn cắt link miễn phí bằng Shurlvn.com — kèm ảnh minh hoạ giao diện thật, không cần đăng ký tài khoản.",
+    date: "2026-09-14",
+    contentHtml: `
+      <p>Bạn từng phải gửi cho ai đó một đường link dài cả trăm ký tự, đầy tham số lạ và ký tự phần trăm loằng ngoằng? Đó chính là lý do các công cụ "cắt link" (rút gọn link) ra đời. Trong bài này, mình sẽ giải thích ngắn gọn link rút gọn là gì, vì sao nên dùng, và hướng dẫn cắt link chỉ trong vài giây bằng công cụ miễn phí <a href="https://shurlvn.com" target="_blank" rel="noopener">Shurlvn.com</a> — kèm ảnh minh hoạ giao diện thật của công cụ.</p>
+
+      <h2>Link rút gọn là gì?</h2>
+      <p>Nói đơn giản, đây là dịch vụ chuyển một đường dẫn (URL) dài, khó nhớ thành một liên kết ngắn gọn hơn nhiều, nhưng khi bấm vào vẫn dẫn thẳng tới đúng địa chỉ gốc. Ví dụ một link tải phần mềm dài gần 100 ký tự có thể được rút lại chỉ còn vài chục ký tự, dễ đọc, dễ gửi và trông chuyên nghiệp hơn hẳn.</p>
+
+      <h2>Vì sao nên rút gọn link?</h2>
+      <ul>
+        <li><b>Dễ chia sẻ:</b> link ngắn gọn hơn khi gửi qua tin nhắn, in trên name card, hay đọc trực tiếp cho người khác nghe.</li>
+        <li><b>Trông chuyên nghiệp, đáng tin hơn:</b> một link rõ ràng, ngắn gọn tạo thiện cảm hơn hẳn một chuỗi ký tự rối rắm dễ bị nhầm là link lừa đảo.</li>
+        <li><b>Theo dõi được lượt click:</b> nhiều công cụ rút gọn link (trong đó có Shurlvn) cho phép xem link của bạn được bấm vào bao nhiêu lần, từ đâu.</li>
+        <li><b>Tạo mã QR đi kèm:</b> từ một link rút gọn, bạn có thể xuất ngay mã QR để in ấn hoặc chia sẻ offline.</li>
+      </ul>
+
+      <h2>Hướng dẫn cắt link bằng Shurlvn.com (3 bước)</h2>
+      <p>Khác với nhiều công cụ yêu cầu tạo tài khoản mới cho dùng, Shurlvn cho phép rút gọn link ngay lập tức mà không cần đăng ký — khách vãng lai được rút gọn miễn phí 5 link mỗi ngày.</p>
+
+      <h3>Bước 1: Truy cập Shurlvn.com</h3>
+      <p>Mở trình duyệt và vào thẳng <a href="https://shurlvn.com" target="_blank" rel="noopener">shurlvn.com</a>. Ngay trên trang chủ, bạn sẽ thấy khung "URL cần rút gọn" — không cần đăng nhập hay điền thông tin gì thêm.</p>
+      <div class="mockup">
+        <div class="mockup-topbar"><span class="mockup-dot"></span><span class="mockup-dot"></span><span class="mockup-dot"></span><span class="mockup-url">shurlvn.com</span></div>
+        <div class="mockup-body">
+          <div class="mockup-brand">SHORT URL</div>
+          <p class="mockup-card-title">SHURL</p>
+          <p class="mockup-card-sub">Nền tảng rút gọn link đa tầng — an toàn, thống kê chi tiết, quản lý chiến dịch.</p>
+          <label class="mockup-label">URL cần rút gọn</label>
+          <div class="mockup-input ph">https://vi-du.com/duong-dan-rat-dai</div>
+          <div class="mockup-btn">Rút gọn ngay</div>
+        </div>
+      </div>
+      <p class="mockup-caption">Giao diện thật của trang chủ Shurlvn.com</p>
+
+      <h3>Bước 2: Dán link cần rút gọn</h3>
+      <p>Dán đường link dài của bạn vào ô nhập. Nếu tạo tài khoản (miễn phí), bạn còn có thể đặt tên ngắn gọn tuỳ ý cho link thay vì để hệ thống tự sinh ngẫu nhiên.</p>
+      <div class="mockup">
+        <div class="mockup-topbar"><span class="mockup-dot"></span><span class="mockup-dot"></span><span class="mockup-dot"></span><span class="mockup-url">shurlvn.com</span></div>
+        <div class="mockup-body">
+          <div class="mockup-brand">SHORT URL</div>
+          <p class="mockup-card-title">SHURL</p>
+          <p class="mockup-card-sub">Nền tảng rút gọn link đa tầng — an toàn, thống kê chi tiết, quản lý chiến dịch.</p>
+          <label class="mockup-label">URL cần rút gọn</label>
+          <div class="mockup-input">https://www.microsoft.com/vi-vn/software-download/windows11</div>
+          <div class="mockup-btn">Rút gọn ngay</div>
+        </div>
+      </div>
+      <p class="mockup-caption">Dán link gốc vào ô, ví dụ link tải Windows 11 từ Microsoft</p>
+
+      <h3>Bước 3: Bấm "Rút gọn ngay" và nhận kết quả</h3>
+      <p>Chỉ sau chưa đầy 1 giây, hệ thống trả về ngay đường link rút gọn kèm nút "Chép" tiện lợi. Ví dụ dưới đây là một link rút gọn thật mình vừa tạo trực tiếp trên Shurlvn.com khi viết bài này — bạn có thể bấm thử.</p>
+      <div class="mockup">
+        <div class="mockup-topbar"><span class="mockup-dot"></span><span class="mockup-dot"></span><span class="mockup-dot"></span><span class="mockup-url">shurlvn.com</span></div>
+        <div class="mockup-body">
+          <div class="mockup-brand">SHORT URL</div>
+          <p class="mockup-card-title">SHURL</p>
+          <p class="mockup-card-sub">Nền tảng rút gọn link đa tầng — an toàn, thống kê chi tiết, quản lý chiến dịch.</p>
+          <label class="mockup-label">URL cần rút gọn</label>
+          <div class="mockup-input">https://www.microsoft.com/vi-vn/software-download/windows11</div>
+          <div class="mockup-btn">Rút gọn ngay</div>
+          <div class="mockup-result"><a class="link" href="https://shurlvn.com/cVQgKz" target="_blank" rel="noopener">https://shurlvn.com/cVQgKz</a><span class="copy">Chép</span></div>
+          <div class="mockup-dest">Đích: https://www.microsoft.com/vi-vn/software-download/windows11</div>
+        </div>
+      </div>
+      <p class="mockup-caption">Link rút gọn thật, tạo trực tiếp từ Shurlvn.com — bấm để kiểm chứng</p>
+
+      <blockquote>💡 <b>Mẹo:</b> Ngay trên trang chủ Shurlvn còn có sẵn công cụ tạo mã QR miễn phí. Sau khi có link rút gọn, bạn có thể chuyển luôn thành mã QR để dán lên poster, tờ rơi hay slide thuyết trình — không cần thêm phần mềm nào khác.</blockquote>
+
+      <h2>Một số lưu ý khi dùng link rút gọn</h2>
+      <ul>
+        <li>Luôn kiểm tra nguồn gốc link trước khi bấm vào link rút gọn từ người lạ, vì bản chất link đã được "che" địa chỉ thật</li>
+        <li>Với nhu cầu cá nhân/dự án nhỏ, dùng miễn phí là đủ; nếu cần đặt tên riêng, xem thống kê chi tiết hay quản lý số lượng lớn link, nên tạo tài khoản</li>
+        <li>Một số nền tảng mạng xã hội có thể giới hạn hiển thị với link rút gọn lạ — nên ưu tiên dịch vụ uy tín, có tên miền rõ ràng như Shurlvn</li>
+      </ul>
+    `
+  },
+  {
     slug: "cach-cai-dat-windows-11",
     title: "Hướng Dẫn Cách Cài Đặt Windows 11 Bằng USB Nhanh Nhất (Cập Nhật 2026)",
     description: "Hướng dẫn từng bước cài đặt Windows 11 bằng USB: kiểm tra cấu hình, tải ISO, tạo USB boot bằng Rufus và cài đặt hoàn chỉnh — đơn giản, dễ làm theo.",
@@ -2520,23 +2599,42 @@ function renderBlogLayout(titleText, descriptionText, canonicalPath, bodyHtml) {
 <meta property="og:description" content="${d}">
 <meta property="og:url" content="https://shurlvn.com${canonicalPath}">
 <style>
-body{margin:0;background:#0b0f1a;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.7;}
+body{margin:0;background:#f8fafc;color:#1e293b;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.7;}
 .wrap{max-width:760px;margin:0 auto;padding:24px 20px 60px;}
-header{padding:18px 0;border-bottom:1px solid rgba(148,163,184,0.15);margin-bottom:28px;}
-header a{font-weight:800;font-size:20px;background:linear-gradient(135deg,#818cf8,#c084fc);-webkit-background-clip:text;background-clip:text;color:transparent;text-decoration:none;}
-h1{font-size:28px;line-height:1.3;margin:0 0 10px;color:#f8fafc;}
-h2{font-size:20px;margin:30px 0 10px;color:#f1f5f9;}
-p,li{font-size:16px;color:#cbd5e1;}
-.meta{color:#94a3b8;font-size:13px;margin-bottom:24px;}
-a{color:#818cf8;}
-blockquote{background:rgba(99,102,241,0.1);border-left:3px solid #818cf8;border-radius:8px;margin:20px 0;padding:14px 18px;color:#e2e8f0;}
-.cta{margin-top:40px;background:linear-gradient(135deg,rgba(99,102,241,0.18),rgba(192,132,252,0.18));border:1px solid rgba(99,102,241,0.35);border-radius:16px;padding:28px;text-align:center;}
-.cta h3{margin:0 0 10px;color:#f8fafc;font-size:20px;}
+header{padding:18px 0;border-bottom:1px solid rgba(15,23,42,0.08);margin-bottom:28px;}
+header a{font-weight:800;font-size:20px;background:linear-gradient(135deg,#6366f1,#a855f7);-webkit-background-clip:text;background-clip:text;color:transparent;text-decoration:none;}
+h1{font-size:28px;line-height:1.3;margin:0 0 10px;color:#0f172a;}
+h2{font-size:20px;margin:30px 0 10px;color:#0f172a;}
+h3{font-size:17px;margin:24px 0 8px;color:#0f172a;}
+p,li{font-size:16px;color:#334155;}
+.meta{color:#64748b;font-size:13px;margin-bottom:24px;}
+a{color:#6366f1;}
+img{max-width:100%;border-radius:12px;border:1px solid rgba(15,23,42,0.08);box-shadow:0 4px 16px rgba(15,23,42,0.08);margin:18px 0;}
+blockquote{background:rgba(99,102,241,0.07);border-left:3px solid #6366f1;border-radius:8px;margin:20px 0;padding:14px 18px;color:#1e293b;}
+.cta{margin-top:40px;background:linear-gradient(135deg,rgba(99,102,241,0.12),rgba(192,132,252,0.12));border:1px solid rgba(99,102,241,0.25);border-radius:16px;padding:28px;text-align:center;}
+.cta h3{margin:0 0 10px;color:#0f172a;font-size:20px;}
 .cta a{display:inline-block;margin-top:10px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;text-decoration:none;font-weight:700;padding:12px 26px;border-radius:10px;}
-.postlist a{color:#f1f5f9;text-decoration:none;font-weight:700;font-size:18px;}
+.postlist a{color:#0f172a;text-decoration:none;font-weight:700;font-size:18px;}
 .postlist li{list-style:none;margin-bottom:22px;}
-footer{margin-top:50px;text-align:center;color:#64748b;font-size:13px;}
-footer a{color:#94a3b8;}
+footer{margin-top:50px;text-align:center;color:#94a3b8;font-size:13px;}
+footer a{color:#64748b;}
+.mockup{border:1px solid rgba(15,23,42,0.1);border-radius:14px;overflow:hidden;box-shadow:0 8px 24px rgba(15,23,42,0.08);margin:20px 0;}
+.mockup-topbar{background:#eef0f4;padding:10px 14px;display:flex;align-items:center;gap:6px;}
+.mockup-dot{width:9px;height:9px;border-radius:50%;background:#d1d5db;display:inline-block;}
+.mockup-url{margin-left:8px;font-size:12px;color:#64748b;background:#fff;border-radius:6px;padding:3px 10px;}
+.mockup-body{background:#fff;padding:22px;}
+.mockup-brand{font-weight:800;font-size:15px;background:linear-gradient(135deg,#6366f1,#a855f7);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:16px;}
+.mockup-card-title{font-size:20px;font-weight:800;color:#0f172a;margin:0 0 6px;}
+.mockup-card-sub{font-size:13px;color:#64748b;margin:0 0 16px;}
+.mockup-label{display:block;font-size:12px;font-weight:600;color:#334155;margin-bottom:6px;}
+.mockup-input{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;font-size:13px;color:#0f172a;margin-bottom:14px;}
+.mockup-input.ph{color:#94a3b8;}
+.mockup-btn{display:inline-block;background:linear-gradient(135deg,#6366f1,#7c3aed);color:#fff;font-weight:700;font-size:13px;padding:9px 18px;border-radius:8px;}
+.mockup-result{margin-top:14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.mockup-result .link{font-family:monospace;color:#6366f1;font-weight:700;font-size:13px;}
+.mockup-result .copy{font-weight:600;color:#334155;background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:4px 10px;font-size:12px;white-space:nowrap;}
+.mockup-dest{font-size:12px;color:#94a3b8;margin-top:8px;}
+.mockup-caption{text-align:center;font-size:13px;color:#94a3b8;margin:-10px 0 24px;font-style:italic;}
 </style>
 </head>
 <body>
