@@ -7430,22 +7430,16 @@ function renderNav() {
 
   var html = "";
   html += sbItem("home", "link", tr("home", "Trang chủ"));
-  if (state.user) {
-    html += sbItem("dashboard", "chart", tr("dashboard", "Bảng điều khiển"));
-  }
-  if (state.user) {
-    html += '<div class="sb-section-label">Links</div>';
-    html += sbItem("bulkqr", "qr", "QR Codes");
-  }
-  if (state.user) {
-    html += '<div class="sb-section-label">Tools</div>';
-    html += sbItem("bulk", "package", "Bulk");
-    html += sbItem("webhooks", "zap", "Webhooks" + (isProOrAbove(state.user) ? "" : " 🔒"));
-    html += sbItem("export", "download", "Export" + (isProOrAbove(state.user) ? "" : " 🔒"));
-    if (state.limits && state.limits.hasCampaignHistory) html += sbItem("campaigns", "target", "Campaigns");
-    if (state.limits && state.limits.hasTeam) html += sbItem("team", "users", "Team");
-    html += sbItem("api", "code2", "API");
-  }
+  html += sbItem("dashboard", "chart", tr("dashboard", "Bảng điều khiển"));
+  html += '<div class="sb-section-label">Links</div>';
+  html += sbItem("bulkqr", "qr", "QR Codes");
+  html += '<div class="sb-section-label">Tools</div>';
+  html += sbItem("bulk", "package", "Bulk");
+  html += sbItem("webhooks", "zap", "Webhooks" + (isProOrAbove(state.user) ? "" : " 🔒"));
+  html += sbItem("export", "download", "Export" + (isProOrAbove(state.user) ? "" : " 🔒"));
+  if (state.limits && state.limits.hasCampaignHistory) html += sbItem("campaigns", "target", "Campaigns");
+  if (state.limits && state.limits.hasTeam) html += sbItem("team", "users", "Team");
+  html += sbItem("api", "code2", "API");
   html += '<div class="sb-section-label">System</div>';
   html += sbItem("pricing", "ticket", tr("plans", "Bảng giá"));
   if (state.user) html += sbItem("account", "settings", tr("account", "Tài khoản"));
