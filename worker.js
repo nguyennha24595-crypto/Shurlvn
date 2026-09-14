@@ -2456,6 +2456,124 @@ async function handleExportWorker(request, env, corsHeaders) {
 // ===================== BLOG (server-rendered, indexable by Google) =====================
 const BLOG_POSTS = [
   {
+    slug: "tao-ma-qr-mien-phi-doi-mau",
+    title: "Tạo Mã QR Miễn Phí, Tuỳ Chỉnh Màu Sắc Trong Vài Giây Với Shurlvn",
+    description: "Hướng dẫn tạo mã QR miễn phí từ link hoặc văn bản, đổi màu và kích thước tuỳ ý bằng công cụ QR của Shurlvn.com — không cần đăng ký, có ví dụ QR thật.",
+    date: "2026-09-14",
+    contentHtml: `
+      <p>Mã QR ngày nay xuất hiện ở khắp mọi nơi: menu quán ăn, poster sự kiện, danh thiếp, bao bì sản phẩm... Thay vì trả phí cho các công cụ tạo QR chuyên nghiệp, bạn hoàn toàn có thể tạo mã QR đẹp, tuỳ chỉnh màu sắc theo bộ nhận diện thương hiệu của mình miễn phí bằng công cụ QR có sẵn trên <a href="https://shurlvn.com" target="_blank" rel="noopener">Shurlvn.com</a>. Bài viết này hướng dẫn chi tiết cách làm, kèm theo vài mã QR thật để bạn thấy rõ mức độ tuỳ biến.</p>
+
+      <h2>Vì sao nên tự tạo mã QR thay vì chụp màn hình có sẵn?</h2>
+      <ul>
+        <li>Mã QR tự tạo luôn rõ nét ở mọi kích thước, không bị vỡ hình như ảnh chụp màn hình</li>
+        <li>Tuỳ chỉnh được màu sắc để đồng bộ với bộ nhận diện thương hiệu, thay vì mã đen-trắng mặc định</li>
+        <li>Có thể mã hoá trực tiếp văn bản (số điện thoại, địa chỉ, ghi chú...) chứ không chỉ đường link</li>
+        <li>Tạo và tải về ngay lập tức, không watermark, không giới hạn số lần dùng</li>
+      </ul>
+
+      <h2>Hướng dẫn tạo mã QR trên Shurlvn.com</h2>
+      <p>Công cụ QR nằm ngay trên trang chủ hoặc ở mục QR Codes trên Shurlvn — dùng được ngay không cần tạo tài khoản.</p>
+
+      <h3>Bước 1: Chọn loại nội dung</h3>
+      <p>Bạn có thể mã hoá một đường link (URL) hoặc một đoạn văn bản bất kỳ tuỳ vào nhu cầu.</p>
+      <div class="mockup">
+        <div class="mockup-topbar"><span class="mockup-dot"></span><span class="mockup-dot"></span><span class="mockup-dot"></span><span class="mockup-url">shurlvn.com</span></div>
+        <div class="mockup-body">
+          <div class="mockup-brand">SHORT URL</div>
+          <p class="mockup-card-title">Tạo QR Code</p>
+          <p class="mockup-card-sub">Tạo và tùy chỉnh QR Code trực tiếp — thay đổi gì cũng thấy ngay, không cần bấm tạo lại.</p>
+          <label class="mockup-label">Chọn loại mã QR</label>
+          <div class="mockup-input">🔗 URL &nbsp;&nbsp;&nbsp; 📄 Văn bản</div>
+          <label class="mockup-label">Nhập dữ liệu</label>
+          <div class="mockup-input ph">https://shurlvn.com</div>
+        </div>
+      </div>
+      <p class="mockup-caption">Bước chọn loại nội dung và nhập dữ liệu cần tạo QR</p>
+
+      <h3>Bước 2: Tuỳ chỉnh màu sắc, kích thước</h3>
+      <p>Đây là phần thú vị nhất — bạn có thể đổi màu mã QR, màu nền (hoặc để nền trong suốt), chọn kích thước và độ rộng viền, xem trước kết quả ngay lập tức mà không cần bấm nút tạo lại.</p>
+      <div class="mockup">
+        <div class="mockup-topbar"><span class="mockup-dot"></span><span class="mockup-dot"></span><span class="mockup-dot"></span><span class="mockup-url">shurlvn.com</span></div>
+        <div class="mockup-body">
+          <div class="mockup-brand">SHORT URL</div>
+          <label class="mockup-label">Tùy chỉnh</label>
+          <div class="mockup-input">Màu sắc: #6366f1 &nbsp;·&nbsp; Màu nền: Trong suốt</div>
+          <div class="mockup-input">Kích cỡ: 300px &nbsp;·&nbsp; Viền (margin): Mặc định</div>
+        </div>
+      </div>
+      <p class="mockup-caption">Đổi màu, kích thước và xem kết quả cập nhật theo thời gian thực</p>
+
+      <p>Dưới đây là 3 mã QR thật, cùng trỏ về shurlvn.com, được tạo với các tuỳ chỉnh màu khác nhau bằng chính công cụ trên — bạn có thể quét thử bằng điện thoại:</p>
+      <div class="qr-row">
+        <figure><img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https%3A%2F%2Fshurlvn.com&color=000000&format=png" alt="Mã QR màu đen mặc định trỏ về shurlvn.com" width="180" height="180"><figcaption>Mặc định (đen)</figcaption></figure>
+        <figure><img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https%3A%2F%2Fshurlvn.com&color=7c3aed&format=png" alt="Mã QR màu tím thương hiệu trỏ về shurlvn.com" width="180" height="180"><figcaption>Màu tím thương hiệu</figcaption></figure>
+        <figure><img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https%3A%2F%2Fshurlvn.com&color=ffffff&bgcolor=0f172a&format=png" alt="Mã QR đảo màu nền tối chữ trắng trỏ về shurlvn.com" width="180" height="180"><figcaption>Đảo màu (nền tối)</figcaption></figure>
+      </div>
+
+      <h3>Bước 3: Tải về hoặc dùng ngay</h3>
+      <p>Sau khi ưng ý với mẫu QR, bấm tải PNG hoặc SVG về máy để in ấn, hoặc bấm sao chép để dán trực tiếp vào tài liệu, slide thuyết trình.</p>
+
+      <blockquote>💡 <b>Mẹo:</b> Nếu cần tạo hàng loạt mã QR cùng lúc từ một danh sách link (ví dụ vài chục sản phẩm), Shurlvn có thêm tính năng "Tạo QR hàng loạt" dành cho gói Super, xuất luôn ra file Excel tiện quản lý.</blockquote>
+
+      <h2>Một vài lưu ý khi dùng mã QR</h2>
+      <ul>
+        <li>Chọn độ tương phản màu đủ rõ giữa mã và nền để máy quét đọc được, tránh phối 2 màu quá gần nhau</li>
+        <li>Nếu in mã QR kích thước nhỏ (dưới 2cm), nên chọn viền (margin) mặc định để mã không bị "nghẹt" khi in</li>
+        <li>Luôn quét thử mã sau khi tạo trước khi in hàng loạt hoặc đăng công khai</li>
+      </ul>
+    `
+  },
+  {
+    slug: "tao-ten-mien-rieng-cho-link",
+    title: "Tạo Tên Miền Riêng Cho Link Rút Gọn — Hướng Dẫn Dành Cho Gói Super",
+    description: "Hướng dẫn gắn tên miền riêng (custom domain) của bạn vào link rút gọn trên Shurlvn.com để tăng độ tin cậy và nhận diện thương hiệu — tính năng gói Super.",
+    date: "2026-09-14",
+    contentHtml: `
+      <p>Một đường link dạng <b>shurlvn.com/abc123</b> đã ngắn gọn, nhưng nếu bạn đang xây dựng thương hiệu riêng, một link mang tên miền của chính bạn — ví dụ <b>di.tencongty.com/abc123</b> — sẽ tạo cảm giác chuyên nghiệp và đáng tin hơn hẳn với khách hàng. Đó chính là tính năng <b>tên miền riêng (custom domain)</b> trên Shurlvn.</p>
+
+      <h2>Tên miền riêng là gì và vì sao nên dùng?</h2>
+      <ul>
+        <li><b>Nhận diện thương hiệu:</b> người nhận thấy ngay link đến từ công ty/thương hiệu của bạn, không phải một dịch vụ rút gọn lạ</li>
+        <li><b>Tăng độ tin cậy:</b> khách hàng có xu hướng ngần ngại bấm vào link từ domain lạ hơn là domain quen thuộc của chính bạn</li>
+        <li><b>Đồng bộ với các kênh khác:</b> link chia sẻ, mã QR trên bao bì hay email marketing đều mang cùng một tên miền nhất quán</li>
+      </ul>
+
+      <h2>Điều kiện sử dụng</h2>
+      <p>Tên miền riêng hiện là tính năng dành riêng cho <b>gói Super</b> (chưa áp dụng ở các gói Free, Plus hay Pro). Bạn cần nâng cấp tài khoản lên gói Super trước khi thiết lập.</p>
+
+      <h2>Các bước thiết lập tên miền riêng</h2>
+
+      <h3>Bước 1: Nâng cấp lên gói Super</h3>
+      <p>Vào mục <b>Bảng giá</b> trên Shurlvn, chọn gói Super và hoàn tất thanh toán.</p>
+
+      <h3>Bước 2: Điền tên miền khi tạo link mới</h3>
+      <p>Ở Dashboard, khi tạo một link rút gọn mới, bạn sẽ thấy thêm ô "Tên miền riêng" — điền tên miền bạn muốn dùng vào đây.</p>
+      <div class="mockup">
+        <div class="mockup-topbar"><span class="mockup-dot"></span><span class="mockup-dot"></span><span class="mockup-dot"></span><span class="mockup-url">shurlvn.com</span></div>
+        <div class="mockup-body">
+          <div class="mockup-brand">SHORT URL</div>
+          <p class="mockup-card-title">Tạo Short URL</p>
+          <label class="mockup-label">URL cần rút gọn</label>
+          <div class="mockup-input ph">https://tencongty.com/khuyen-mai-thang-9</div>
+          <label class="mockup-label">Tên miền riêng</label>
+          <div class="mockup-input ph">ten.shurl.com</div>
+          <div class="mockup-btn">Tạo link</div>
+        </div>
+      </div>
+      <p class="mockup-caption">Ô "Tên miền riêng" chỉ hiển thị và dùng được với tài khoản gói Super</p>
+
+      <h3>Bước 3: Trỏ DNS tên miền của bạn về SHURL</h3>
+      <p>Để tên miền riêng thực sự hoạt động (chứ không chỉ hiển thị dưới dạng chữ), bạn cần cấu hình bản ghi DNS của tên miền đó trỏ về hạ tầng của SHURL. Vì cấu hình DNS chính xác phụ thuộc vào tên miền và nhà cung cấp DNS của từng khách hàng, đội ngũ SHURL sẽ hỗ trợ trực tiếp bước này — liên hệ qua email <a href="https://mail.google.com/mail/?view=cm&fs=1&to=nguyennha24595@gmail.com&su=SHURL%20Custom%20Domain" target="_blank" rel="noopener">nguyennha24595@gmail.com</a> kèm tên miền bạn muốn sử dụng để được hướng dẫn trỏ DNS cụ thể.</p>
+
+      <h2>Một vài lưu ý</h2>
+      <ul>
+        <li>Mỗi tên miền riêng chỉ nên gắn với một tài khoản để tránh xung đột khi quản lý link</li>
+        <li>Sau khi trỏ DNS, thời gian để tên miền hoạt động có thể mất một khoảng thời gian ngắn để lan truyền (DNS propagation)</li>
+        <li>Vẫn nên theo dõi thống kê lượt click như bình thường ngay cả khi dùng tên miền riêng</li>
+      </ul>
+    `
+  },
+  {
     slug: "cach-rut-gon-link-mien-phi",
     title: "Cách Rút Gọn Link (Cắt Link) Miễn Phí Chỉ Trong Vài Giây Với Shurlvn",
     description: "Link rút gọn là gì, vì sao nên dùng, và hướng dẫn cắt link miễn phí bằng Shurlvn.com — kèm ảnh minh hoạ giao diện thật, không cần đăng ký tài khoản.",
@@ -2635,6 +2753,10 @@ footer a{color:#64748b;}
 .mockup-result .copy{font-weight:600;color:#334155;background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:4px 10px;font-size:12px;white-space:nowrap;}
 .mockup-dest{font-size:12px;color:#94a3b8;margin-top:8px;}
 .mockup-caption{text-align:center;font-size:13px;color:#94a3b8;margin:-10px 0 24px;font-style:italic;}
+.qr-row{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;margin:20px 0;}
+.qr-row figure{margin:0;text-align:center;}
+.qr-row img{margin:0 0 8px;}
+.qr-row figcaption{font-size:12px;color:#64748b;}
 </style>
 </head>
 <body>
