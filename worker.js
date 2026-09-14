@@ -3965,6 +3965,15 @@ footer{text-align:center;color:var(--muted2);font-size:12px;padding:30px 20px;}
   .qr-utm-grid{grid-template-columns:1fr;}
 }
 </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=AW-18446641822"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'AW-18446641822');
+</script>
 </head>
 <body>
 <div class="app-shell">
