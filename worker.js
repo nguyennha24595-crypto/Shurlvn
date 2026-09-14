@@ -9998,7 +9998,23 @@ function renderLegalPage(app, title, subtitle, sections){
     '<div class="card">' + body + '</div>';
 }
 function renderTerms(app){
-  renderLegalPage(app, t("terms_title"), t("terms_subtitle"), [
+  var isEn = currentLang === "en";
+  renderLegalPage(app, t("terms_title"), t("terms_subtitle"), isEn ? [
+    { h: "Introduction", p: "SHURL is a link-shortening service with QR code generation, click tracking, and link management tools. By accessing or using the service, you agree to the terms below." },
+    { h: "User Accounts", p: "Some features require an account (username/password, or Google sign-in). You are responsible for keeping your login credentials secure and for all activity under your account." },
+    { h: "Using the Service", p: "The service is provided as-is. You agree to use it for its intended purpose and not to interfere with the normal operation of the system." },
+    { h: "Short URLs and User Content", p: "You are responsible for the destination URL and content you shorten or share through the service. SHURL may disable or remove links that violate these terms or applicable law." },
+    { h: "QR Codes and Related Features", p: "QR codes are generated from the content/URL you provide, via a third-party QR generation service. You are responsible for the content encoded in your QR codes." },
+    { h: "Analytics and Statistics", p: "The service may record click data for links you create (e.g. time, country, device) to display statistics to you. See the Privacy Policy for details." },
+    { h: "Free Plan and Paid Services", p: "SHURL offers a free plan and paid plans with different limits and features. Plan details and pricing shown on the Pricing page may change over time." },
+    { h: "Prohibited Conduct", p: "You may not use the service to distribute malware, phishing, spam, unlawful content, or to infringe others' intellectual property or privacy rights, or attempt to exploit or attack the system." },
+    { h: "Account Suspension or Termination", p: "SHURL may suspend or terminate an account that violates these terms without prior notice, particularly in cases of abuse or harm to the system or other users." },
+    { h: "Intellectual Property", p: "SHURL's brand, interface, and source code are owned by its development team. Content you create (links, QR codes, related data) remains yours." },
+    { h: "Limitation of Liability", p: "The service is provided as-is, without guarantee of continuous, error-free, or uninterrupted operation. SHURL is not liable for indirect damages arising from use or inability to use the service." },
+    { h: "Changes to the Service and Terms", p: "SHURL may update, change, or discontinue part or all of its features, and may revise these terms over time. Updated versions will be posted on this page." },
+    { h: "Governing Law and Dispute Resolution", p: "The parties will first seek to resolve disputes in good faith. Where necessary, disputes will be handled under the applicable law governing the service." },
+    { h: "Contact", p: "For questions about these terms, please contact: nguyennha24595@gmail.com." }
+  ] : [
     { h: "Giới thiệu", p: "SHURL là dịch vụ rút gọn liên kết (short URL) kèm theo tính năng tạo mã QR, theo dõi lượt click và các công cụ quản lý link. Bằng việc truy cập hoặc sử dụng dịch vụ, bạn đồng ý với các điều khoản dưới đây." },
     { h: "Tài khoản người dùng", p: "Một số tính năng yêu cầu tạo tài khoản (tên đăng nhập/mật khẩu, hoặc đăng nhập bằng Google). Bạn chịu trách nhiệm bảo mật thông tin đăng nhập và mọi hoạt động diễn ra dưới tài khoản của mình." },
     { h: "Sử dụng dịch vụ", p: "Dịch vụ được cung cấp theo hiện trạng (as-is). Bạn đồng ý sử dụng dịch vụ đúng mục đích và không can thiệp vào hoạt động bình thường của hệ thống." },
@@ -10016,7 +10032,23 @@ function renderTerms(app){
   ]);
 }
 function renderPrivacy(app){
-  renderLegalPage(app, t("privacy_title"), t("privacy_subtitle"), [
+  var isEn = currentLang === "en";
+  renderLegalPage(app, t("privacy_title"), t("privacy_subtitle"), isEn ? [
+    { h: "Scope", p: "This policy applies to data collected and processed when you use the SHURL service." },
+    { h: "Information We May Collect", p: "Depending on how you use the service, we may collect: your username, password (hashed, never stored as plain text), email (if provided or via Google sign-in), the URLs and QR codes you create, and click data for those links (e.g. time, country, device type, IP address)." },
+    { h: "How We Use Information", p: "Information is used to provide and maintain the service, authenticate your account, show you statistics, provide technical support, and keep the system safe (e.g. rate-limiting to prevent spam)." },
+    { h: "Short URL and Analytics Data", p: "For each link you create, the system may record click counts and some visit-related information (time, country, device, IP) to power the statistics shown in your Dashboard. If you enable advanced features like Pixel tracking or Webhooks, visit data for that link may also be sent to a third party you configure yourself (e.g. Facebook, Google, TikTok, or your own webhook URL) — collecting and using data through those tools is your responsibility as the link's creator." },
+    { h: "Cookies and Storage Technology", p: "We use a login session cookie to keep you signed in. We do not use advertising or third-party tracking cookies on the SHURL platform itself." },
+    { h: "Sharing Information with Third Parties", p: "We do not sell your personal information. Some parts of the service rely on third parties to operate, such as payment processing (Stripe, VietQR), sending email (Resend), Google sign-in, and generating QR code images (via api.qrserver.com). These parties only receive the data needed for their specific function." },
+    { h: "Data Storage and Protection", p: "Data is stored on Cloudflare Workers KV infrastructure. Account passwords are hashed before storage, never stored as plain text." },
+    { h: "Data Retention", p: "Once you delete a link, it's marked deleted and permanently purged after 24 hours unless you restore it in that window. Other data is kept for as long as your account is active or as reasonably needed to operate the service." },
+    { h: "Your Rights", p: "You can view and edit your account information and manage your links from the Dashboard. You can contact us at the email below for help related to your personal data." },
+    { h: "Account Security", p: "You are responsible for keeping your password and login credentials secure. Please notify us right away if you notice unauthorized access to your account." },
+    { h: "Third-Party Services", p: "The service integrates the third parties listed in section 6 (Stripe, VietQR, Resend, Google, api.qrserver.com) along with Cloudflare infrastructure. Use of these services is subject to each provider's own privacy policy." },
+    { h: "Children", p: "The service is not directed at children under 13, and we do not knowingly collect information from children in that age group." },
+    { h: "Changes to This Privacy Policy", p: "This policy may be updated from time to time. New versions will be posted on this page along with the update date." },
+    { h: "Contact", p: "For questions about this Privacy Policy, please contact: nguyennha24595@gmail.com." }
+  ] : [
     { h: "Phạm vi áp dụng", p: "Chính sách này áp dụng cho dữ liệu được thu thập và xử lý khi bạn sử dụng dịch vụ SHURL." },
     { h: "Thông tin chúng tôi có thể thu thập", p: "Tùy theo cách bạn sử dụng dịch vụ, chúng tôi có thể thu thập: tên đăng nhập, mật khẩu (được băm/hash, không lưu dạng văn bản thô), email (nếu bạn cung cấp hoặc đăng nhập bằng Google), URL và mã QR bạn tạo, cùng dữ liệu lượt click trên các link đó (ví dụ: thời điểm, quốc gia, loại thiết bị, địa chỉ IP)." },
     { h: "Cách chúng tôi sử dụng thông tin", p: "Thông tin được dùng để cung cấp và duy trì dịch vụ, xác thực tài khoản, hiển thị số liệu thống kê cho bạn, hỗ trợ kỹ thuật, và bảo vệ an toàn hệ thống (ví dụ: giới hạn tần suất truy cập để chống spam)." },
