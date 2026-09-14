@@ -8875,7 +8875,11 @@ function bindRegisterForm(){
       email: document.getElementById("r_email").value.trim(),
       password: document.getElementById("r_pass").value
     }).then(function(){ return api("/api/auth/me"); })
-    .then(function(me){ state.user = me.user; state.limits = me.limits; navigate("dashboard"); render(); })
+    .then(function(me){
+      state.user = me.user; state.limits = me.limits;
+      if (typeof gtag === "function") gtag('event', 'conversion', {'send_to': 'AW-18446641822/Y7ssCLDjqfccEJ7VhdxE'});
+      navigate("dashboard"); render();
+    })
     .catch(function(err){ msg.innerHTML = '<div class="msg msg-error">' + esc(err.message) + '</div>'; });
   });
 }
