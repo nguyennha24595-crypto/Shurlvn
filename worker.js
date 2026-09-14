@@ -4036,6 +4036,7 @@ var i18n = {
     home_promo_sub:"Không thời hạn · Tên rút gọn tuỳ chỉnh · Quản lý link · Thống kê lượt click · QR nhanh gọn... các tính năng miễn phí",
     home_promo_desc:"Không thời hạn · Tên rút gọn tuỳ chỉnh · Quản lý link · Thống kê lượt click",
     home_promo_btn1:"Đăng ký miễn phí", home_promo_btn2:"Đã có tài khoản?",
+    home_qr_promo_title:"Tạo mã QR miễn phí", home_qr_promo_desc:"Chuyển link hoặc văn bản thành mã QR tuỳ chỉnh màu sắc, kích thước — dùng ngay, không cần đăng ký.", home_qr_promo_btn:"Tạo mã QR ngay",
     home_hero_sub:"Nền tảng rút gọn link đa tầng — an toàn, thống kê chi tiết, quản lý chiến dịch.",
     home_guest_hint:"Đăng nhập để đặt alias tuỳ chỉnh, quản lý và xem thống kê link. Khách: 5 link/ngày.",
     home_url_placeholder:"https://vi-du.com/duong-dan-rat-dai", home_alias_placeholder:"ten-rieng-cua-ban",
@@ -4401,6 +4402,7 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     home_promo_sub:"No expiry · Custom aliases · Link management · Click analytics",
     home_promo_desc:"No expiry · Custom aliases · Link management · Click analytics",
     home_promo_btn1:"Sign up free", home_promo_btn2:"Already have an account?",
+    home_qr_promo_title:"Free QR Code Generator", home_qr_promo_desc:"Turn any link or text into a QR code with custom colors and sizes — use it now, no sign-up required.", home_qr_promo_btn:"Create QR Code",
     home_hero_sub:"Multi-tier link shortening platform — secure, detailed analytics, campaign management.",
     home_guest_hint:"Log in to set custom aliases, manage links and view analytics. Guests: 5 links/day.",
     home_url_placeholder:"https://example.com/very-long-path", home_alias_placeholder:"your-custom-name",
@@ -7655,6 +7657,11 @@ function renderHome(app){
       '<div style="margin-top:18px;"><button class="btn btn-primary" type="submit">' + t("shorten_now") + '</button></div>' +
     '</form>' +
     '<div id="shortenResult"></div>' +
+    '</div>' +
+    '<div class="card">' +
+    '<h2>' + li('qr', 20) + ' ' + t("home_qr_promo_title") + '</h2>' +
+    '<p class="sub">' + t("home_qr_promo_desc") + '</p>' +
+    '<button class="btn btn-primary" onclick="navigate(&#39;bulkqr&#39;)">' + t("home_qr_promo_btn") + '</button>' +
     '</div>';
 
 
@@ -8596,7 +8603,7 @@ function renderBulkQR(app){
   var maxBatch = limits.maxBulkBatch || 100;
   var canUse = state.user && (state.user.role === "super" || state.user.role === "admin");
 
-  var qrWorkspaceHtml = (state.user ?
+  var qrWorkspaceHtml = (
     '<div class="card">' +
     '<h2>' + t("qr_title") + '</h2>' +
     '<p class="hint" style="margin-top:-6px;">' + t("qr_workspace_sub") + '</p>' +
@@ -8676,7 +8683,7 @@ function renderBulkQR(app){
     '</div>' +
 
     '</div>' +
-    '</div>' : '');
+    '</div>');
 
   var html = guideCard("bulkqr") + '<div class="page-head"><h1>' + li('qr', 24) + ' QR Codes</h1></div>' +
     qrWorkspaceHtml +
@@ -8700,7 +8707,7 @@ function renderBulkQR(app){
 
   app.innerHTML = html;
 
-  if (state.user) qrWsBindWorkspace();
+  qrWsBindWorkspace();
 }
 
 var qrWsPresetList = [
