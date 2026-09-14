@@ -362,7 +362,7 @@ export default {
         const urls = [
           { loc: "https://shurlvn.com/", changefreq: "daily", priority: "1.0", lastmod: today },
           { loc: "https://shurlvn.com/blog", changefreq: "weekly", priority: "0.8", lastmod: today }
-        ].concat(BLOG_POSTS.map(p => ({ loc: "https://shurlvn.com/blog/" + p.slug, changefreq: "monthly", priority: "0.7", lastmod: p.date })));
+        ].concat(publishedBlogPosts().map(p => ({ loc: "https://shurlvn.com/blog/" + p.slug, changefreq: "monthly", priority: "0.7", lastmod: p.date })));
         const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ` + urls.map(u => `  <url>
@@ -381,7 +381,7 @@ export default {
       if (path.startsWith("blog/")) {
         const slug = path.slice(5);
         const post = BLOG_POSTS.find(p => p.slug === slug);
-        if (post) return html(renderBlogPostPage(post));
+        if (post && isPostPublished(post)) return html(renderBlogPostPage(post));
         return html('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Không tìm thấy bài viết</title></head><body style="font-family:system-ui;text-align:center;padding:60px;"><h1>404</h1><p>Bài viết không tồn tại.</p><a href="/blog">← Xem tất cả bài viết</a></body></html>', 404);
       }
       // ===== 9. SHORTLINK REDIRECT (/:code) =====
@@ -2459,7 +2459,7 @@ const BLOG_POSTS = [
     slug: "rut-gon-link-affiliate-khong-bi-chan-facebook",
     title: "Vì Sao Link Affiliate Shopee/TikTok Hay Bị Facebook Chặn — Và Cách Khắc Phục",
     description: "Lý do link affiliate Shopee, Lazada, TikTok Shop dễ bị Facebook hạn chế hiển thị, và cách dùng link rút gọn kèm tên miền riêng trên Shurlvn để giảm rủi ro.",
-    date: "2026-09-14",
+    date: "2026-10-06",
     contentHtml: `
       <p>Nếu bạn làm affiliate marketing cho Shopee, Lazada hay TikTok Shop, chắc hẳn đã từng gặp cảnh: đăng bài kèm link sản phẩm lên Facebook xong thấy lượt tiếp cận (reach) tụt thảm hại, hoặc tệ hơn là bài viết bị ẩn, cảnh báo "liên kết không an toàn". Đây là nỗi đau rất phổ biến của dân affiliate. Bài viết này giải thích vì sao và cách giảm thiểu rủi ro đó.</p>
 
@@ -2507,7 +2507,7 @@ const BLOG_POSTS = [
     slug: "utm-tracking-la-gi-ket-hop-rut-gon-link",
     title: "UTM Tracking Là Gì? Cách Kết Hợp UTM Với Link Rút Gọn Để Đo Lường Chiến Dịch Chính Xác",
     description: "UTM Tracking là gì và cách kết hợp UTM với công cụ rút gọn link Shurlvn để đo lường chính xác hiệu quả quảng cáo Facebook, Google — xem rõ nguồn traffic đến từ đâu.",
-    date: "2026-09-14",
+    date: "2026-10-04",
     contentHtml: `
       <p>Bạn chạy quảng cáo trên cả Facebook lẫn Google, đăng thêm vài bài trên các hội nhóm — nhưng cuối tháng nhìn vào Google Analytics lại không biết chính xác đơn hàng nào đến từ kênh nào? Đó là lúc bạn cần đến UTM Tracking.</p>
 
@@ -2565,7 +2565,7 @@ const BLOG_POSTS = [
     slug: "loi-ich-branded-link-cho-doanh-nghiep",
     title: "Branded Link Là Gì? Vì Sao Doanh Nghiệp Nên Dùng Link Mang Tên Miền Riêng",
     description: "Phân tích lợi ích của Branded Link (link rút gọn mang tên miền riêng của doanh nghiệp) so với link rút gọn dùng domain chung — về uy tín, nhận diện thương hiệu và bảo mật.",
-    date: "2026-09-14",
+    date: "2026-10-02",
     contentHtml: `
       <p>Với một cá nhân, một link dạng <b>shurlvn.com/abc123</b> đã đủ dùng. Nhưng với doanh nghiệp đang xây dựng thương hiệu, mỗi điểm chạm với khách hàng — kể cả một đường link ngắn — đều là cơ hội để củng cố (hoặc làm giảm) niềm tin. Đó là lý do khái niệm <b>Branded Link</b> (link mang tên miền riêng của doanh nghiệp) ngày càng được các thương hiệu chú trọng.</p>
 
@@ -2599,7 +2599,7 @@ const BLOG_POSTS = [
     slug: "so-sanh-bitly-tinyurl-shurlvn",
     title: "So Sánh Bitly, TinyURL Và Shurlvn — Nên Chọn Công Cụ Rút Gọn Link Nào?",
     description: "So sánh khách quan 3 công cụ rút gọn link phổ biến Bitly, TinyURL và Shurlvn về tính năng, tên miền riêng, mã QR, thống kê và ngôn ngữ giao diện.",
-    date: "2026-09-14",
+    date: "2026-09-30",
     contentHtml: `
       <p>Thị trường công cụ rút gọn link có khá nhiều lựa chọn, mỗi cái mạnh một kiểu. Bài viết này so sánh khách quan ba cái tên quen thuộc với người dùng Việt Nam: <b>Bitly</b>, <b>TinyURL</b> và <b>Shurlvn</b> — để bạn chọn đúng công cụ cho nhu cầu của mình.</p>
 
@@ -2636,7 +2636,7 @@ const BLOG_POSTS = [
     slug: "rut-gon-link-hang-loat",
     title: "Rút Gọn Link Hàng Loạt (Bulk) — Xử Lý Cả Trăm Link Trong 1 Lần",
     description: "Hướng dẫn rút gọn nhiều link cùng lúc bằng tính năng Bulk trên Shurlvn.com, kèm cách đặt alias và campaign riêng cho từng link ngay trong 1 lần nhập.",
-    date: "2026-09-14",
+    date: "2026-09-28",
     contentHtml: `
       <p>Nếu công việc của bạn cần rút gọn hàng chục, hàng trăm đường link cùng lúc — ví dụ danh sách sản phẩm, link tài liệu cho từng chi nhánh — việc tạo từng link một sẽ rất mất thời gian. Tính năng <b>Rút gọn hàng loạt (Bulk)</b> trên Shurlvn.com giúp bạn xử lý toàn bộ chỉ trong một lần nhập.</p>
 
@@ -2678,7 +2678,7 @@ const BLOG_POSTS = [
     slug: "dat-ten-link-tuy-chinh",
     title: "Đặt Tên Link Tuỳ Chỉnh (Custom Alias) Để Link Dễ Nhớ, Dễ Nhận Diện",
     description: "Hướng dẫn đặt tên riêng cho link rút gọn trên Shurlvn.com thay vì để hệ thống tự sinh ngẫu nhiên — giúp link chuyên nghiệp và dễ nhớ hơn.",
-    date: "2026-09-14",
+    date: "2026-09-26",
     contentHtml: `
       <p>Một link dạng <b>shurlvn.com/x7Yq2</b> hoạt động tốt, nhưng khó nhớ và không truyền tải được nội dung bên trong. Với tính năng <b>đặt tên link tuỳ chỉnh (custom alias)</b>, bạn có thể biến nó thành <b>shurlvn.com/khuyen-mai-thang9</b> — vừa dễ nhớ, vừa dễ đọc khi chia sẻ bằng lời.</p>
 
@@ -2715,7 +2715,7 @@ const BLOG_POSTS = [
     slug: "bao-ve-link-bang-mat-khau",
     title: "Bảo Vệ Link Bằng Mật Khẩu — Chỉ Người Có Mật Khẩu Mới Xem Được",
     description: "Hướng dẫn đặt mật khẩu bảo vệ cho link rút gọn trên Shurlvn.com để giới hạn ai được truy cập nội dung — tính năng từ gói Pro trở lên.",
-    date: "2026-09-14",
+    date: "2026-09-24",
     contentHtml: `
       <p>Không phải link nào cũng nên công khai cho tất cả mọi người bấm vào — ví dụ tài liệu nội bộ, link họp riêng tư, hay ưu đãi chỉ dành cho một nhóm khách hàng nhất định. Với tính năng <b>bảo vệ link bằng mật khẩu</b> trên Shurlvn, chỉ ai có mật khẩu mới xem được nội dung đích.</p>
 
@@ -2763,7 +2763,7 @@ const BLOG_POSTS = [
     slug: "dat-ngay-het-han-cho-link",
     title: "Đặt Ngày Hết Hạn Cho Link — Tự Động Vô Hiệu Hoá Đúng Lúc",
     description: "Hướng dẫn đặt ngày hết hạn cho link rút gọn trên Shurlvn.com để link tự động ngừng hoạt động sau chương trình khuyến mãi hoặc sự kiện — tính năng gói Pro trở lên.",
-    date: "2026-09-14",
+    date: "2026-09-22",
     contentHtml: `
       <p>Nhiều link chỉ có giá trị trong một khoảng thời gian nhất định — link đăng ký sự kiện, link mã giảm giá theo đợt, link tải tài liệu tạm thời. Thay vì phải nhớ tự tay xoá hoặc vô hiệu hoá link sau khi hết hạn dùng, bạn có thể để Shurlvn tự động làm việc đó đúng ngày bạn chọn.</p>
 
@@ -2802,7 +2802,7 @@ const BLOG_POSTS = [
     slug: "tao-ma-qr-mien-phi-doi-mau",
     title: "Tạo Mã QR Miễn Phí, Tuỳ Chỉnh Màu Sắc Trong Vài Giây Với Shurlvn",
     description: "Hướng dẫn tạo mã QR miễn phí từ link hoặc văn bản, đổi màu và kích thước tuỳ ý bằng công cụ QR của Shurlvn.com — không cần đăng ký, có ví dụ QR thật.",
-    date: "2026-09-14",
+    date: "2026-09-20",
     contentHtml: `
       <p>Mã QR ngày nay xuất hiện ở khắp mọi nơi: menu quán ăn, poster sự kiện, danh thiếp, bao bì sản phẩm... Thay vì trả phí cho các công cụ tạo QR chuyên nghiệp, bạn hoàn toàn có thể tạo mã QR đẹp, tuỳ chỉnh màu sắc theo bộ nhận diện thương hiệu của mình miễn phí bằng công cụ QR có sẵn trên <a href="https://shurlvn.com" target="_blank" rel="noopener">Shurlvn.com</a>. Bài viết này hướng dẫn chi tiết cách làm, kèm theo vài mã QR thật để bạn thấy rõ mức độ tuỳ biến.</p>
 
@@ -2870,7 +2870,7 @@ const BLOG_POSTS = [
     slug: "tao-ten-mien-rieng-cho-link",
     title: "Tạo Tên Miền Riêng Cho Link Rút Gọn — Hướng Dẫn Dành Cho Gói Super",
     description: "Hướng dẫn gắn tên miền riêng (custom domain) của bạn vào link rút gọn trên Shurlvn.com để tăng độ tin cậy và nhận diện thương hiệu — tính năng gói Super.",
-    date: "2026-09-14",
+    date: "2026-09-18",
     contentHtml: `
       <p>Một đường link dạng <b>shurlvn.com/abc123</b> đã ngắn gọn, nhưng nếu bạn đang xây dựng thương hiệu riêng, một link mang tên miền của chính bạn — ví dụ <b>di.tencongty.com/abc123</b> — sẽ tạo cảm giác chuyên nghiệp và đáng tin hơn hẳn với khách hàng. Đó chính là tính năng <b>tên miền riêng (custom domain)</b> trên Shurlvn.</p>
 
@@ -2920,7 +2920,7 @@ const BLOG_POSTS = [
     slug: "cach-rut-gon-link-mien-phi",
     title: "Cách Rút Gọn Link (Cắt Link) Miễn Phí Chỉ Trong Vài Giây Với Shurlvn",
     description: "Link rút gọn là gì, vì sao nên dùng, và hướng dẫn cắt link miễn phí bằng Shurlvn.com — kèm ảnh minh hoạ giao diện thật, không cần đăng ký tài khoản.",
-    date: "2026-09-14",
+    date: "2026-09-16",
     contentHtml: `
       <p>Bạn từng phải gửi cho ai đó một đường link dài cả trăm ký tự, đầy tham số lạ và ký tự phần trăm loằng ngoằng? Đó chính là lý do các công cụ "cắt link" (rút gọn link) ra đời. Trong bài này, mình sẽ giải thích ngắn gọn link rút gọn là gì, vì sao nên dùng, và hướng dẫn cắt link chỉ trong vài giây bằng công cụ miễn phí <a href="https://shurlvn.com" target="_blank" rel="noopener">Shurlvn.com</a> — kèm ảnh minh hoạ giao diện thật của công cụ.</p>
 
@@ -3045,6 +3045,14 @@ const BLOG_POSTS = [
   }
 ];
 
+function isPostPublished(post) {
+  const today = new Date().toISOString().split("T")[0];
+  return post.date <= today;
+}
+function publishedBlogPosts() {
+  return BLOG_POSTS.filter(isPostPublished);
+}
+
 function renderBlogLayout(titleText, descriptionText, canonicalPath, bodyHtml) {
   const t = escHtml(titleText), d = escHtml(descriptionText);
   return `<!DOCTYPE html>
@@ -3123,7 +3131,7 @@ ${bodyHtml}
 }
 
 function renderBlogIndexPage() {
-  const items = BLOG_POSTS.map(p =>
+  const items = publishedBlogPosts().map(p =>
     `<li><a href="/blog/${escHtml(p.slug)}">${escHtml(p.title)}</a><p class="meta">${escHtml(p.date)}</p><p>${escHtml(p.description)}</p></li>`
   ).join("");
   const body = `<h1>Blog SHURL</h1><p class="meta">Mẹo và hướng dẫn công nghệ, kèm theo cách dùng SHURL để chia sẻ link nhanh gọn hơn.</p><ul class="postlist">${items}</ul>`;
