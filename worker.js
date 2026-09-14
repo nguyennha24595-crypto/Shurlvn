@@ -7576,7 +7576,7 @@ var html = guideCard("pricing") + '<style>' +
   '@keyframes cloudFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}' +
   '@keyframes planeFly{0%{left:calc(100% + 150px);opacity:0.8;}100%{left:-150px;opacity:0.9;}}' +
   '@keyframes flamePulse{0%,100%{transform:scaleX(1);opacity:0.9;}50%{transform:scaleX(1.4);opacity:1;}}' +
-  '.pricing-hero .cloud{position:absolute;opacity:0.6;pointer-events:none;}' +
+  '.pricing-hero .cloud{position:absolute;opacity:0.18;pointer-events:none;z-index:0;}' +
   '.pricing-hero .cloud-1{top:5%;width:70px;animation:cloudDrift 6.1s linear infinite,cloudFloat 7s ease-in-out infinite;}' +
   '.pricing-hero .cloud-2{top:38%;width:85px;animation:cloudDrift 9s linear infinite,cloudFloat 8s ease-in-out infinite;animation-delay:-0.3s,-2s;}' +
   '.pricing-hero .cloud-3{top:72%;width:60px;animation:cloudDrift 10s linear infinite,cloudFloat 6.5s ease-in-out infinite;animation-delay:-0.6s,-1s;}' +
@@ -8224,7 +8224,7 @@ function renderNav() {
       hHtml += '</div></div>';
     } else {
       hHtml += '<div style="position:relative;" id="guestLangWrap">';
-      hHtml += '<button class="sb-icon-btn" onclick="toggleGuestLangDropdown(event)" title="' + tr("language", "Ngôn ngữ") + '">' + li("globe", 18) + '</button>';
+      hHtml += '<button class="sb-icon-btn" onclick="toggleGuestLangDropdown(event)" title="' + tr("language", "Ngôn ngữ") + '" style="gap:6px;padding:8px 10px;">' + li("globe", 18) + '<span style="font-size:12px;font-weight:700;">' + esc(currentLang.toUpperCase()) + '</span></button>';
       if (guestLangDropdownOpen) {
         hHtml += '<div class="lang-dropdown">';
         for (var gi = 0; gi < LANGS.length; gi++) {
@@ -8387,7 +8387,7 @@ function renderHome(app){
     '<div class="card">' +
     '<h2>' + li('qr', 20) + ' ' + t("home_qr_promo_title") + '</h2>' +
     '<p class="sub">' + t("home_qr_promo_desc") + '</p>' +
-    '<button class="btn btn-primary" onclick="navigate(&#39;bulkqr&#39;)">' + t("home_qr_promo_btn") + '</button>' +
+    '<button class="btn btn-ghost" onclick="navigate(&#39;bulkqr&#39;)">' + t("home_qr_promo_btn") + '</button>' +
     '</div>';
 
 
