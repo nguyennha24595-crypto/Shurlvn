@@ -3989,7 +3989,7 @@ footer{text-align:center;color:var(--muted2);font-size:12px;padding:30px 20px;}
       <div id="app" class="fade-in"></div>
       <div id="sidebarLeft" style="display:none;"></div>
       <div id="sidebarRight" style="display:none;"></div>
-      <footer><span id="footerTagline"></span><br><a href="https://mail.google.com/mail/?view=cm&fs=1&to=nguyennha24595@gmail.com&su=SHURL%20Support" target="_blank"><span id="footerContact"></span>: nguyennha24595@gmail.com</a><br>🇻🇳 Trường Sa | Hoàng Sa là của Việt Nam</footer>
+      <footer><span id="footerTagline"></span><br><a href="https://mail.google.com/mail/?view=cm&fs=1&to=nguyennha24595@gmail.com&su=SHURL%20Support" target="_blank"><span id="footerContact"></span>: nguyennha24595@gmail.com</a><br><a href="#/terms" id="footerTermsLink"></a> · <a href="#/privacy" id="footerPrivacyLink"></a><br>🇻🇳 Trường Sa | Hoàng Sa là của Việt Nam</footer>
     </main>
   </div>
 </div>
@@ -4231,6 +4231,10 @@ var i18n = {
     // ===== MISC =====
     days:"ngày", hours:"giờ", minutes:"phút", loading:"Đang tải...", footer_tagline:"Nền tảng rút gọn link đa tầng · An toàn · Nhanh chóng",
     footer_contact:"Liên hệ",
+    footer_terms:"Điều khoản sử dụng", footer_privacy:"Chính sách bảo mật", legal_last_updated:"Cập nhật lần cuối",
+    terms_title:"Điều khoản sử dụng", terms_subtitle:"Quy định sử dụng dịch vụ SHORT URL.",
+    privacy_title:"Chính sách bảo mật", privacy_subtitle:"Cách SHORT URL thu thập, sử dụng và bảo vệ thông tin của bạn.",
+    register_legal_notice:"Bằng việc đăng ký, bạn đồng ý với", and:"và",
     // ===== ERROR CODES =====
     err_url_invalid:"URL không hợp lệ (phải bắt đầu bằng http:// hoặc https://)",
     err_domain_blacklisted:"Domain đích nằm trong danh sách đen bảo mật.",
@@ -4591,6 +4595,10 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     // ===== MISC =====
     days:"days", hours:"hours", minutes:"minutes", loading:"Loading...", footer_tagline:"Multi-tier link shortening platform · Secure · Fast",
     footer_contact:"Contact",
+    footer_terms:"Terms of Service", footer_privacy:"Privacy Policy", legal_last_updated:"Last updated",
+    terms_title:"Terms of Service", terms_subtitle:"Rules for using the SHORT URL service.",
+    privacy_title:"Privacy Policy", privacy_subtitle:"How SHORT URL collects, uses, and protects your information.",
+    register_legal_notice:"By signing up, you agree to our", and:"and",
     // ===== ERROR CODES =====
     err_url_invalid:"Invalid URL (must start with http:// or https://)",
     err_domain_blacklisted:"Destination domain is on the security blacklist.",
@@ -7545,7 +7553,7 @@ function render(){
   var app = document.getElementById("app");
   var authRoutes = ["dashboard","bulk","api","webhooks","export","team","campaigns","admin","account"];
   if (authRoutes.indexOf(route) !== -1 && !state.user){ navigate("login"); return; }
-  var majorRoutes = ["home","bulkqr","login","register","forgot-password","dashboard","bulk","api","webhooks","export","team","campaigns","account","pricing","admin"];
+  var majorRoutes = ["home","bulkqr","login","register","forgot-password","dashboard","bulk","api","webhooks","export","team","campaigns","account","pricing","admin","terms","privacy"];
   var isMajor = majorRoutes.indexOf(route) !== -1 || route.indexOf("reset-password") === 0;
   function doRender(){
     if (route === "home") renderHome(app);
@@ -7564,6 +7572,8 @@ function render(){
     else if (route === "account") renderAccount(app);
     else if (route === "pricing") renderPricing(app);
     else if (route === "admin") renderAdmin(app);
+    else if (route === "terms") renderTerms(app);
+    else if (route === "privacy") renderPrivacy(app);
     else if (route.indexOf("analytics/") === 0) renderAnalytics(app, decodeURIComponent(route.slice(10)));
     else app.innerHTML = '<div class="card"><p class="sub">Không tìm thấy trang.</p></div>';
     app.style.opacity = "1";
@@ -8056,6 +8066,7 @@ function registerFormHtml(){
       '<label>' + t("reg_password") + '</label><input type="password" id="r_pass" required>' +
       '<div id="regMsg"></div>' +
       '<div style="margin-top:18px;"><button class="btn btn-primary" type="submit" style="width:100%;justify-content:center;">' + t("register_free") + '</button></div>' +
+      '<p class="hint" style="margin-top:10px;">' + t("register_legal_notice") + ' <a href="#/terms" target="_blank">' + t("footer_terms") + '</a> ' + t("and") + ' <a href="#/privacy" target="_blank">' + t("footer_privacy") + '</a>.</p>' +
     '</form>' +
     '<p class="hint" style="margin-top:16px;">' + t("have_account") + ' <a href="javascript:void(0)" onclick="switchAuthMode(&#39;login&#39;)">' + t("login") + '</a></p>';
 }
@@ -9972,6 +9983,56 @@ function acctUsageBar(label, limit, unlimited){
 function acctFeatRow(label, has){
   return '<div style="display:flex;justify-content:space-between;align-items:center;"><span style="color:var(--text);">' + label + '</span>' + (has ? '<span style="color:#22c55e;">✓</span>' : '<span style="color:var(--muted);">✗</span>') + '</div>';
 }
+function renderLegalPage(app, title, subtitle, sections){
+  var toc = sections.map(function(s, i){
+    return '<li><a href="javascript:void(0)" onclick="document.getElementById(&#39;ls' + i + '&#39;).scrollIntoView({behavior:&#39;smooth&#39;})">' + (i + 1) + '. ' + s.h + '</a></li>';
+  }).join('');
+  var body = sections.map(function(s, i){
+    return '<h2 id="ls' + i + '" style="margin-top:24px;">' + (i + 1) + '. ' + s.h + '</h2><p style="color:var(--text);line-height:1.7;">' + s.p + '</p>';
+  }).join('');
+  app.innerHTML =
+    '<div class="page-head"><h1>' + title + '</h1></div>' +
+    '<p class="sub">' + subtitle + '</p>' +
+    '<p class="hint">' + t("legal_last_updated") + ': 14/09/2026</p>' +
+    '<div class="card"><ul style="margin:0;padding-left:20px;line-height:2;">' + toc + '</ul></div>' +
+    '<div class="card">' + body + '</div>';
+}
+function renderTerms(app){
+  renderLegalPage(app, t("terms_title"), t("terms_subtitle"), [
+    { h: "Giới thiệu", p: "SHURL là dịch vụ rút gọn liên kết (short URL) kèm theo tính năng tạo mã QR, theo dõi lượt click và các công cụ quản lý link. Bằng việc truy cập hoặc sử dụng dịch vụ, bạn đồng ý với các điều khoản dưới đây." },
+    { h: "Tài khoản người dùng", p: "Một số tính năng yêu cầu tạo tài khoản (tên đăng nhập/mật khẩu, hoặc đăng nhập bằng Google). Bạn chịu trách nhiệm bảo mật thông tin đăng nhập và mọi hoạt động diễn ra dưới tài khoản của mình." },
+    { h: "Sử dụng dịch vụ", p: "Dịch vụ được cung cấp theo hiện trạng (as-is). Bạn đồng ý sử dụng dịch vụ đúng mục đích và không can thiệp vào hoạt động bình thường của hệ thống." },
+    { h: "Short URL và nội dung người dùng", p: "Bạn chịu trách nhiệm về URL đích và nội dung mà bạn rút gọn hoặc chia sẻ qua dịch vụ. SHURL có quyền vô hiệu hóa hoặc gỡ bỏ các liên kết vi phạm điều khoản này hoặc pháp luật hiện hành." },
+    { h: "QR Code và các tính năng liên quan", p: "Mã QR được tạo dựa trên nội dung/URL do bạn cung cấp, thông qua dịch vụ tạo QR của bên thứ ba. Bạn chịu trách nhiệm về nội dung được mã hóa trong QR." },
+    { h: "Analytics và dữ liệu thống kê", p: "Dịch vụ có thể ghi nhận số liệu lượt click trên các link bạn tạo (ví dụ: thời gian, quốc gia, thiết bị) để hiển thị thống kê cho bạn. Chi tiết xem tại Chính sách bảo mật." },
+    { h: "Gói miễn phí và dịch vụ trả phí", p: "SHURL cung cấp gói miễn phí và các gói trả phí với giới hạn, tính năng khác nhau. Thông tin và giá gói hiển thị tại trang Bảng giá có thể thay đổi theo thời gian." },
+    { h: "Hành vi bị cấm", p: "Nghiêm cấm sử dụng dịch vụ để phát tán mã độc, lừa đảo (phishing), spam, nội dung vi phạm pháp luật, xâm phạm quyền sở hữu trí tuệ hoặc quyền riêng tư của người khác, hoặc cố gắng khai thác/tấn công hệ thống." },
+    { h: "Đình chỉ hoặc chấm dứt tài khoản", p: "SHURL có quyền tạm khóa hoặc chấm dứt tài khoản vi phạm điều khoản này mà không cần báo trước, đặc biệt trong trường hợp lạm dụng hoặc gây hại cho hệ thống hay người dùng khác." },
+    { h: "Quyền sở hữu trí tuệ", p: "Thương hiệu, giao diện và mã nguồn của SHURL thuộc quyền sở hữu của đội ngũ phát triển. Nội dung bạn tạo ra (link, QR, dữ liệu liên quan) vẫn thuộc về bạn." },
+    { h: "Giới hạn trách nhiệm", p: "Dịch vụ được cung cấp trên cơ sở hiện trạng, không đảm bảo hoạt động liên tục, không lỗi hoặc không gián đoạn. SHURL không chịu trách nhiệm cho thiệt hại gián tiếp phát sinh từ việc sử dụng hoặc không thể sử dụng dịch vụ." },
+    { h: "Thay đổi dịch vụ và điều khoản", p: "SHURL có thể cập nhật, thay đổi hoặc ngừng một phần hay toàn bộ tính năng, cũng như điều chỉnh điều khoản này theo thời gian. Phiên bản cập nhật sẽ được đăng tại trang này." },
+    { h: "Luật áp dụng và giải quyết tranh chấp", p: "Các bên ưu tiên giải quyết tranh chấp thông qua trao đổi thiện chí. Trường hợp cần thiết, tranh chấp sẽ được xử lý theo quy định pháp luật hiện hành áp dụng cho dịch vụ." },
+    { h: "Liên hệ", p: "Mọi thắc mắc về điều khoản này, vui lòng liên hệ: nguyennha24595@gmail.com." }
+  ]);
+}
+function renderPrivacy(app){
+  renderLegalPage(app, t("privacy_title"), t("privacy_subtitle"), [
+    { h: "Phạm vi áp dụng", p: "Chính sách này áp dụng cho dữ liệu được thu thập và xử lý khi bạn sử dụng dịch vụ SHURL." },
+    { h: "Thông tin chúng tôi có thể thu thập", p: "Tùy theo cách bạn sử dụng dịch vụ, chúng tôi có thể thu thập: tên đăng nhập, mật khẩu (được băm/hash, không lưu dạng văn bản thô), email (nếu bạn cung cấp hoặc đăng nhập bằng Google), URL và mã QR bạn tạo, cùng dữ liệu lượt click trên các link đó (ví dụ: thời điểm, quốc gia, loại thiết bị, địa chỉ IP)." },
+    { h: "Cách chúng tôi sử dụng thông tin", p: "Thông tin được dùng để cung cấp và duy trì dịch vụ, xác thực tài khoản, hiển thị số liệu thống kê cho bạn, hỗ trợ kỹ thuật, và bảo vệ an toàn hệ thống (ví dụ: giới hạn tần suất truy cập để chống spam)." },
+    { h: "Dữ liệu Short URL và Analytics", p: "Với mỗi link bạn tạo, hệ thống có thể ghi nhận số lượt click và một số thông tin liên quan đến lượt truy cập (thời gian, quốc gia, thiết bị, IP) để phục vụ thống kê trong Dashboard của bạn. Nếu bạn bật các tính năng nâng cao như Pixel tracking hoặc Webhook, dữ liệu truy cập link đó cũng có thể được gửi tới bên thứ ba do chính bạn cấu hình (ví dụ Facebook, Google, TikTok, hoặc URL webhook riêng) — việc thu thập và sử dụng dữ liệu qua các công cụ này thuộc trách nhiệm của bạn với tư cách người tạo link." },
+    { h: "Cookie và công nghệ lưu trữ", p: "Chúng tôi sử dụng một cookie phiên đăng nhập (session cookie) để duy trì trạng thái đăng nhập của bạn. Chúng tôi không sử dụng cookie quảng cáo hoặc theo dõi của bên thứ ba trên nền tảng SHURL." },
+    { h: "Chia sẻ thông tin với bên thứ ba", p: "Chúng tôi không bán thông tin cá nhân của bạn. Một số chức năng của dịch vụ sử dụng bên thứ ba để vận hành, ví dụ: xử lý thanh toán (Stripe, VietQR), gửi email (Resend), đăng nhập bằng Google, và tạo hình ảnh mã QR (qua dịch vụ api.qrserver.com). Các bên này chỉ nhận dữ liệu cần thiết để thực hiện đúng chức năng tương ứng." },
+    { h: "Lưu trữ và bảo vệ dữ liệu", p: "Dữ liệu được lưu trữ trên hạ tầng Cloudflare Workers KV. Mật khẩu tài khoản được băm (hash) trước khi lưu trữ, không lưu dưới dạng văn bản thô." },
+    { h: "Thời gian lưu giữ dữ liệu", p: "Link sau khi bạn xóa sẽ được đánh dấu xóa và tự động xóa vĩnh viễn sau 24 giờ, trừ khi bạn khôi phục trong thời gian đó. Với các dữ liệu khác, chúng tôi lưu giữ trong thời gian tài khoản của bạn còn hoạt động hoặc theo nhu cầu vận hành hợp lý của dịch vụ." },
+    { h: "Quyền của người dùng", p: "Bạn có thể xem, chỉnh sửa thông tin tài khoản và quản lý các link của mình trong Dashboard. Bạn có thể liên hệ với chúng tôi qua email bên dưới để được hỗ trợ liên quan đến dữ liệu cá nhân." },
+    { h: "Bảo mật tài khoản", p: "Bạn chịu trách nhiệm bảo mật mật khẩu và thông tin đăng nhập của mình. Vui lòng thông báo cho chúng tôi ngay nếu phát hiện truy cập trái phép vào tài khoản." },
+    { h: "Dịch vụ của bên thứ ba", p: "Dịch vụ có tích hợp một số bên thứ ba như đã nêu ở mục 6 (Stripe, VietQR, Resend, Google, api.qrserver.com) cùng hạ tầng Cloudflare. Việc sử dụng các dịch vụ này tuân theo chính sách bảo mật riêng của từng bên." },
+    { h: "Trẻ em", p: "Dịch vụ không hướng đến đối tượng trẻ em dưới 13 tuổi và chúng tôi không chủ đích thu thập thông tin từ trẻ em trong độ tuổi này." },
+    { h: "Thay đổi Chính sách bảo mật", p: "Chính sách này có thể được cập nhật theo thời gian. Phiên bản mới sẽ được đăng tại trang này kèm ngày cập nhật." },
+    { h: "Liên hệ", p: "Mọi câu hỏi về Chính sách bảo mật, vui lòng liên hệ: nguyennha24595@gmail.com." }
+  ]);
+}
 var adminTab = "overview";
 function renderAdmin(app){
   if (state.user.role !== "admin"){ app.innerHTML = '<div class="card"><p class="sub">' + t("upgrade_to_unlock") + '</p></div>'; return; }
@@ -11586,8 +11647,12 @@ function exportPayCSV() {
 function renderFooter(){
   var ft = document.getElementById("footerTagline");
   var fc = document.getElementById("footerContact");
+  var fTerms = document.getElementById("footerTermsLink");
+  var fPrivacy = document.getElementById("footerPrivacyLink");
   if (ft) ft.textContent = "SHURL — " + t("footer_tagline");
   if (fc) fc.textContent = t("footer_contact");
+  if (fTerms) fTerms.textContent = t("footer_terms");
+  if (fPrivacy) fPrivacy.textContent = t("footer_privacy");
 }
 
 // ---------- INIT ----------
