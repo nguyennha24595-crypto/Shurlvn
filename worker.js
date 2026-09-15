@@ -4506,6 +4506,7 @@ function renderAppHtml() {
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
+<script>(function(){try{var t=localStorage.getItem("shurl_theme");document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}catch(e){document.documentElement.setAttribute("data-theme","light");}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SHORT Link — Multi-tier link shortening platform · Safe · Fast</title>
 <meta name="description" content="Rút gọn link và tạo mã QR miễn phí, không cần đăng ký. Thống kê lượt click chi tiết, đặt tên link tuỳ chỉnh, giao diện tiếng Việt — nhanh và an toàn.">
@@ -13120,17 +13121,8 @@ document.addEventListener("click", function(e){
   }
 });
 window.addEventListener("DOMContentLoaded", function(){
-  // Khôi phục theme — mặc định light
-  try {
-    var savedTheme = localStorage.getItem("shurl_theme");
-    if (savedTheme === "dark") {
-      // giữ dark
-    } else {
-      document.documentElement.setAttribute("data-theme", "light");
-    }
-  } catch(e) {
-    document.documentElement.setAttribute("data-theme", "light");
-  }
+  // Theme is already applied synchronously by the inline head script above
+  // (runs before first paint, to avoid a flash of the wrong theme) — nothing to do here.
   api("/api/auth/me").then(function(data){ state.user = data.user; state.limits = data.limits; })
     .catch(function(){ state.user = null; state.limits = null; })
     .then(function(){
