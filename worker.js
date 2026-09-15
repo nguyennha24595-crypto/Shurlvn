@@ -10114,7 +10114,7 @@ function qrWsSaveDynamic(){
     msgEl.innerHTML = '<div class="msg msg-ok">' + t("qr_dynamic_created") + ' ' + t("qr_dynamic_created_desc") + '</div>';
     if (titleEl) titleEl.value = "";
     qrDynRenderQuotaBar(data.limit, data.remaining);
-    qrDynLoadList();
+    if (data.qr) { qrDynItems.unshift(data.qr); qrDynRenderList(); }
   }).catch(function(err){
     var code = err && err.code;
     if (code === "QUOTA_EXCEEDED") {
@@ -10131,35 +10131,53 @@ function qrWsSaveDynamic(){
   });
 }
 
+// Client-side source of truth for the "QR đã tạo" table. Mutations (create/edit/delete)
+// update this array directly from their own response instead of re-fetching the list from
+// the server: Cloudflare KV's list() is eventually consistent, so a GET right after a write
+// can still miss it — that caused the list to only pick up new/edited/deleted QRs on reload.
+var qrDynItems = [];
+
+function qrDynRenderList(){
+  var body = document.getElementById("qrCreatedListBody");
+  if (!body) return;
+  if (qrDynItems.length === 0) {
+    body.innerHTML = '<p class="hint">' + t("qr_created_list_empty") + '</p>';
+    return;
+  }
+  body.innerHTML = '<div style="overflow-x:auto;"><table class="qr-created-table"><thead><tr>' +
+    '<th>' + t("qr_created_col_qr") + '</th><th>' + t("qr_created_col_title") + '</th><th>' + t("qr_created_col_short") + '</th>' +
+    '<th>' + t("qr_created_col_target") + '</th><th>' + t("qr_created_col_scans") + '</th><th>' + t("qr_created_col_created") + '</th><th>' + t("qr_created_col_actions") + '</th>' +
+    '</tr></thead><tbody>' +
+    qrDynItems.map(function(qr){
+      return '<tr id="qrDynRow_' + esc(qr.id) + '">' +
+        '<td><img src="' + qrDynBuildImgUrl(qr, 60) + '" alt="QR"></td>' +
+        '<td>' + esc(qr.title || "—") + '</td>' +
+        '<td class="mono">' + esc(qr.shortUrl || "—") + '</td>' +
+        '<td class="qr-target-cell" style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(qr.targetUrl || "—") + '</td>' +
+        '<td>' + fmtNum(qr.scanCount || 0) + '</td>' +
+        '<td>' + esc((qr.createdAt || "").slice(0, 10)) + '</td>' +
+        '<td style="white-space:nowrap;">' +
+        '<button type="button" class="btn btn-ghost btn-sm" onclick="qrDynEditTarget(&#39;' + esc(qr.id) + '&#39;)">' + li('edit', 12) + '</button> ' +
+        '<button type="button" class="btn btn-ghost btn-sm" onclick="qrDynDeleteQr(&#39;' + esc(qr.id) + '&#39;)">' + li('trash', 12) + '</button>' +
+        '</td>' +
+        '</tr>';
+    }).join("") +
+    '</tbody></table></div>';
+}
+
 function qrDynLoadList(){
   var body = document.getElementById("qrCreatedListBody");
   api("/api/qr/dynamic").then(function(data){
     if (data.quota) qrDynRenderQuotaBar(data.quota.limit, data.quota.remaining);
-    if (!body) return;
-    var qrs = data.qrs || [];
-    if (qrs.length === 0) {
-      body.innerHTML = '<p class="hint">' + t("qr_created_list_empty") + '</p>';
-      return;
-    }
-    body.innerHTML = '<div style="overflow-x:auto;"><table class="qr-created-table"><thead><tr>' +
-      '<th>' + t("qr_created_col_qr") + '</th><th>' + t("qr_created_col_title") + '</th><th>' + t("qr_created_col_short") + '</th>' +
-      '<th>' + t("qr_created_col_target") + '</th><th>' + t("qr_created_col_scans") + '</th><th>' + t("qr_created_col_created") + '</th><th>' + t("qr_created_col_actions") + '</th>' +
-      '</tr></thead><tbody>' +
-      qrs.map(function(qr){
-        return '<tr id="qrDynRow_' + esc(qr.id) + '">' +
-          '<td><img src="' + qrDynBuildImgUrl(qr, 60) + '" alt="QR"></td>' +
-          '<td>' + esc(qr.title || "—") + '</td>' +
-          '<td class="mono">' + esc(qr.shortUrl || "—") + '</td>' +
-          '<td class="qr-target-cell" style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(qr.targetUrl || "—") + '</td>' +
-          '<td>' + fmtNum(qr.scanCount || 0) + '</td>' +
-          '<td>' + esc((qr.createdAt || "").slice(0, 10)) + '</td>' +
-          '<td style="white-space:nowrap;">' +
-          '<button type="button" class="btn btn-ghost btn-sm" onclick="qrDynEditTarget(&#39;' + esc(qr.id) + '&#39;)">' + li('edit', 12) + '</button> ' +
-          '<button type="button" class="btn btn-ghost btn-sm" onclick="qrDynDeleteQr(&#39;' + esc(qr.id) + '&#39;)">' + li('trash', 12) + '</button>' +
-          '</td>' +
-          '</tr>';
-      }).join("") +
-      '</tbody></table></div>';
+    var fetched = data.qrs || [];
+    var fetchedIds = {};
+    fetched.forEach(function(q){ fetchedIds[q.id] = true; });
+    // KV's list() is eventually consistent, so a background refresh can arrive without an
+    // item we just optimistically added — keep it until the server actually reports it too.
+    var stillPending = qrDynItems.filter(function(q){ return !fetchedIds[q.id]; });
+    qrDynItems = stillPending.concat(fetched);
+    qrDynItems.sort(function(a, b){ return (b.createdAt || "").localeCompare(a.createdAt || ""); });
+    qrDynRenderList();
   }).catch(function(){
     if (body) body.innerHTML = '<p class="hint">' + t("qr_created_list_empty") + '</p>';
   });
@@ -10193,8 +10211,12 @@ function qrDynSaveTarget(qrId){
   if (!input) return;
   var newUrl = input.value.trim();
   if (!newUrl) return;
-  api("/api/qr/dynamic/" + encodeURIComponent(qrId), "PUT", { targetUrl: newUrl }).then(function(){
-    qrDynLoadList();
+  api("/api/qr/dynamic/" + encodeURIComponent(qrId), "PUT", { targetUrl: newUrl }).then(function(data){
+    if (data.qr) {
+      var idx = qrDynItems.findIndex(function(q){ return q.id === qrId; });
+      if (idx !== -1) qrDynItems[idx] = data.qr;
+    }
+    qrDynRenderList();
   }).catch(function(err){
     alert((err && err.message) || t("qr_edit_target_title"));
   });
@@ -10203,7 +10225,8 @@ function qrDynSaveTarget(qrId){
 function qrDynDeleteQr(qrId){
   if (!confirm(t("qr_delete_qr_confirm"))) return;
   api("/api/qr/dynamic/" + encodeURIComponent(qrId), "DELETE").then(function(){
-    qrDynLoadList();
+    qrDynItems = qrDynItems.filter(function(q){ return q.id !== qrId; });
+    qrDynRenderList();
   }).catch(function(err){
     alert((err && err.message) || "");
   });
@@ -10212,6 +10235,7 @@ function qrDynDeleteQr(qrId){
 function qrWsBindWorkspace(){
   qrWsMode = "static";
   qrWsResolved = { url: null, code: null };
+  qrDynItems = [];
   document.querySelectorAll(".qr-type-btn").forEach(function(btn){
     btn.addEventListener("click", function(){ qrWsSetType(btn.getAttribute("data-qrtype")); });
   });
