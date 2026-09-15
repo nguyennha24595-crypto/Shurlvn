@@ -1389,7 +1389,7 @@ function checkDailyQuota(user, role, addCount) {
     currentCount = user.dailyQuota.count;
   }
   if (currentCount + addCount > limit) {
-    const tierName = role === "guest" ? "Khách chưa đăng ký" : role === "free" ? "Registered (Miễn phí)" : role === "pro" ? "Pro" : "Super";
+    const tierName = role === "guest" ? "Khách chưa đăng ký" : role === "free" ? "Registered (Miễn phí)" : role === "plus" ? "Plus" : role === "pro" ? "Pro" : "Super";
     return { ok: false, message: `Bạn đã vượt quá giới hạn ${limit} link/ngày của gói ${tierName} (đã tạo ${currentCount} link hôm nay).` };
   }
   return { ok: true };
@@ -2266,6 +2266,10 @@ async function handleCreateDynamicQr(request, env, url, corsHeaders) {
       return json({ error: "Bạn không sở hữu Short URL này." }, 403, corsHeaders);
     }
   } else if (targetUrl) {
+    const linkQuotaCheck = checkDailyQuota(userRecord, role, 1);
+    if (!linkQuotaCheck.ok) {
+      return json({ error: linkQuotaCheck.message }, 403, corsHeaders);
+    }
     try {
       link = await createLinkInternal(env, { url: targetUrl, owner, role });
     } catch (err) {
@@ -4908,6 +4912,10 @@ footer{text-align:center;color:var(--muted2);font-size:12px;padding:30px 20px;}
 .qr-mode-btn small{display:block;font-weight:400;font-size:11px;color:var(--muted2);margin-top:2px;}
 .qr-mode-btn.active{border-color:var(--indigo);background:rgba(99,102,241,0.1);color:var(--indigo);}
 .qr-mode-btn.active small{color:var(--indigo);opacity:0.8;}
+.qr-mode-btn-wrap{flex:1;position:relative;}
+.qr-mode-btn-wrap .qr-mode-btn{width:100%;padding-right:28px;}
+.qr-help-link{position:absolute;top:8px;right:8px;color:var(--muted2);opacity:0.7;line-height:0;text-decoration:none;}
+.qr-help-link:hover{opacity:1;color:var(--indigo);}
 .qr-quota-bar-wrap{margin:10px 0;font-size:12px;color:var(--muted);}
 .qr-quota-bar-track{width:100%;height:6px;border-radius:3px;background:var(--stat-bg);border:1px solid var(--border);overflow:hidden;margin-top:4px;}
 .qr-quota-bar-fill{height:100%;background:var(--indigo);border-radius:3px;transition:width 0.2s ease;}
@@ -5035,11 +5043,12 @@ var i18n = {
     qr_contrast_warning:"Màu QR và nền quá giống nhau, có thể khó quét.",
     qr_csv_label:"hoặc tải lên file CSV (cột URL)", qr_csv_detected:"Đã phát hiện URL từ CSV:",
     // ===== QR ĐỘNG (QR Studio) =====
-    qr_mode_static:"QR tĩnh", qr_mode_dynamic:"QR code biến đổi",
+    qr_mode_static:"QR tĩnh", qr_mode_dynamic:"QR động",
     qr_mode_static_hint:"Đích được ghi cố định vào mã QR — không thể đổi sau khi tạo.",
     qr_mode_dynamic_hint:"QR trỏ tới một Short URL — đổi đích bất cứ lúc nào mà không cần in lại mã QR.",
     qr_dyn_teaser_title:"QR động", qr_dyn_teaser_feat1:"Đổi URL đích sau này — không cần in lại QR", qr_dyn_teaser_feat2:"Theo dõi lượt quét (scan)",
     qr_dyn_teaser_cta_guest:"Đăng ký miễn phí để dùng thử", qr_dyn_teaser_cta_upgrade:"Nâng cấp để mở khoá QR động",
+    qr_dyn_help_title:"QR động là gì? Xem hướng dẫn sử dụng chi tiết",
     qr_dynamic_title_label:"Tên gợi nhớ (tuỳ chọn)", qr_dynamic_title_placeholder:"VD: Poster sự kiện tháng 9",
     qr_dynamic_save_btn:"Lưu QR động", qr_dynamic_saving:"Đang lưu...",
     qr_dynamic_quota_label:"QR động đã dùng tháng này", qr_dynamic_quota_unlimited:"Không giới hạn",
@@ -5432,6 +5441,7 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     qr_mode_dynamic_hint:"The QR points to a Short URL — change the destination anytime without reprinting the QR.",
     qr_dyn_teaser_title:"Dynamic QR", qr_dyn_teaser_feat1:"Change the destination later — no reprinting", qr_dyn_teaser_feat2:"Track scan counts",
     qr_dyn_teaser_cta_guest:"Sign up free to try it", qr_dyn_teaser_cta_upgrade:"Upgrade to unlock dynamic QR",
+    qr_dyn_help_title:"What is dynamic QR? See the detailed guide",
     qr_dynamic_title_label:"Memo name (optional)", qr_dynamic_title_placeholder:"e.g. September event poster",
     qr_dynamic_save_btn:"Save dynamic QR", qr_dynamic_saving:"Saving...",
     qr_dynamic_quota_label:"Dynamic QR used this month", qr_dynamic_quota_unlimited:"Unlimited",
@@ -9663,7 +9673,10 @@ function renderBulkQR(app){
     '<div class="qr-step-label">' + t("qr_step_type") + '</div>' +
     '<div class="qr-mode-toggle">' +
     '<button type="button" class="qr-mode-btn active" data-qrmode="static">' + t("qr_mode_static") + '<small>' + t("qr_mode_static_hint") + '</small></button>' +
+    '<div class="qr-mode-btn-wrap">' +
     '<button type="button" class="qr-mode-btn" data-qrmode="dynamic">' + t("qr_mode_dynamic") + '<small>' + t("qr_mode_dynamic_hint") + '</small></button>' +
+    '<a class="qr-help-link" href="/blog/qr-dong-la-gi-huong-dan-su-dung" target="_blank" rel="noopener" title="' + t("qr_dyn_help_title") + '">' + li('help_circle', 16) + '</a>' +
+    '</div>' +
     '</div>' +
     '<div class="qr-type-toggle" id="qrWsTypeToggle">' +
     '<button type="button" class="qr-type-btn active" data-qrtype="url">' + li('link', 14) + ' ' + t("qr_type_url") + '</button>' +
@@ -9984,10 +9997,15 @@ function qrWsLoadExisting(){
     var links = (res.links || []).filter(function(l){ return !l.isDeleted; });
     sel.innerHTML = '<option value="">' + t("qr_use_existing_placeholder") + '</option>' +
       links.map(function(l){
-        return '<option value="' + esc(l.shortUrl) + '">' + esc(l.shortUrl) + (l.title ? (" — " + esc(l.title)) : "") + '</option>';
+        return '<option value="' + esc(l.shortUrl) + '" data-code="' + esc(l.code) + '">' + esc(l.shortUrl) + (l.title ? (" — " + esc(l.title)) : "") + '</option>';
       }).join("");
   }).catch(function(){});
 }
+
+// Tracks the last URL we KNOW is one of our own short links (with its code),
+// so qrWsSaveDynamic can reuse the exact code instead of guessing from the
+// domain — guessing breaks for links on a custom domain (Super tier).
+var qrWsResolved = { url: null, code: null };
 
 function qrWsCreateShortUrl(){
   var urlEl = document.getElementById("qrWsUrl");
@@ -9999,6 +10017,7 @@ function qrWsCreateShortUrl(){
   api("/api/links", "POST", { url: raw }).then(function(data){
     var link = data.link;
     urlEl.value = link.shortUrl;
+    qrWsResolved = { url: link.shortUrl, code: link.code };
     if (resultEl) resultEl.textContent = t("qr_shorturl_created") + " " + link.shortUrl;
     if (btn) btn.disabled = false;
     qrWsUpdatePreview();
@@ -10081,7 +10100,9 @@ function qrWsSaveDynamic(){
     size: sizeEl ? sizeEl.value : "200",
     margin: marginEl ? marginEl.value : ""
   };
-  if (parsed.origin === window.location.origin && parsed.pathname.length > 1) {
+  if (qrWsResolved.code && qrWsResolved.url === val) {
+    payload.shortCode = qrWsResolved.code;
+  } else if (parsed.origin === window.location.origin && parsed.pathname.length > 1) {
     payload.shortCode = parsed.pathname.slice(1).split("/")[0];
   } else {
     payload.targetUrl = val;
@@ -10190,6 +10211,7 @@ function qrDynDeleteQr(qrId){
 
 function qrWsBindWorkspace(){
   qrWsMode = "static";
+  qrWsResolved = { url: null, code: null };
   document.querySelectorAll(".qr-type-btn").forEach(function(btn){
     btn.addEventListener("click", function(){ qrWsSetType(btn.getAttribute("data-qrtype")); });
   });
@@ -10215,7 +10237,10 @@ function qrWsBindWorkspace(){
 
   var urlEl = document.getElementById("qrWsUrl");
   var textEl = document.getElementById("qrWsText");
-  if (urlEl) urlEl.addEventListener("input", qrWsUpdatePreviewDebounced);
+  if (urlEl) urlEl.addEventListener("input", function(){
+    if (urlEl.value.trim() !== qrWsResolved.url) qrWsResolved = { url: null, code: null };
+    qrWsUpdatePreviewDebounced();
+  });
   if (textEl) textEl.addEventListener("input", qrWsUpdatePreviewDebounced);
 
   var colorEl = document.getElementById("qrWsColor");
@@ -10251,7 +10276,12 @@ function qrWsBindWorkspace(){
     existingSel.addEventListener("focus", qrWsLoadExisting);
     existingSel.addEventListener("mousedown", qrWsLoadExisting);
     existingSel.addEventListener("change", function(){
-      if (existingSel.value && urlEl) { urlEl.value = existingSel.value; qrWsSetType("url"); }
+      if (existingSel.value && urlEl) {
+        urlEl.value = existingSel.value;
+        var opt = existingSel.options[existingSel.selectedIndex];
+        qrWsResolved = { url: existingSel.value, code: opt ? opt.getAttribute("data-code") : null };
+        qrWsSetType("url");
+      }
     });
   }
 
@@ -12144,6 +12174,7 @@ function li(icon, size) {
   var icons = {
     bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
     help: '<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+    help_circle: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
     message: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
     trash: '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>',
     lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
