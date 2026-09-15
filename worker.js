@@ -7,7 +7,7 @@ const TIER_CONFIG = {
     dailyLinks: 5, linkExpiryDays: null,
     hasAdvancedManagement: false, hasDetailedAnalytics: false, hasAdvancedAnalytics: false,
     hasCustomAlias: false, hasBulkShorten: false, maxBulkBatch: 0,
-    hasCustomQr: false, hasBulkQr: false, hasApi: false, monthlyApiLimit: 0,
+    hasCustomQr: false, hasBulkQr: false, maxBulkQrBatch: 0, maxDynamicQrPerMonth: 0, hasApi: false, monthlyApiLimit: 0,
     hasDataExport: false, hasCustomDomain: false,
     hasPixel: false, maxPixelPerLink: 0, maxPixelLinks: 0,
     hasABTest: false, maxABUrls: 0, maxABLinks: 0, hasCustomABPercent: false,
@@ -18,7 +18,7 @@ const TIER_CONFIG = {
     dailyLinks: 10, linkExpiryDays: null,
     hasAdvancedManagement: false, hasDetailedAnalytics: false, hasAdvancedAnalytics: false,
     hasCustomAlias: true, hasBulkShorten: false, maxBulkBatch: 0,
-    hasCustomQr: false, hasBulkQr: false, hasApi: false, monthlyApiLimit: 0,
+    hasCustomQr: false, hasBulkQr: false, maxBulkQrBatch: 0, maxDynamicQrPerMonth: 0, hasApi: false, monthlyApiLimit: 0,
     hasDataExport: false, hasCustomDomain: false,
     hasPixel: false, maxPixelPerLink: 0, maxPixelLinks: 0,
     hasABTest: false, maxABUrls: 0, maxABLinks: 0, hasCustomABPercent: false,
@@ -29,7 +29,7 @@ const TIER_CONFIG = {
   dailyLinks: 150, linkExpiryDays: 7,
   hasAdvancedManagement: false, hasDetailedAnalytics: false, hasAdvancedAnalytics: false,
   hasCustomAlias: true, hasBulkShorten: true, maxBulkBatch: 150,
-  hasCustomQr: false, hasBulkQr: false, hasApi: false, monthlyApiLimit: 0,
+  hasCustomQr: false, hasBulkQr: false, maxBulkQrBatch: 0, maxDynamicQrPerMonth: 20, hasApi: false, monthlyApiLimit: 0,
   hasDataExport: false, hasCustomDomain: false,
   hasPixel: false, maxPixelPerLink: 0, maxPixelLinks: 0,
   hasABTest: false, maxABUrls: 0, maxABLinks: 0, hasCustomABPercent: false,
@@ -41,7 +41,7 @@ const TIER_CONFIG = {
     dailyLinks: 200, linkExpiryDays: null,
     hasAdvancedManagement: true, hasDetailedAnalytics: true, hasAdvancedAnalytics: false,
     hasCustomAlias: true, hasBulkShorten: true, maxBulkBatch: 300,
-    hasCustomQr: true, hasBulkQr: false, hasApi: true, monthlyApiLimit: 5000,
+    hasCustomQr: true, hasBulkQr: true, maxBulkQrBatch: 50, maxDynamicQrPerMonth: 100, hasApi: true, monthlyApiLimit: 5000,
     hasDataExport: true, hasCustomDomain: false,
     hasPixel: true, maxPixelPerLink: 1, maxPixelLinks: 50,
     hasABTest: true, maxABUrls: 2, maxABLinks: 20, hasCustomABPercent: false,
@@ -53,7 +53,7 @@ const TIER_CONFIG = {
     dailyLinks: 600, linkExpiryDays: null,
     hasAdvancedManagement: true, hasDetailedAnalytics: true, hasAdvancedAnalytics: true,
     hasCustomAlias: true, hasBulkShorten: true, maxBulkBatch: 600,
-    hasCustomQr: true, hasBulkQr: true, hasApi: true, monthlyApiLimit: 10000,
+    hasCustomQr: true, hasBulkQr: true, maxBulkQrBatch: 200, maxDynamicQrPerMonth: 500, hasApi: true, monthlyApiLimit: 10000,
     hasDataExport: true, hasCustomDomain: true,
     hasPixel: true, maxPixelPerLink: 2, maxPixelLinks: 999999,
     hasABTest: true, maxABUrls: 3, maxABLinks: 999999, hasCustomABPercent: true,
@@ -67,7 +67,7 @@ const TIER_CONFIG = {
     hasAdvancedManagement: true, hasDetailedAnalytics: true, hasAdvancedAnalytics: true,
     hasCustomAlias: true, hasBulkShorten: true, maxBulkBatch: 5000,
     hasTeam: true, maxTeamMembers: 999999,
-    hasCustomQr: true, hasBulkQr: true, hasApi: true, monthlyApiLimit: 999999,
+    hasCustomQr: true, hasBulkQr: true, maxBulkQrBatch: 999999, maxDynamicQrPerMonth: 999999, hasApi: true, monthlyApiLimit: 999999,
     hasDataExport: true, hasCustomDomain: true,
     hasPixel: true, maxPixelPerLink: 3, maxPixelLinks: 999999,
     hasABTest: true, maxABUrls: 5, maxABLinks: 999999, hasCustomABPercent: true,
@@ -311,6 +311,12 @@ export default {
 
       // ===== 4e. QR CODE (trừ dailyQuota) =====
       if (path === "api/qr/create" && method === "POST") return handleCreateQr(request, env, corsHeaders);
+
+      // ===== 4f. DYNAMIC QR (QR Studio — QR động, hạn mức theo tháng) =====
+      if (path === "api/qr/dynamic" && method === "GET") return handleListDynamicQr(request, env, url, corsHeaders);
+      if (path === "api/qr/dynamic" && method === "POST") return handleCreateDynamicQr(request, env, url, corsHeaders);
+      if (path.startsWith("api/qr/dynamic/") && method === "PUT") return handleUpdateDynamicQr(request, env, url, decodeURIComponent(path.slice("api/qr/dynamic/".length)), corsHeaders);
+      if (path.startsWith("api/qr/dynamic/") && method === "DELETE") return handleDeleteDynamicQr(request, env, decodeURIComponent(path.slice("api/qr/dynamic/".length)), corsHeaders);
 
       // ===== 5. REPORTS (public submit) =====
       if (path === "api/reports" && method === "POST") return handleCreateReport(request, env, corsHeaders);
@@ -578,6 +584,30 @@ async function putLink(env, link) {
 async function deleteLinkKV(env, code) {
   await env.LINKS_KV.delete("link:" + code);
   await env.LINKS_KV.delete("clicks:" + code);
+}
+
+// ===================== KV: DYNAMIC QR (QR động) =====================
+// A dynamic QR is just a saved mapping { id -> shortUrl code + display/customization }.
+// The destination is always resolved live from the underlying link record (getLink),
+// so retargeting the link (via handleUpdateDynamicQr) changes where the printed QR goes
+// without ever regenerating the QR image itself.
+async function getQrRecord(env, qrId) {
+  const raw = await env.LINKS_KV.get("qr:" + qrId);
+  return raw ? JSON.parse(raw) : null;
+}
+async function putQrRecord(env, qr) {
+  await env.LINKS_KV.put("qr:" + qr.id, JSON.stringify(qr));
+}
+async function deleteQrRecord(env, qrId) {
+  await env.LINKS_KV.delete("qr:" + qrId);
+}
+async function listAllQrRecords(env) {
+  const list = await env.LINKS_KV.list({ prefix: "qr:" });
+  const raws = await Promise.all(list.keys.map(k => env.LINKS_KV.get(k.name)));
+  return raws.filter(Boolean).map(r => JSON.parse(r));
+}
+function generateQrId() {
+  return "q" + randomHex(10);
 }
 async function listAllLinks(env) {
   if (env._linksCache && env._linksCacheTime && (Date.now() - env._linksCacheTime < 30000)) { return env._linksCache; }
@@ -1405,6 +1435,33 @@ async function incrementMonthlyApiQuota(env, ownerUsername) {
   }
   await putUser(env, user);
 }
+function checkMonthlyDynamicQrQuota(user, role) {
+  if (role === "admin") return { ok: true, limit: 999999, remaining: 999999 };
+  const limit = (TIER_CONFIG[role] && TIER_CONFIG[role].maxDynamicQrPerMonth) || 0;
+  if (!limit) {
+    return { ok: false, code: "DYNAMIC_QR_NOT_AVAILABLE", message: "Gói hiện tại chưa hỗ trợ QR động. Nâng cấp Plus trở lên để sử dụng.", upgradeUrl: "#/pricing" };
+  }
+  const thisMonth = thisMonthStr();
+  let currentCount = 0;
+  if (user && user.monthlyDynamicQrQuota && user.monthlyDynamicQrQuota.month === thisMonth) {
+    currentCount = user.monthlyDynamicQrQuota.count;
+  }
+  if (currentCount >= limit) {
+    return { ok: false, code: "QUOTA_EXCEEDED", message: `Bạn đã dùng hết ${limit} QR động/tháng. Các QR động đã tạo vẫn hoạt động bình thường — nâng cấp gói để tạo thêm.`, upgradeUrl: "#/pricing", limit: limit, remaining: 0, retryAt: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString() };
+  }
+  return { ok: true, limit: limit, remaining: limit - currentCount };
+}
+async function incrementMonthlyDynamicQrQuota(env, ownerUsername) {
+  const user = await getUser(env, ownerUsername);
+  if (!user) return;
+  const thisMonth = thisMonthStr();
+  if (!user.monthlyDynamicQrQuota || user.monthlyDynamicQrQuota.month !== thisMonth) {
+    user.monthlyDynamicQrQuota = { month: thisMonth, count: 1 };
+  } else {
+    user.monthlyDynamicQrQuota.count += 1;
+  }
+  await putUser(env, user);
+}
 
 // ===================== HANDLERS: LINKS (CORE) =====================
 function generateCode(len) {
@@ -2164,6 +2221,152 @@ async function handleCreateQr(request, env, corsHeaders) {
   if (hasMargin) qrSrc += "&margin=" + qrMargin;
 
   return json({ ok: true, qrUrl: qrSrc, targetUrl: targetUrl, size: qrSize, color: qrColor, bgcolor: qrBgColor || null, margin: hasMargin ? qrMargin : null, format: qrFormat }, 200, corsHeaders);
+}
+
+// ===================== HANDLERS: DYNAMIC QR (QR động — QR Studio) =====================
+function qrRecordToResponse(qr, link, url) {
+  return {
+    id: qr.id,
+    title: qr.title || "",
+    code: qr.code,
+    shortUrl: link ? shortUrlFor(url, link.code, link.customDomain) : null,
+    targetUrl: link ? link.url : null,
+    scanCount: link ? (link.totalClicks || 0) : 0,
+    linkExists: !!link,
+    color: qr.color || "#000000",
+    bgcolor: qr.bgcolor || "",
+    size: qr.size || 200,
+    margin: qr.margin,
+    createdAt: qr.createdAt
+  };
+}
+
+async function handleCreateDynamicQr(request, env, url, corsHeaders) {
+  const authedUser = await getAuthenticatedUser(request, env);
+  if (!authedUser) return requireAuthResponse(corsHeaders, request);
+
+  const role = authedUser.role;
+  const owner = authedUser.username;
+  const userRecord = await getUser(env, owner);
+
+  const quotaCheck = checkMonthlyDynamicQrQuota(userRecord, role);
+  if (!quotaCheck.ok) {
+    return json({ error: quotaCheck.message, code: quotaCheck.code, upgradeUrl: quotaCheck.upgradeUrl }, 403, corsHeaders);
+  }
+
+  let body;
+  try { body = await request.json(); } catch (e) { body = {}; }
+  const { shortCode, targetUrl, title, color, bgcolor, size, margin } = body || {};
+
+  let link;
+  if (shortCode) {
+    link = await getLink(env, shortCode);
+    if (!link) return json({ error: "Không tìm thấy Short URL đã chọn." }, 404, corsHeaders);
+    if (role !== "admin" && link.owner !== owner) {
+      return json({ error: "Bạn không sở hữu Short URL này." }, 403, corsHeaders);
+    }
+  } else if (targetUrl) {
+    try {
+      link = await createLinkInternal(env, { url: targetUrl, owner, role });
+    } catch (err) {
+      return json({ error: err.message }, 400, corsHeaders);
+    }
+  } else {
+    return json({ error: "Vui lòng chọn Short URL có sẵn hoặc nhập URL đích để tạo mới." }, 400, corsHeaders);
+  }
+
+  const qr = {
+    id: generateQrId(),
+    owner,
+    code: link.code,
+    title: (title || "").trim(),
+    color: color || "#000000",
+    bgcolor: bgcolor || "",
+    size: parseInt(size) || 200,
+    margin: (margin !== undefined && margin !== "" && !isNaN(parseInt(margin))) ? parseInt(margin) : null,
+    createdAt: new Date().toISOString()
+  };
+  await putQrRecord(env, qr);
+  await incrementMonthlyDynamicQrQuota(env, owner);
+
+  return json({ ok: true, qr: qrRecordToResponse(qr, link, url), remaining: quotaCheck.remaining - 1, limit: quotaCheck.limit }, 200, corsHeaders);
+}
+
+async function handleListDynamicQr(request, env, url, corsHeaders) {
+  const authedUser = await getAuthenticatedUser(request, env);
+  if (!authedUser) return requireAuthResponse(corsHeaders, request);
+
+  const allQr = await listAllQrRecords(env);
+  const mine = authedUser.role === "admin" ? allQr : allQr.filter(q => q.owner === authedUser.username);
+  mine.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+
+  const results = await Promise.all(mine.map(async (qr) => {
+    const link = await getLink(env, qr.code);
+    return qrRecordToResponse(qr, link, url);
+  }));
+
+  const role = authedUser.role;
+  const userRecord = await getUser(env, authedUser.username);
+  const quota = checkMonthlyDynamicQrQuota(userRecord, role);
+
+  return json({ qrs: results, quota: { limit: quota.limit || 0, remaining: quota.ok ? quota.remaining : 0 } }, 200, corsHeaders);
+}
+
+async function handleUpdateDynamicQr(request, env, url, qrId, corsHeaders) {
+  const authedUser = await getAuthenticatedUser(request, env);
+  if (!authedUser) return requireAuthResponse(corsHeaders, request);
+
+  const qr = await getQrRecord(env, qrId);
+  if (!qr) return json({ error: "Không tìm thấy QR động này." }, 404, corsHeaders);
+  if (authedUser.role !== "admin" && qr.owner !== authedUser.username) {
+    return json({ error: "Bạn không có quyền chỉnh sửa QR này." }, 403, corsHeaders);
+  }
+
+  let body;
+  try { body = await request.json(); } catch (e) { body = {}; }
+  const { targetUrl, title, color, bgcolor, size, margin } = body || {};
+
+  const link = await getLink(env, qr.code);
+  if (!link) return json({ error: "Short URL gốc của QR này không còn tồn tại." }, 404, corsHeaders);
+
+  // Retargeting the destination is the whole point of a dynamic QR, so this is allowed
+  // regardless of hasAdvancedManagement tier gating that applies to manual link edits.
+  if (targetUrl && targetUrl !== link.url) {
+    if (!targetUrl.startsWith("http")) {
+      return json({ error: "URL đích mới không hợp lệ." }, 400, corsHeaders);
+    }
+    if (await isDomainBlacklisted(env, targetUrl)) {
+      return json({ error: "URL đích mới nằm trong danh sách đen bảo mật." }, 400, corsHeaders);
+    }
+    if (!link.destinationHistory) link.destinationHistory = [];
+    link.destinationHistory.push({ oldUrl: link.url, changedAt: new Date().toISOString() });
+    link.url = targetUrl;
+    link.updatedAt = new Date().toISOString();
+    await putLink(env, link);
+  }
+
+  if (title !== undefined) qr.title = title;
+  if (color !== undefined) qr.color = color;
+  if (bgcolor !== undefined) qr.bgcolor = bgcolor;
+  if (size !== undefined) qr.size = parseInt(size) || qr.size;
+  if (margin !== undefined) qr.margin = (margin === "" || margin === null) ? null : parseInt(margin);
+  await putQrRecord(env, qr);
+
+  return json({ ok: true, qr: qrRecordToResponse(qr, link, url) }, 200, corsHeaders);
+}
+
+async function handleDeleteDynamicQr(request, env, qrId, corsHeaders) {
+  const authedUser = await getAuthenticatedUser(request, env);
+  if (!authedUser) return requireAuthResponse(corsHeaders, request);
+
+  const qr = await getQrRecord(env, qrId);
+  if (!qr) return json({ error: "Không tìm thấy QR động này." }, 404, corsHeaders);
+  if (authedUser.role !== "admin" && qr.owner !== authedUser.username) {
+    return json({ error: "Bạn không có quyền xoá QR này." }, 403, corsHeaders);
+  }
+
+  await deleteQrRecord(env, qrId);
+  return json({ ok: true }, 200, corsHeaders);
 }
 
 // ===================== HANDLERS: REPORTS =====================
@@ -4700,10 +4903,27 @@ footer{text-align:center;color:var(--muted2);font-size:12px;padding:30px 20px;}
 .qr-existing-select{width:100%;padding:8px 10px;border:1px solid var(--input-border);border-radius:8px;background:var(--input-bg);color:var(--text);font-size:13px;margin-top:8px;}
 .qr-utm-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
 .qr-csv-drop{border:1px dashed var(--input-border);border-radius:10px;padding:14px;text-align:center;font-size:13px;color:var(--muted);margin-top:10px;}
+.qr-mode-toggle{display:flex;gap:8px;margin-bottom:10px;}
+.qr-mode-btn{flex:1;padding:11px 12px;border:1.5px solid var(--input-border);border-radius:10px;background:var(--input-bg);color:var(--muted);font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;text-align:left;transition:all 0.15s ease;}
+.qr-mode-btn small{display:block;font-weight:400;font-size:11px;color:var(--muted2);margin-top:2px;}
+.qr-mode-btn.active{border-color:var(--indigo);background:rgba(99,102,241,0.1);color:var(--indigo);}
+.qr-mode-btn.active small{color:var(--indigo);opacity:0.8;}
+.qr-quota-bar-wrap{margin:10px 0;font-size:12px;color:var(--muted);}
+.qr-quota-bar-track{width:100%;height:6px;border-radius:3px;background:var(--stat-bg);border:1px solid var(--border);overflow:hidden;margin-top:4px;}
+.qr-quota-bar-fill{height:100%;background:var(--indigo);border-radius:3px;transition:width 0.2s ease;}
+.qr-quota-bar-fill.warn{background:var(--amber);}
+.qr-dynamic-panel{margin-top:14px;padding-top:14px;border-top:1px dashed var(--border);}
+.qr-quota-exceeded{background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:14px;font-size:13px;color:var(--text);}
+.qr-quota-exceeded h4{margin:0 0 4px;color:var(--amber);font-size:14px;}
+.qr-created-table{width:100%;border-collapse:collapse;font-size:13px;}
+.qr-created-table th,.qr-created-table td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;vertical-align:middle;}
+.qr-created-table img{width:40px;height:40px;border-radius:6px;}
+.qr-edit-target-row input{width:100%;padding:6px 8px;border:1px solid var(--input-border);border-radius:6px;background:var(--input-bg);color:var(--text);font-size:12px;}
 @media(max-width:900px){
   .qr-workspace{grid-template-columns:1fr;}
   .qr-preview-card{position:static;}
   .qr-utm-grid{grid-template-columns:1fr;}
+  .qr-created-table{display:block;overflow-x:auto;}
 }
 </style>
 <!-- Google tag (gtag.js) -->
@@ -4808,13 +5028,34 @@ var i18n = {
     qr_create_shorturl_btn:"Tạo Short URL", qr_shorturl_created:"Đã tạo:",
     qr_contrast_warning:"Màu QR và nền quá giống nhau, có thể khó quét.",
     qr_csv_label:"hoặc tải lên file CSV (cột URL)", qr_csv_detected:"Đã phát hiện URL từ CSV:",
+    // ===== QR ĐỘNG (QR Studio) =====
+    qr_mode_static:"QR tĩnh", qr_mode_dynamic:"QR code biến đổi",
+    qr_mode_static_hint:"Đích được ghi cố định vào mã QR — không thể đổi sau khi tạo.",
+    qr_mode_dynamic_hint:"QR trỏ tới một Short URL — đổi đích bất cứ lúc nào mà không cần in lại mã QR.",
+    qr_dynamic_title_label:"Tên gợi nhớ (tuỳ chọn)", qr_dynamic_title_placeholder:"VD: Poster sự kiện tháng 9",
+    qr_dynamic_save_btn:"Lưu QR động", qr_dynamic_saving:"Đang lưu...",
+    qr_dynamic_quota_label:"QR động đã dùng tháng này", qr_dynamic_quota_unlimited:"Không giới hạn",
+    qr_dynamic_quota_exceeded_title:"Bạn đã dùng hết hạn mức QR động tháng này",
+    qr_dynamic_quota_exceeded_desc:"Các QR động đã tạo trước đó vẫn hoạt động và quét bình thường. Nâng cấp gói để tạo thêm QR động ngay bây giờ.",
+    qr_dynamic_not_available_title:"Gói hiện tại chưa hỗ trợ QR động",
+    qr_dynamic_not_available_desc:"Nâng cấp lên Plus trở lên để tạo QR có thể đổi đích bất cứ lúc nào.",
+    qr_dynamic_upgrade_btn:"Nâng cấp gói", qr_dynamic_created:"Đã lưu QR động!",
+    qr_dynamic_created_desc:"Xem và quản lý ở mục “QR đã tạo” bên dưới.",
+    qr_created_list_title:"QR đã tạo", qr_created_list_empty:"Bạn chưa tạo QR động nào.",
+    qr_created_col_qr:"QR", qr_created_col_title:"Tên", qr_created_col_short:"Short URL", qr_created_col_target:"Đích hiện tại",
+    qr_created_col_scans:"Lượt quét", qr_created_col_created:"Ngày tạo", qr_created_col_actions:"Thao tác",
+    qr_edit_target_btn:"Chỉnh sửa URL", qr_edit_target_title:"Đổi đích cho QR này",
+    qr_edit_target_placeholder:"https://dich-moi.com", qr_edit_target_save:"Lưu đích mới", qr_edit_target_cancel:"Huỷ",
+    qr_edit_target_success:"Đã cập nhật đích — mã QR không đổi, vẫn dùng được ngay.",
+    qr_delete_qr_confirm:"Xoá QR động này? Short URL bên dưới vẫn hoạt động bình thường, chỉ mục quản lý này bị xoá.",
+    qr_delete_qr_btn:"Xoá",
     // ===== BULK QR =====
     bulkqr:"Tạo QR hàng loạt", bulkqr_title:"Tạo mã QR hàng loạt", bulkqr_hint:"Mỗi dòng 1 link rút gọn. Tạo QR hàng loạt và tải về file Excel.",
     bulkqr_generate:"Tạo QR hàng loạt", bulkqr_download:"Tải Excel (.xls)", bulkqr_color:"Màu QR",
-    bulkqr_empty:"Không có link hợp lệ.", bulkqr_max:"Tối đa 1200 link/lần.",
+    bulkqr_empty:"Không có link hợp lệ.", bulkqr_max:"Tối đa {max} link/lần.",
     bulkqr_loading:"Đang tạo QR...", bulkqr_done:"Đã tạo {count} QR. Bấm 'Tải Excel' để tải về.",
     bulkqr_enter_list:"Vui lòng nhập danh sách link.", bulkqr_result_heading:"Kết quả ({count} QR)", bulkqr_col_link:"Link rút gọn", bulkqr_col_qr:"QR Code",
-    bulkqr_super:"Tính năng chỉ dành cho gói Super.",
+    bulkqr_super:"Tính năng cần gói Pro hoặc Super.",
     // ===== DASHBOARD =====
     my_links:"Link của tôi", total_clicks:"Tổng lượt click", daily_limit:"Hạn mức link/ngày",
     create_new:"Tạo link mới", create_success:"Tạo link thành công!",
@@ -4885,6 +5126,9 @@ var i18n = {
     pricing_f_10links:"10 link/ngày", pricing_f_manage:"Quản lý link", pricing_f_clickstats:"Thống kê lượt click",
     pricing_plus_desc:"150 link/ngày", pricing_plus_btn:"Nâng cấp Plus",pricing_per_week:"/tuần",
     pricing_plus_f1:"150 link/ngày", pricing_plus_f2:"Link không hết hạn", pricing_plus_f3:"Rút gọn hàng loạt — 150 link/lần",
+    pricing_f_qrdyn_plus:"QR động (đổi đích không cần in lại) — 20/tháng",
+    pricing_f_qrdyn_pro:"QR động — 100/tháng · Bulk QR 50/lần",
+    pricing_f_qrdyn_super:"QR động — 500/tháng · Bulk QR 200/lần",
     pricing_popular:"Phổ biến nhất", pricing_per_batch:"lần", pricing_per_link:"link", pricing_links:"link",
     pricing_day:"ngày", pricing_month:"tháng", pricing_req_month:"request/tháng", pricing_custom:"tuỳ chỉnh",
     pricing_advanced_mgmt:"Quản lý nâng cao", pricing_compare_title:"So sánh chi tiết", pricing_compare_feature:"Tính năng",
@@ -5174,13 +5418,34 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     qr_create_shorturl_btn:"Create Short URL", qr_shorturl_created:"Created:",
     qr_contrast_warning:"QR color and background are too similar — it may be hard to scan.",
     qr_csv_label:"or upload a CSV file (URL column)", qr_csv_detected:"URLs detected from CSV:",
+    // ===== DYNAMIC QR (QR Studio) =====
+    qr_mode_static:"Static QR", qr_mode_dynamic:"Dynamic QR",
+    qr_mode_static_hint:"The destination is baked directly into the QR — it can't change after creation.",
+    qr_mode_dynamic_hint:"The QR points to a Short URL — change the destination anytime without reprinting the QR.",
+    qr_dynamic_title_label:"Memo name (optional)", qr_dynamic_title_placeholder:"e.g. September event poster",
+    qr_dynamic_save_btn:"Save dynamic QR", qr_dynamic_saving:"Saving...",
+    qr_dynamic_quota_label:"Dynamic QR used this month", qr_dynamic_quota_unlimited:"Unlimited",
+    qr_dynamic_quota_exceeded_title:"You've used all your dynamic QR quota this month",
+    qr_dynamic_quota_exceeded_desc:"Dynamic QR codes you already created keep working and scanning normally. Upgrade your plan to create more right now.",
+    qr_dynamic_not_available_title:"Your current plan doesn't include dynamic QR",
+    qr_dynamic_not_available_desc:"Upgrade to Plus or above to create QR codes whose destination you can change anytime.",
+    qr_dynamic_upgrade_btn:"Upgrade plan", qr_dynamic_created:"Dynamic QR saved!",
+    qr_dynamic_created_desc:"View and manage it under “Created QRs” below.",
+    qr_created_list_title:"Created QRs", qr_created_list_empty:"You haven't created any dynamic QR yet.",
+    qr_created_col_qr:"QR", qr_created_col_title:"Name", qr_created_col_short:"Short URL", qr_created_col_target:"Current destination",
+    qr_created_col_scans:"Scans", qr_created_col_created:"Created", qr_created_col_actions:"Actions",
+    qr_edit_target_btn:"Edit URL", qr_edit_target_title:"Change this QR's destination",
+    qr_edit_target_placeholder:"https://new-destination.com", qr_edit_target_save:"Save new destination", qr_edit_target_cancel:"Cancel",
+    qr_edit_target_success:"Destination updated — the QR code itself hasn't changed and still works.",
+    qr_delete_qr_confirm:"Delete this dynamic QR? The Short URL underneath keeps working — only this management entry is removed.",
+    qr_delete_qr_btn:"Delete",
     // ===== BULK QR =====
     bulkqr:"Bulk QR", bulkqr_title:"Bulk QR Code", bulkqr_hint:"One shortened link per line. Generate QR codes in bulk and download as an Excel file.",
     bulkqr_generate:"Generate bulk QR", bulkqr_download:"Download Excel (.xls)", bulkqr_color:"QR color",
-    bulkqr_empty:"No valid links.", bulkqr_max:"Max. 1200 links per batch.",
+    bulkqr_empty:"No valid links.", bulkqr_max:"Max. {max} links per batch.",
     bulkqr_loading:"Generating QR...", bulkqr_done:"Generated {count} QR codes. Click 'Download Excel' to save.",
     bulkqr_enter_list:"Please enter a list of links.", bulkqr_result_heading:"Results ({count} QR codes)", bulkqr_col_link:"Short link", bulkqr_col_qr:"QR Code",
-    bulkqr_super:"Super plan only feature.",
+    bulkqr_super:"Requires Pro or Super plan.",
     // ===== DASHBOARD =====
     my_links:"My links", total_clicks:"Total clicks", daily_limit:"Daily link limit",
     create_new:"Create new link", create_success:"Link created successfully!",
@@ -5251,6 +5516,9 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     pricing_f_10links:"10 links/day", pricing_f_manage:"Link management", pricing_f_clickstats:"Click analytics",
     pricing_plus_desc:"150 links/day", pricing_plus_btn:"Upgrade Plus",pricing_per_week:"/week",
     pricing_plus_f1:"150 links/day", pricing_plus_f2:"Links never expire", pricing_plus_f3:"Bulk shorten — 150 links/batch",
+    pricing_f_qrdyn_plus:"Dynamic QR (change destination, no reprint) — 20/month",
+    pricing_f_qrdyn_pro:"Dynamic QR — 100/month · Bulk QR 50/batch",
+    pricing_f_qrdyn_super:"Dynamic QR — 500/month · Bulk QR 200/batch",
     pricing_popular:"Most popular", pay_vn_btn:"VN Payment (MoMo/Napas)", pricing_per_batch:"batch", pricing_per_link:"link", pricing_links:"links",
     pricing_day:"day", pricing_month:"month", pricing_req_month:"requests/month", pricing_custom:"custom",
     pricing_advanced_mgmt:"Advanced management", pricing_compare_title:"Detailed comparison", pricing_compare_feature:"Feature",
@@ -7540,7 +7808,12 @@ function api(path, method, body){
   if (body !== undefined) { opts.headers["Content-Type"] = "application/json"; opts.body = JSON.stringify(body); }
   return fetch(path, opts).then(function(res){
     return res.json().catch(function(){ return {}; }).then(function(data){
-      if (!res.ok) throw new Error((data && data.error) || "Đã có lỗi xảy ra");
+      if (!res.ok) {
+        var e = new Error((data && data.error) || "Đã có lỗi xảy ra");
+        if (data && data.code) e.code = data.code;
+        if (data && data.upgradeUrl) e.upgradeUrl = data.upgradeUrl;
+        throw e;
+      }
       return data;
     });
   });
@@ -7562,21 +7835,21 @@ async function renderPricing(app){
       features: [
         { t: t("pricing_plus_f1"), y: true }, { t: t("pricing_plus_f2"), y: true },
         { t: t("custom_alias"), y: true }, { t: t("pricing_f_manage"), y: true }, { t: t("pricing_f_clickstats"), y: true },
-        { t: t("campaign_history"), y: true },
+        { t: t("campaign_history"), y: true }, { t: t("pricing_f_qrdyn_plus"), y: true },
         { t: t("pixel_tracking"), y: false }, { t: t("ab_testing"), y: false }, { t: t("deep_link"), y: false },
         { t: t("password_protect"), y: false }, { t: t("webhooks"), y: false }, { t: t("data_export"), y: false }, { t: t("team_management"), y: false }, { t: "API", y: false }
       ]},
     { name: "Pro", price: "$8", unit: t("pricing_per_month"), desc: t("account_pro_desc"), popular: true, btn: t("upgrade_pro"), btnClass: "btn-primary", tier: "pro",
       features: [
         { t: t("plan_pro_f1"), y: true }, { t: t("bulk_title") + " (300/" + t("pricing_per_batch") + ")", y: true }, { t: t("custom_alias") + " " + t("plan_unlimited"), y: true },
-        { t: t("pricing_advanced_mgmt"), y: true }, { t: t("analytics_title") + " " + t("plan_pro_f4"), y: true }, { t: t("plan_pro_f5"), y: true },
+        { t: t("pricing_advanced_mgmt"), y: true }, { t: t("analytics_title") + " " + t("plan_pro_f4"), y: true }, { t: t("plan_pro_f5"), y: true }, { t: t("pricing_f_qrdyn_pro"), y: true },
         { t: t("pixel_tracking") + " — 1/" + t("pricing_per_link") + ", 50 " + t("pricing_links"), y: true }, { t: t("ab_testing") + " — 2 URL, 20 " + t("pricing_links"), y: true }, { t: t("deep_link") + " iOS/Android", y: true },
         { t: t("password_protect"), y: true }, { t: t("webhooks"), y: true }, { t: t("data_export"), y: true }, { t: t("campaign_history"), y: true }, { t: "API 5.000 " + t("pricing_req_month"), y: true }, { t: t("export"), y: true }
       ]},
     { name: "Super", price: "$20", unit: t("pricing_per_month"), desc: t("account_super_desc"), popular: false, btn: t("upgrade_super"), btnClass: "btn-primary", tier: "super",
       features: [
         { t: t("plan_super_f1"), y: true }, { t: t("bulk_title") + " (600/" + t("pricing_per_batch") + ")", y: true }, { t: t("plan_super_f3"), y: true },
-        { t: t("analytics_title") + " " + t("plan_super_f4"), y: true }, { t: t("plan_super_f5"), y: true }, { t: t("pixel_tracking") + " — 2/" + t("pricing_per_link") + ", " + t("plan_unlimited"), y: true },
+        { t: t("analytics_title") + " " + t("plan_super_f4"), y: true }, { t: t("plan_super_f5"), y: true }, { t: t("pricing_f_qrdyn_super"), y: true }, { t: t("pixel_tracking") + " — 2/" + t("pricing_per_link") + ", " + t("plan_unlimited"), y: true },
         { t: t("ab_testing") + " — 3 URL, % " + t("pricing_custom") + ", ∞", y: true }, { t: t("deep_link") + " + " + t("plan_super_f10"), y: true }, { t: t("password_protect") + " + " + t("plan_super_f11"), y: true },
         { t: t("webhooks"), y: true }, { t: t("data_export"), y: true }, { t: t("campaign_history"), y: true }, { t: t("team_management"), y: true }, { t: "API 10.000 " + t("pricing_req_month"), y: true }, { t: "Custom domain", y: true }, { t: t("plan_priority_support"), y: true }
       ]}
@@ -9342,8 +9615,9 @@ function bars(items, labelKey, valueKey, max){
 }
 function renderBulkQR(app){
   var limits = state.limits || {};
-  var maxBatch = limits.maxBulkBatch || 100;
-  var canUse = state.user && (state.user.role === "super" || state.user.role === "admin");
+  var maxBatch = limits.maxBulkQrBatch || 0;
+  var canUse = !!limits.hasBulkQr;
+  var dynLimit = limits.maxDynamicQrPerMonth || 0;
 
   var qrWorkspaceHtml = (
     '<div class="card">' +
@@ -9353,7 +9627,11 @@ function renderBulkQR(app){
     '<div>' +
 
     '<div class="qr-step-label">' + t("qr_step_type") + '</div>' +
-    '<div class="qr-type-toggle">' +
+    '<div class="qr-mode-toggle">' +
+    '<button type="button" class="qr-mode-btn active" data-qrmode="static">' + t("qr_mode_static") + '<small>' + t("qr_mode_static_hint") + '</small></button>' +
+    '<button type="button" class="qr-mode-btn" data-qrmode="dynamic">' + t("qr_mode_dynamic") + '<small>' + t("qr_mode_dynamic_hint") + '</small></button>' +
+    '</div>' +
+    '<div class="qr-type-toggle" id="qrWsTypeToggle">' +
     '<button type="button" class="qr-type-btn active" data-qrtype="url">' + li('link', 14) + ' ' + t("qr_type_url") + '</button>' +
     '<button type="button" class="qr-type-btn" data-qrtype="text">' + li('file', 14) + ' ' + t("qr_type_text") + '</button>' +
     '</div>' +
@@ -9422,13 +9700,28 @@ function renderBulkQR(app){
     '<button class="btn btn-ghost btn-sm" id="qrWsDlSvgBtn" disabled>' + t("qr_download_svg") + '</button>' +
     '<button class="btn btn-ghost btn-sm" id="qrWsCopyBtn" disabled>' + t("qr_copy_link") + '</button>' +
     '</div>' +
+    '<div class="qr-dynamic-panel" id="qrWsDynamicPanel" style="display:none;text-align:left;">' +
+    '<label>' + t("qr_dynamic_title_label") + '</label>' +
+    '<input type="text" id="qrWsDynamicTitle" class="qr-existing-select" placeholder="' + t("qr_dynamic_title_placeholder") + '">' +
+    '<div class="qr-quota-bar-wrap" id="qrDynQuotaBar"></div>' +
+    '<button type="button" class="btn btn-primary btn-sm" id="qrWsDynamicSaveBtn" style="width:100%;margin-top:8px;" onclick="qrWsSaveDynamic()">' + li('save', 12) + ' ' + t("qr_dynamic_save_btn") + '</button>' +
+    '<div id="qrWsDynamicMsg" style="margin-top:8px;"></div>' +
+    '</div>' +
     '</div>' +
 
     '</div>' +
     '</div>');
 
+  var qrCreatedListHtml = dynLimit > 0 ? (
+    '<div class="card" id="qrCreatedListCard">' +
+    '<h2>' + li('qr', 14) + ' ' + t("qr_created_list_title") + '</h2>' +
+    '<div id="qrCreatedListBody"><p class="hint">' + t("processing") + '</p></div>' +
+    '</div>'
+  ) : '';
+
   var html = guideCard("bulkqr") + '<div class="page-head"><h1>' + li('qr', 24) + ' QR Codes</h1></div>' +
     qrWorkspaceHtml +
+    qrCreatedListHtml +
     '<div class="card">' +
     '<h2>' + li('smartphone', 14) + ' ' + t("bulkqr_title") + '</h2>' +
     (canUse ? '' : '<p class="hint">' + li('lock_icon', 12) + ' ' + t("bulkqr_super") + '</p>') +
@@ -9436,7 +9729,7 @@ function renderBulkQR(app){
     '<div style="margin:12px 0;">' +
     '<label>Màu QR</label><input type="color" id="bqrColor" value="#000000" style="width:60px;height:32px;border:1px solid var(--input-border);border-radius:6px;cursor:pointer;background:none;display:block;margin-top:4px;">' +
     '</div>' +
-    '<label>' + t("bulkqr_hint") + '</label>' +
+    '<label>' + tf("bulkqr_max", { max: maxBatch }) + '</label>' +
     '<textarea id="bqrInput" rows="8" placeholder="' + (canUse ? "shurl.com/abc\\nshurl.com/def" : t("bulkqr_super")) + '" style="width:100%;padding:12px;border:1px solid var(--input-border);border-radius:10px;background:var(--input-bg);color:var(--text);font-size:14px;font-family:monospace;resize:vertical;outline:none;" ' + (canUse ? "" : "disabled") + '></textarea>' +
     (canUse ? '<div class="qr-csv-drop"><label style="cursor:pointer;">' + li('upload', 12) + ' ' + t("qr_csv_label") + '<input type="file" id="qrWsCsvFile" accept=".csv,text/csv" style="display:none;"></label><div id="qrWsCsvDetected" style="margin-top:6px;"></div></div>' : '') +
     '<div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">' +
@@ -9450,6 +9743,7 @@ function renderBulkQR(app){
   app.innerHTML = html;
 
   qrWsBindWorkspace();
+  if (dynLimit > 0) qrDynLoadList();
 }
 
 var qrWsPresetList = [
@@ -9588,6 +9882,28 @@ function qrWsSetType(type){
   qrWsUpdatePreview();
 }
 
+var qrWsMode = "static";
+function qrWsSetMode(mode){
+  qrWsMode = (mode === "dynamic") ? "dynamic" : "static";
+  var btnStatic = document.querySelector('.qr-mode-btn[data-qrmode="static"]');
+  var btnDynamic = document.querySelector('.qr-mode-btn[data-qrmode="dynamic"]');
+  var typeToggle = document.getElementById("qrWsTypeToggle");
+  var dynPanel = document.getElementById("qrWsDynamicPanel");
+  var limits = state.limits || {};
+  if (btnStatic) btnStatic.classList.toggle("active", qrWsMode === "static");
+  if (btnDynamic) btnDynamic.classList.toggle("active", qrWsMode === "dynamic");
+  if (qrWsMode === "dynamic") {
+    qrWsSetType("url");
+    if (typeToggle) typeToggle.style.display = "none";
+    if (dynPanel) dynPanel.style.display = "block";
+    qrDynRenderQuotaBar((limits.maxDynamicQrPerMonth || 0), null);
+    qrDynLoadList();
+  } else {
+    if (typeToggle) typeToggle.style.display = "flex";
+    if (dynPanel) dynPanel.style.display = "none";
+  }
+}
+
 function qrWsSetSize(size){
   var input = document.getElementById("qrWsSize");
   if (input) input.value = size;
@@ -9685,9 +10001,168 @@ function qrWsHandleCsvFile(input){
   reader.readAsText(file);
 }
 
+// ---------- QR ĐỘNG (QR Studio: create/list/edit/delete dynamic QR) ----------
+function qrDynRenderQuotaBar(limit, remaining){
+  var box = document.getElementById("qrDynQuotaBar");
+  if (!box) return;
+  if (!limit || limit >= 999999) {
+    box.innerHTML = '<div>' + t("qr_dynamic_quota_label") + ': ' + t("qr_dynamic_quota_unlimited") + '</div>';
+    return;
+  }
+  var used = (remaining === null || remaining === undefined) ? null : (limit - remaining);
+  var pct = used === null ? 0 : Math.min(100, Math.round((used / limit) * 100));
+  box.innerHTML = '<div>' + t("qr_dynamic_quota_label") + ': ' + (used === null ? "…" : (used + "/" + limit)) + '</div>' +
+    '<div class="qr-quota-bar-track"><div class="qr-quota-bar-fill' + (pct >= 90 ? ' warn' : '') + '" style="width:' + pct + '%;"></div></div>';
+}
+
+function qrDynBuildImgUrl(qr, size){
+  var color = (qr.color || "#000000").replace("#", "");
+  var bg = (qr.bgcolor || "").replace("#", "");
+  var s = size || qr.size || 150;
+  var url = "https://api.qrserver.com/v1/create-qr-code/?size=" + s + "x" + s + "&data=" + encodeURIComponent(qr.shortUrl || "") + "&color=" + color;
+  if (bg) url += "&bgcolor=" + bg;
+  if (qr.margin !== null && qr.margin !== undefined) url += "&margin=" + qr.margin;
+  return url;
+}
+
+function qrWsSaveDynamic(){
+  var urlEl = document.getElementById("qrWsUrl");
+  var btn = document.getElementById("qrWsDynamicSaveBtn");
+  var msgEl = document.getElementById("qrWsDynamicMsg");
+  if (!urlEl || !msgEl) return;
+  var val = urlEl.value.trim();
+  if (!val) { msgEl.innerHTML = '<div class="msg msg-error">' + t("qr_preview_empty") + '</div>'; return; }
+  var parsed;
+  try { parsed = new URL(val); } catch (e) { msgEl.innerHTML = '<div class="msg msg-error">' + t("qr_preview_invalid") + '</div>'; return; }
+
+  var titleEl = document.getElementById("qrWsDynamicTitle");
+  var colorEl = document.getElementById("qrWsColor");
+  var bgEl = document.getElementById("qrWsBgColor");
+  var transEl = document.getElementById("qrWsBgTransparent");
+  var sizeEl = document.getElementById("qrWsSize");
+  var marginEl = document.getElementById("qrWsMargin");
+
+  var payload = {
+    title: titleEl ? titleEl.value.trim() : "",
+    color: colorEl ? colorEl.value : "#000000",
+    bgcolor: (transEl && transEl.checked) ? "" : (bgEl ? bgEl.value : ""),
+    size: sizeEl ? sizeEl.value : "200",
+    margin: marginEl ? marginEl.value : ""
+  };
+  if (parsed.origin === window.location.origin && parsed.pathname.length > 1) {
+    payload.shortCode = parsed.pathname.slice(1).split("/")[0];
+  } else {
+    payload.targetUrl = val;
+  }
+
+  if (btn) { btn.disabled = true; }
+  msgEl.innerHTML = '<p class="hint">' + t("qr_dynamic_saving") + '</p>';
+  api("/api/qr/dynamic", "POST", payload).then(function(data){
+    msgEl.innerHTML = '<div class="msg msg-ok">' + t("qr_dynamic_created") + ' ' + t("qr_dynamic_created_desc") + '</div>';
+    if (titleEl) titleEl.value = "";
+    qrDynRenderQuotaBar(data.limit, data.remaining);
+    qrDynLoadList();
+  }).catch(function(err){
+    var code = err && err.code;
+    if (code === "QUOTA_EXCEEDED") {
+      msgEl.innerHTML = '<div class="qr-quota-exceeded"><h4>' + t("qr_dynamic_quota_exceeded_title") + '</h4><p>' + t("qr_dynamic_quota_exceeded_desc") + '</p>' +
+        '<button type="button" class="btn btn-primary btn-sm" style="margin-top:6px;" onclick="navigate(&#39;pricing&#39;)">' + t("qr_dynamic_upgrade_btn") + '</button></div>';
+    } else if (code === "DYNAMIC_QR_NOT_AVAILABLE") {
+      msgEl.innerHTML = '<div class="qr-quota-exceeded"><h4>' + t("qr_dynamic_not_available_title") + '</h4><p>' + t("qr_dynamic_not_available_desc") + '</p>' +
+        '<button type="button" class="btn btn-primary btn-sm" style="margin-top:6px;" onclick="navigate(&#39;pricing&#39;)">' + t("qr_dynamic_upgrade_btn") + '</button></div>';
+    } else {
+      msgEl.innerHTML = '<div class="msg msg-error">' + esc((err && err.message) || "") + '</div>';
+    }
+  }).then(function(){
+    if (btn) btn.disabled = false;
+  });
+}
+
+function qrDynLoadList(){
+  var body = document.getElementById("qrCreatedListBody");
+  api("/api/qr/dynamic").then(function(data){
+    if (data.quota) qrDynRenderQuotaBar(data.quota.limit, data.quota.remaining);
+    if (!body) return;
+    var qrs = data.qrs || [];
+    if (qrs.length === 0) {
+      body.innerHTML = '<p class="hint">' + t("qr_created_list_empty") + '</p>';
+      return;
+    }
+    body.innerHTML = '<div style="overflow-x:auto;"><table class="qr-created-table"><thead><tr>' +
+      '<th>' + t("qr_created_col_qr") + '</th><th>' + t("qr_created_col_title") + '</th><th>' + t("qr_created_col_short") + '</th>' +
+      '<th>' + t("qr_created_col_target") + '</th><th>' + t("qr_created_col_scans") + '</th><th>' + t("qr_created_col_created") + '</th><th>' + t("qr_created_col_actions") + '</th>' +
+      '</tr></thead><tbody>' +
+      qrs.map(function(qr){
+        return '<tr id="qrDynRow_' + esc(qr.id) + '">' +
+          '<td><img src="' + qrDynBuildImgUrl(qr, 60) + '" alt="QR"></td>' +
+          '<td>' + esc(qr.title || "—") + '</td>' +
+          '<td class="mono">' + esc(qr.shortUrl || "—") + '</td>' +
+          '<td class="qr-target-cell" style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(qr.targetUrl || "—") + '</td>' +
+          '<td>' + fmtNum(qr.scanCount || 0) + '</td>' +
+          '<td>' + esc((qr.createdAt || "").slice(0, 10)) + '</td>' +
+          '<td style="white-space:nowrap;">' +
+          '<button type="button" class="btn btn-ghost btn-sm" onclick="qrDynEditTarget(&#39;' + esc(qr.id) + '&#39;)">' + li('edit', 12) + '</button> ' +
+          '<button type="button" class="btn btn-ghost btn-sm" onclick="qrDynDeleteQr(&#39;' + esc(qr.id) + '&#39;)">' + li('trash', 12) + '</button>' +
+          '</td>' +
+          '</tr>';
+      }).join("") +
+      '</tbody></table></div>';
+  }).catch(function(){
+    if (body) body.innerHTML = '<p class="hint">' + t("qr_created_list_empty") + '</p>';
+  });
+}
+
+function qrDynEditTarget(qrId){
+  var row = document.getElementById("qrDynRow_" + qrId);
+  if (!row) return;
+  var cell = row.querySelector(".qr-target-cell");
+  if (!cell || cell.querySelector("input")) return;
+  var current = cell.textContent;
+  cell.dataset.original = current;
+  cell.innerHTML = '<div class="qr-edit-target-row" style="display:flex;gap:4px;">' +
+    '<input type="url" value="' + esc(current === "—" ? "" : current) + '" placeholder="' + t("qr_edit_target_placeholder") + '">' +
+    '<button type="button" class="btn btn-primary btn-sm" onclick="qrDynSaveTarget(&#39;' + esc(qrId) + '&#39;)">' + li('check', 12) + '</button>' +
+    '<button type="button" class="btn btn-ghost btn-sm" onclick="qrDynCancelEdit(&#39;' + esc(qrId) + '&#39;)">' + li('x', 12) + '</button>' +
+    '</div>';
+}
+
+function qrDynCancelEdit(qrId){
+  var row = document.getElementById("qrDynRow_" + qrId);
+  if (!row) return;
+  var cell = row.querySelector(".qr-target-cell");
+  if (cell) cell.textContent = cell.dataset.original || "—";
+}
+
+function qrDynSaveTarget(qrId){
+  var row = document.getElementById("qrDynRow_" + qrId);
+  if (!row) return;
+  var input = row.querySelector(".qr-target-cell input");
+  if (!input) return;
+  var newUrl = input.value.trim();
+  if (!newUrl) return;
+  api("/api/qr/dynamic/" + encodeURIComponent(qrId), "PUT", { targetUrl: newUrl }).then(function(){
+    qrDynLoadList();
+  }).catch(function(err){
+    alert((err && err.message) || t("qr_edit_target_title"));
+  });
+}
+
+function qrDynDeleteQr(qrId){
+  if (!confirm(t("qr_delete_qr_confirm"))) return;
+  api("/api/qr/dynamic/" + encodeURIComponent(qrId), "DELETE").then(function(){
+    qrDynLoadList();
+  }).catch(function(err){
+    alert((err && err.message) || "");
+  });
+}
+
 function qrWsBindWorkspace(){
+  qrWsMode = "static";
   document.querySelectorAll(".qr-type-btn").forEach(function(btn){
     btn.addEventListener("click", function(){ qrWsSetType(btn.getAttribute("data-qrtype")); });
+  });
+  document.querySelectorAll(".qr-mode-btn").forEach(function(btn){
+    btn.addEventListener("click", function(){ qrWsSetMode(btn.getAttribute("data-qrmode")); });
   });
   document.querySelectorAll(".qr-size-btn").forEach(function(btn){
     btn.addEventListener("click", function(){ qrWsSetSize(btn.getAttribute("data-size")); });
