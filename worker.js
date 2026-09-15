@@ -4913,6 +4913,12 @@ footer{text-align:center;color:var(--muted2);font-size:12px;padding:30px 20px;}
 .qr-quota-bar-fill{height:100%;background:var(--indigo);border-radius:3px;transition:width 0.2s ease;}
 .qr-quota-bar-fill.warn{background:var(--amber);}
 .qr-dynamic-panel{margin-top:14px;padding-top:14px;border-top:1px dashed var(--border);}
+.qr-dyn-teaser{position:relative;background:linear-gradient(160deg,var(--stat-bg),rgba(99,102,241,0.08));border:1px solid var(--border);border-radius:12px;padding:16px;}
+.qr-dyn-teaser-lock{position:absolute;top:12px;right:12px;color:var(--muted2);opacity:0.7;}
+.qr-dyn-teaser h4{margin:0 26px 8px 0;font-size:14px;}
+.qr-dyn-teaser ul{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:6px;}
+.qr-dyn-teaser li{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);}
+.qr-dyn-teaser li svg{flex-shrink:0;color:var(--indigo);}
 .qr-quota-exceeded{background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:14px;font-size:13px;color:var(--text);}
 .qr-quota-exceeded h4{margin:0 0 4px;color:var(--amber);font-size:14px;}
 .qr-created-table{width:100%;border-collapse:collapse;font-size:13px;}
@@ -5032,6 +5038,8 @@ var i18n = {
     qr_mode_static:"QR tĩnh", qr_mode_dynamic:"QR code biến đổi",
     qr_mode_static_hint:"Đích được ghi cố định vào mã QR — không thể đổi sau khi tạo.",
     qr_mode_dynamic_hint:"QR trỏ tới một Short URL — đổi đích bất cứ lúc nào mà không cần in lại mã QR.",
+    qr_dyn_teaser_title:"QR động", qr_dyn_teaser_feat1:"Đổi URL đích sau này — không cần in lại QR", qr_dyn_teaser_feat2:"Theo dõi lượt quét (scan)",
+    qr_dyn_teaser_cta_guest:"Đăng ký miễn phí để dùng thử", qr_dyn_teaser_cta_upgrade:"Nâng cấp để mở khoá QR động",
     qr_dynamic_title_label:"Tên gợi nhớ (tuỳ chọn)", qr_dynamic_title_placeholder:"VD: Poster sự kiện tháng 9",
     qr_dynamic_save_btn:"Lưu QR động", qr_dynamic_saving:"Đang lưu...",
     qr_dynamic_quota_label:"QR động đã dùng tháng này", qr_dynamic_quota_unlimited:"Không giới hạn",
@@ -5422,6 +5430,8 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     qr_mode_static:"Static QR", qr_mode_dynamic:"Dynamic QR",
     qr_mode_static_hint:"The destination is baked directly into the QR — it can't change after creation.",
     qr_mode_dynamic_hint:"The QR points to a Short URL — change the destination anytime without reprinting the QR.",
+    qr_dyn_teaser_title:"Dynamic QR", qr_dyn_teaser_feat1:"Change the destination later — no reprinting", qr_dyn_teaser_feat2:"Track scan counts",
+    qr_dyn_teaser_cta_guest:"Sign up free to try it", qr_dyn_teaser_cta_upgrade:"Upgrade to unlock dynamic QR",
     qr_dynamic_title_label:"Memo name (optional)", qr_dynamic_title_placeholder:"e.g. September event poster",
     qr_dynamic_save_btn:"Save dynamic QR", qr_dynamic_saving:"Saving...",
     qr_dynamic_quota_label:"Dynamic QR used this month", qr_dynamic_quota_unlimited:"Unlimited",
@@ -7727,6 +7737,8 @@ function renderSidebarRight(){
       '<div class="upsell-card" style="margin-top:12px;background:linear-gradient(135deg,rgba(16,185,129,0.12),rgba(52,211,153,0.12));border:1px solid rgba(16,185,129,0.3);">' +
       '<h3>' + t("qr_guest_title") + '</h3>' +
       '<p>' + t("qr_guest_desc") + '</p>' +
+      '<div class="feat"><span class="star">⭐</span> ' + t("qr_dyn_teaser_title") + ': ' + t("qr_dyn_teaser_feat1") + '</div>' +
+      '<div class="feat"><span class="star">⭐</span> ' + t("qr_dyn_teaser_feat2") + '</div>' +
       '<button class="btn btn-primary" style="width:100%;justify-content:center;background:linear-gradient(135deg,#10b981,#059669);" onclick="navRegister()">' + t("qr_guest_btn") + '</button>' +
       '</div>';
     return;
@@ -9618,6 +9630,28 @@ function renderBulkQR(app){
   var maxBatch = limits.maxBulkQrBatch || 0;
   var canUse = !!limits.hasBulkQr;
   var dynLimit = limits.maxDynamicQrPerMonth || 0;
+  var dynAllowed = dynLimit > 0;
+
+  var dynTeaserCta = !state.user
+    ? '<button type="button" class="btn btn-primary btn-sm" style="width:100%;" onclick="navRegister()">' + t("qr_dyn_teaser_cta_guest") + '</button>'
+    : '<a class="btn btn-primary btn-sm" style="width:100%;justify-content:center;" href="#/pricing">' + t("qr_dyn_teaser_cta_upgrade") + '</a>';
+  var dynPanelInnerHtml = dynAllowed ? (
+    '<label>' + t("qr_dynamic_title_label") + '</label>' +
+    '<input type="text" id="qrWsDynamicTitle" class="qr-existing-select" placeholder="' + t("qr_dynamic_title_placeholder") + '">' +
+    '<div class="qr-quota-bar-wrap" id="qrDynQuotaBar"></div>' +
+    '<button type="button" class="btn btn-primary btn-sm" id="qrWsDynamicSaveBtn" style="width:100%;margin-top:8px;" onclick="qrWsSaveDynamic()">' + li('save', 12) + ' ' + t("qr_dynamic_save_btn") + '</button>' +
+    '<div id="qrWsDynamicMsg" style="margin-top:8px;"></div>'
+  ) : (
+    '<div class="qr-dyn-teaser">' +
+    '<div class="qr-dyn-teaser-lock">' + li('lock_icon', 20) + '</div>' +
+    '<h4>' + t("qr_dyn_teaser_title") + '</h4>' +
+    '<ul>' +
+    '<li>' + li('check', 12) + ' ' + t("qr_dyn_teaser_feat1") + '</li>' +
+    '<li>' + li('check', 12) + ' ' + t("qr_dyn_teaser_feat2") + '</li>' +
+    '</ul>' +
+    dynTeaserCta +
+    '</div>'
+  );
 
   var qrWorkspaceHtml = (
     '<div class="card">' +
@@ -9701,11 +9735,7 @@ function renderBulkQR(app){
     '<button class="btn btn-ghost btn-sm" id="qrWsCopyBtn" disabled>' + t("qr_copy_link") + '</button>' +
     '</div>' +
     '<div class="qr-dynamic-panel" id="qrWsDynamicPanel" style="display:none;text-align:left;">' +
-    '<label>' + t("qr_dynamic_title_label") + '</label>' +
-    '<input type="text" id="qrWsDynamicTitle" class="qr-existing-select" placeholder="' + t("qr_dynamic_title_placeholder") + '">' +
-    '<div class="qr-quota-bar-wrap" id="qrDynQuotaBar"></div>' +
-    '<button type="button" class="btn btn-primary btn-sm" id="qrWsDynamicSaveBtn" style="width:100%;margin-top:8px;" onclick="qrWsSaveDynamic()">' + li('save', 12) + ' ' + t("qr_dynamic_save_btn") + '</button>' +
-    '<div id="qrWsDynamicMsg" style="margin-top:8px;"></div>' +
+    dynPanelInnerHtml +
     '</div>' +
     '</div>' +
 
@@ -9896,8 +9926,10 @@ function qrWsSetMode(mode){
     qrWsSetType("url");
     if (typeToggle) typeToggle.style.display = "none";
     if (dynPanel) dynPanel.style.display = "block";
-    qrDynRenderQuotaBar((limits.maxDynamicQrPerMonth || 0), null);
-    qrDynLoadList();
+    if ((limits.maxDynamicQrPerMonth || 0) > 0) {
+      qrDynRenderQuotaBar(limits.maxDynamicQrPerMonth, null);
+      qrDynLoadList();
+    }
   } else {
     if (typeToggle) typeToggle.style.display = "flex";
     if (dynPanel) dynPanel.style.display = "none";
