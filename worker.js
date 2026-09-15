@@ -8680,16 +8680,16 @@ function renderHome(app){
           '<div><label>' + t("password_protect") + helpLinkHtml('bao-ve-link-bang-mat-khau', 'Bảo vệ link bằng mật khẩu là gì? Xem hướng dẫn sử dụng') + '</label><input type="text" id="f_password" placeholder="Để trống = không bảo vệ"></div>' +
         '</div>' +
         '<div id="advFields" style="display:none;margin-top:12px;">' +
-          '<label>' + t("pixel_tracking") + ' (Pro/Super)</label>' +
+          '<label>' + t("pixel_tracking") + ' (Pro/Super)' + helpLinkHtml('pixel-tracking-la-gi-huong-dan-gan-facebook-google-tiktok', 'Pixel Tracking là gì? Xem hướng dẫn sử dụng') + '</label>' +
           '<input type="text" id="f_pixel_fb" placeholder="Facebook Pixel ID (vd: 123456789)">' +
           '<input type="text" id="f_pixel_ga" placeholder="Google Analytics ID (vd: G-XXXXXXX)" style="margin-top:8px;">' +
           '<input type="text" id="f_pixel_tt" placeholder="TikTok Pixel ID" style="margin-top:8px;">' +
           '<hr style="border-color:rgba(148,163,184,0.15);margin:14px 0;">' +
-          '<label>' + t("ab_testing") + ' — thêm URL đích (Pro/Super)</label>' +
+          '<label>' + t("ab_testing") + ' — thêm URL đích (Pro/Super)' + helpLinkHtml('ab-testing-la-gi-huong-dan-chia-traffic-link-rut-gon', 'A/B Testing là gì? Xem hướng dẫn sử dụng') + '</label>' +
           '<input type="url" id="f_ab1" placeholder="URL đích A (thêm vào)" style="margin-top:8px;">' +
           '<input type="url" id="f_ab2" placeholder="URL đích B (thêm vào)" style="margin-top:8px;">' +
           '<hr style="border-color:rgba(148,163,184,0.15);margin:14px 0;">' +
-          '<label>' + t("deep_link") + ' (Pro/Super)</label>' +
+          '<label>' + t("deep_link") + ' (Pro/Super)' + helpLinkHtml('deep-link-va-smart-fallback-la-gi-huong-dan-cau-hinh', 'Deep Link là gì? Xem hướng dẫn sử dụng') + '</label>' +
           '<input type="url" id="f_dl_ios" placeholder="iOS app link (vd: myapp://)" style="margin-top:8px;">' +
           '<input type="url" id="f_dl_android" placeholder="Android app link" style="margin-top:8px;">' +
         '</div>' +
@@ -9294,7 +9294,7 @@ function renderDashboard(app){
         '<div><label>' + t("title_field") + '</label><input type="text" id="c_title" placeholder="' + t("optional") + '"></div>' +
       '</div>' +
       '<div class="row">' +
-        '<div><label>' + t("campaign") + '</label><input type="text" id="c_campaign" placeholder="' + t("optional") + '"></div>' +
+        '<div><label>' + t("campaign") + helpLinkHtml('campaign-la-gi-huong-dan-quan-ly-link-theo-chien-dich', 'Campaign là gì? Xem hướng dẫn sử dụng') + '</label><input type="text" id="c_campaign" placeholder="' + t("optional") + '"></div>' +
         '<div><label>' + t("tags") + '</label><input type="text" id="c_tags" placeholder="vd: sale, q1"></div>' +
       '</div>' +
       '<p style="margin-top:6px;"><a href="javascript:void(0)" onclick="toggleUtmFields()">' + t("utm_builder_toggle") + '</a>' + helpLinkHtml('utm-tracking-la-gi-ket-hop-rut-gon-link', 'UTM Tracking là gì? Xem hướng dẫn sử dụng') + '</p>' +
@@ -9323,7 +9323,7 @@ function renderDashboard(app){
       '<h2 style="margin:0;" id="linksHeading">Danh sách link</h2>' +
       '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">' +
       (isAdmin ? '<select id="filterOwner" style="padding:6px 10px;border:1px solid var(--input-border);border-radius:8px;background:var(--input-bg);color:var(--text);font-size:13px;"><option value="">Tất cả user</option></select>' : '') +
-      (limits.hasDataExport ? '<button class="btn btn-ghost btn-sm" id="btnExport">Xuất CSV</button>' : '') +
+      (limits.hasDataExport ? '<button class="btn btn-ghost btn-sm" id="btnExport">Xuất CSV</button>' + helpLinkHtml('xuat-csv-danh-sach-link-huong-dan-su-dung', 'Xuất CSV là gì? Xem hướng dẫn sử dụng') : '') +
       '</div>' +
       '</div>' +
       '<div style="overflow-x:auto;"><table><thead><tr>' +
@@ -9818,7 +9818,7 @@ function renderBulkQR(app){
     qrWorkspaceHtml +
     qrCreatedListHtml +
     '<div class="card">' +
-    '<h2>' + li('smartphone', 14) + ' ' + t("bulkqr_title") + '</h2>' +
+    '<h2>' + li('smartphone', 14) + ' ' + t("bulkqr_title") + helpLinkHtml('tao-qr-hang-loat-huong-dan-su-dung-bulk-qr', 'Tạo QR hàng loạt là gì? Xem hướng dẫn sử dụng') + '</h2>' +
     (canUse ? '' : '<p class="hint">' + li('lock_icon', 12) + ' ' + t("bulkqr_super") + '</p>') +
     '<p class="hint">' + t("bulkqr_hint") + '</p>' +
     '<div style="margin:12px 0;">' +
@@ -10434,7 +10434,7 @@ function renderAnalytics(app, code){
     var days30 = a.timeline30d.slice(-14).map(function(d){ return { date: d.date, clicks: d.clicks }; });
     app.innerHTML = '<div class="breadcrumb"><a onclick="navigate(&#39;dashboard&#39;);">Analytics</a> <span class="sep">/</span> /' + esc(a.code) + '</div>' +
       '<div class="card"><a href="#/dashboard" class="hint">' + t("analytics_back") + '</a>' +
-      '<h1 style="margin-top:10px;">' + t("analytics_title") + ' /' + esc(a.code) + '</h1>' +
+      '<h1 style="margin-top:10px;">' + t("analytics_title") + ' /' + esc(a.code) + helpLinkHtml('thong-ke-chi-tiet-link-huong-dan-doc-analytics-shurlvn', 'Thống kê chi tiết link — Xem hướng dẫn đọc') + '</h1>' +
       '<p class="sub">' + esc(a.title || a.url) + '</p>' +
       '<div class="grid-stats">' +
       '<div class="stat"><div class="num">' + fmtNum(a.totalClicks) + '</div><div class="lbl">' + t("analytics_total") + '</div></div>' +
@@ -10487,7 +10487,7 @@ function renderApiTab(app){
     ? '<div class="copybox"><span class="u">' + esc(state.user.apiToken) + '</span><button class="btn btn-ghost btn-sm" id="btnCopyToken">' + t("copy") + '</button></div>'
     : '<p class="hint">' + t("api_no_token") + '</p>';
   app.innerHTML = guideCard("api") + upgradeBanner("api") +
-    '<div class="card"><h1>' + t("api_title") + '</h1>' +
+    '<div class="card"><h1>' + t("api_title") + helpLinkHtml('api-shurlvn-huong-dan-lay-token-va-goi-api-rut-gon-link', 'API Shurlvn là gì? Xem hướng dẫn sử dụng') + '</h1>' +
     (limits.hasApi ? '' : '<p class="sub">' + t("api_no_access") + '</p>') +
     tokenBlock +
     '<div id="apiMsg"></div>' +
@@ -10558,7 +10558,7 @@ function renderWebhookTab(app){
     return;
   }
   app.innerHTML = guideCard("webhooks") + upgradeBanner("webhooks") +
-    '<div class="card"><h1>' + li('webhook', 14) + ' Webhooks</h1>' +
+    '<div class="card"><h1>' + li('webhook', 14) + ' Webhooks' + helpLinkHtml('webhook-la-gi-huong-dan-nhan-thong-bao-click-tuc-thoi', 'Webhook là gì? Xem hướng dẫn sử dụng') + '</h1>' +
     (limits.hasApi ? '' : '<p class="sub">' + t("wh_requires") + '</p>') +
     '<div id="webhookList"><p class="hint">Đang tải...</p></div>' +
     (limits.hasApi ? '<div class="card" style="margin-top:16px;border:1px solid var(--border);"><h2>' + li('plus', 14) + ' ' + t("wh_add_title") + '</h2>' +
@@ -10723,7 +10723,7 @@ function renderExportTab(app){
 function renderCampaignsTab(app){
   var limits = state.limits || {};
   app.innerHTML = guideCard("campaigns") + upgradeBanner("campaigns") +
-    '<div class="card"><h1>' + li('chart', 14) + ' Campaigns</h1>' +
+    '<div class="card"><h1>' + li('chart', 14) + ' Campaigns' + helpLinkHtml('campaign-la-gi-huong-dan-quan-ly-link-theo-chien-dich', 'Campaign là gì? Xem hướng dẫn sử dụng') + '</h1>' +
     (limits.hasCampaignHistory ? '' : '<p class="sub">' + t("campaigns_requires") + '</p>') +
     '<div id="campaignList"><p class="hint">' + t("campaigns_loading") + '</p></div>' +
     '<div class="card" style="margin-top:16px;border:1px solid var(--border);"><h2>' + t("campaigns_guide_title") + '</h2>' +
@@ -10810,7 +10810,7 @@ function renderCampaignsTab(app){
 function renderTeamTab(app){
   var limits = state.limits || {};
   app.innerHTML = guideCard("team") + upgradeBanner() +
-    '<div class="card"><h1>' + li('users', 14) + ' ' + t("team_tab_title") + '</h1>' +
+    '<div class="card"><h1>' + li('users', 14) + ' ' + t("team_tab_title") + helpLinkHtml('team-management-la-gi-huong-dan-quan-ly-link-theo-nhom', 'Team Management là gì? Xem hướng dẫn sử dụng') + '</h1>' +
     (limits.hasTeam ? '' : '<p class="sub">' + t("team_requires") + '</p>') +
     '<div id="teamInfo"><p class="hint">Đang tải...</p></div>' +
     (limits.hasTeam ? '<div class="card" style="margin-top:16px;border:1px solid var(--border);"><h2>' + li('plus', 14) + ' ' + t("team_create_title") + '</h2>' +
