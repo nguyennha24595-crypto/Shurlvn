@@ -215,6 +215,7 @@ export default {
 
     try {
       try { await seedIfNeeded(env); } catch(e) { /* ignore seed errors */ }
+      try { await seedBlogPostsIfNeeded(env); } catch(e) { /* ignore seed errors */ }
 
       // ===== 1. AUTH & USER =====
       if (path === "api/auth/register" && method === "POST") return handleRegister(request, env, corsHeaders);
@@ -337,6 +338,12 @@ export default {
       if (path === "api/admin/users/search" && method === "GET") return handleAdminSearchUsers(request, env, corsHeaders);
       if (path === "api/admin/settings" && method === "GET") return handleAdminGetSettings(request, env, corsHeaders);
       if (path === "api/admin/settings" && method === "POST") return handleAdminSaveSettings(request, env, corsHeaders);
+      // ===== 6c. ADMIN: BLOG POSTS (stored in KV, no deploy needed to publish) =====
+      if (path === "api/admin/blog" && method === "GET") return handleAdminListBlogPosts(request, env, corsHeaders);
+      if (path === "api/admin/blog" && method === "POST") return handleAdminSaveBlogPost(request, env, corsHeaders, null);
+      if (path.startsWith("api/admin/blog/") && method === "GET") return handleAdminGetBlogPost(request, env, decodeURIComponent(path.slice(15)), corsHeaders);
+      if (path.startsWith("api/admin/blog/") && method === "PUT") return handleAdminSaveBlogPost(request, env, corsHeaders, decodeURIComponent(path.slice(15)));
+      if (path.startsWith("api/admin/blog/") && method === "DELETE") return handleAdminDeleteBlogPost(request, env, decodeURIComponent(path.slice(15)), corsHeaders);
       if (path === "api/admin/vouchers/apply" && method === "POST") return handleAdminApplyVoucher(request, env, corsHeaders);
       if (path === "api/admin/notifications" && method === "POST") return handleAdminBroadcastNotification(request, env, corsHeaders);
       if (path === "api/admin/notifications" && method === "GET") return handleAdminListNotifications(request, env, corsHeaders);
@@ -365,10 +372,11 @@ export default {
       }
       if (path === "sitemap.xml") {
         const today = new Date().toISOString().split("T")[0];
+        const publishedPosts = await getPublishedBlogPosts(env);
         const urls = [
           { loc: "https://shurlvn.com/", changefreq: "daily", priority: "1.0", lastmod: today },
           { loc: "https://shurlvn.com/blog", changefreq: "weekly", priority: "0.8", lastmod: today }
-        ].concat(publishedBlogPosts().map(p => ({ loc: "https://shurlvn.com/blog/" + p.slug, changefreq: "monthly", priority: "0.7", lastmod: p.date })));
+        ].concat(publishedPosts.map(p => ({ loc: "https://shurlvn.com/blog/" + p.slug, changefreq: "monthly", priority: "0.7", lastmod: p.date })));
         const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ` + urls.map(u => `  <url>
@@ -380,13 +388,14 @@ export default {
 </urlset>`;
         return new Response(sitemap, { headers: { "Content-Type": "application/xml; charset=utf-8" } });
       }
-      // ===== 8c. BLOG (server-rendered, indexable) =====
+      // ===== 8c. BLOG (server-rendered, indexable; posts stored in KV) =====
       if (path === "blog") {
-        return html(renderBlogIndexPage());
+        const publishedPosts = await getPublishedBlogPosts(env);
+        return html(renderBlogIndexPage(publishedPosts));
       }
       if (path.startsWith("blog/")) {
         const slug = path.slice(5);
-        const post = BLOG_POSTS.find(p => p.slug === slug);
+        const post = await getBlogPost(env, slug);
         if (post && isPostPublished(post)) return html(renderBlogPostPage(post));
         return html('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Không tìm thấy bài viết</title></head><body style="font-family:system-ui;text-align:center;padding:60px;"><h1>404</h1><p>Bài viết không tồn tại.</p><a href="/blog">← Xem tất cả bài viết</a></body></html>', 404);
       }
@@ -2460,7 +2469,9 @@ async function handleExportWorker(request, env, corsHeaders) {
 
 
 // ===================== BLOG (server-rendered, indexable by Google) =====================
-const BLOG_POSTS = [
+// One-time seed data only — after the first request, posts live in KV (blog:<slug>) and are
+// managed via /api/admin/blog. Editing this array after launch has no effect on production.
+const BLOG_POSTS_SEED = [
   {
     slug: "rut-gon-link-affiliate-khong-bi-chan-facebook",
     title: "Vì Sao Link Affiliate Shopee/TikTok Hay Bị Facebook Chặn — Và Cách Khắc Phục",
@@ -3055,8 +3066,30 @@ function isPostPublished(post) {
   const today = new Date().toISOString().split("T")[0];
   return post.date <= today;
 }
-function publishedBlogPosts() {
-  return BLOG_POSTS.filter(isPostPublished);
+
+async function seedBlogPostsIfNeeded(env) {
+  const flag = await env.LINKS_KV.get("seed:blog:v1");
+  if (flag) return;
+  await Promise.all(BLOG_POSTS_SEED.map(p => env.LINKS_KV.put("blog:" + p.slug, JSON.stringify(p))));
+  await env.LINKS_KV.put("seed:blog:v1", "1");
+}
+
+async function listAllBlogPosts(env) {
+  const list = await env.LINKS_KV.list({ prefix: "blog:" });
+  const raws = await Promise.all(list.keys.map(k => env.LINKS_KV.get(k.name)));
+  const posts = raws.filter(Boolean).map(r => JSON.parse(r));
+  posts.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0)); // newest date first
+  return posts;
+}
+
+async function getPublishedBlogPosts(env) {
+  const all = await listAllBlogPosts(env);
+  return all.filter(isPostPublished);
+}
+
+async function getBlogPost(env, slug) {
+  const raw = await env.LINKS_KV.get("blog:" + slug);
+  return raw ? JSON.parse(raw) : null;
 }
 
 function renderBlogLayout(titleText, descriptionText, canonicalPath, bodyHtml) {
@@ -3136,8 +3169,8 @@ ${bodyHtml}
 </html>`;
 }
 
-function renderBlogIndexPage() {
-  const items = publishedBlogPosts().map(p =>
+function renderBlogIndexPage(posts) {
+  const items = posts.map(p =>
     `<li><a href="/blog/${escHtml(p.slug)}">${escHtml(p.title)}</a><p class="meta">${escHtml(p.date)}</p><p>${escHtml(p.description)}</p></li>`
   ).join("");
   const body = `<h1>Blog SHURL</h1><p class="meta">Mẹo và hướng dẫn công nghệ, kèm theo cách dùng SHURL để chia sẻ link nhanh gọn hơn.</p><ul class="postlist">${items}</ul>`;
@@ -12989,6 +13022,56 @@ async function handleAdminSaveSettings(request, env, corsHeaders) {
   await env.LINKS_KV.put("sys:settings", JSON.stringify(settings));
   await addAuditLog(env, authedUser, "SAVE_SETTINGS", { settings }, request);
   return json({ ok: true, message: "Đã lưu cài đặt hệ thống", settings }, 200, corsHeaders);
+}
+
+// ===================== ADMIN: BLOG POSTS (KV-backed, no deploy needed) =====================
+async function handleAdminListBlogPosts(request, env, corsHeaders) {
+  const authedUser = await getAuthenticatedUser(request, env);
+  if (!authedUser) return requireAuthResponse(corsHeaders, request);
+  if (authedUser.role !== "admin") return requireAdminResponse(corsHeaders, request);
+  const posts = await listAllBlogPosts(env);
+  return json({ posts }, 200, corsHeaders);
+}
+
+async function handleAdminGetBlogPost(request, env, slug, corsHeaders) {
+  const authedUser = await getAuthenticatedUser(request, env);
+  if (!authedUser) return requireAuthResponse(corsHeaders, request);
+  if (authedUser.role !== "admin") return requireAdminResponse(corsHeaders, request);
+  const post = await getBlogPost(env, slug);
+  if (!post) return json({ error: "Không tìm thấy bài viết" }, 404, corsHeaders);
+  return json({ post }, 200, corsHeaders);
+}
+
+async function handleAdminSaveBlogPost(request, env, corsHeaders, slugParam) {
+  const authedUser = await getAuthenticatedUser(request, env);
+  if (!authedUser) return requireAuthResponse(corsHeaders, request);
+  if (authedUser.role !== "admin") return requireAdminResponse(corsHeaders, request);
+  let body;
+  try { body = await request.json(); } catch (e) { body = {}; }
+  const slug = (slugParam || body.slug || "").trim();
+  if (!slug || !/^[a-z0-9-]+$/.test(slug)) {
+    return json({ error: "Slug không hợp lệ — chỉ dùng chữ thường, số và dấu gạch ngang." }, 400, corsHeaders);
+  }
+  const { title, description, date, contentHtml } = body || {};
+  if (!title || !description || !date || !contentHtml) {
+    return json({ error: "Thiếu trường bắt buộc: title, description, date, contentHtml." }, 400, corsHeaders);
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return json({ error: "Định dạng date phải là YYYY-MM-DD." }, 400, corsHeaders);
+  }
+  const post = { slug, title, description, date, contentHtml };
+  await env.LINKS_KV.put("blog:" + slug, JSON.stringify(post));
+  await addAuditLog(env, authedUser, "SAVE_BLOG_POST", { slug }, request);
+  return json({ ok: true, post }, 200, corsHeaders);
+}
+
+async function handleAdminDeleteBlogPost(request, env, slug, corsHeaders) {
+  const authedUser = await getAuthenticatedUser(request, env);
+  if (!authedUser) return requireAuthResponse(corsHeaders, request);
+  if (authedUser.role !== "admin") return requireAdminResponse(corsHeaders, request);
+  await env.LINKS_KV.delete("blog:" + slug);
+  await addAuditLog(env, authedUser, "DELETE_BLOG_POST", { slug }, request);
+  return json({ ok: true }, 200, corsHeaders);
 }
 
 // ===================== ADMIN: APPLY VOUCHER TO USER =====================
