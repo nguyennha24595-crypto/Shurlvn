@@ -4918,6 +4918,8 @@ footer{text-align:center;color:var(--muted2);font-size:12px;padding:30px 20px;}
 .qr-mode-btn-wrap .qr-mode-btn{width:100%;padding-right:28px;}
 .qr-help-link{position:absolute;top:8px;right:8px;color:var(--muted2);opacity:0.7;line-height:0;text-decoration:none;}
 .qr-help-link:hover{opacity:1;color:var(--indigo);}
+.inline-help-link{color:var(--muted2);opacity:0.65;text-decoration:none;display:inline-flex;vertical-align:middle;margin-left:4px;}
+.inline-help-link:hover{opacity:1;color:var(--indigo);}
 .qr-quota-bar-wrap{margin:10px 0;font-size:12px;color:var(--muted);}
 .qr-quota-bar-track{width:100%;height:6px;border-radius:3px;background:var(--stat-bg);border:1px solid var(--border);overflow:hidden;margin-top:4px;}
 .qr-quota-bar-fill{height:100%;background:var(--indigo);border-radius:3px;transition:width 0.2s ease;}
@@ -8662,7 +8664,7 @@ function renderHome(app){
     '<h1>SHURL</h1>' +
     '<p class="sub">' + t("home_hero_sub") + '</p>' +
     '<form id="shortenForm">' +
-      '<label>' + t("url_to_shorten") + '</label>' +
+      '<label>' + t("url_to_shorten") + helpLinkHtml('cach-rut-gon-link-mien-phi', 'Cách rút gọn link miễn phí — Xem hướng dẫn sử dụng') + '</label>' +
       '<input type="url" id="f_url" placeholder="https://vi-du.com/duong-dan-rat-dai" required oninput="updateHomePreview()">' +
       '<div id="homeLinkPreview" style="display:none;margin:16px 0;padding:14px 16px;background:var(--stat-bg);border:1px solid var(--border);border-radius:10px;">' +
       '<div style="font-size:13px;color:var(--muted);margin-bottom:6px;">' + li('link', 14) + ' Link rút gọn của bạn:</div>' +
@@ -8670,12 +8672,12 @@ function renderHome(app){
       '</div>' +
       (state.user ? (
         '<div class="row">' +
-          '<div><label>' + t("custom_alias_opt") + '</label><input type="text" id="f_code" placeholder="ten-rieng-cua-ban" oninput="updateHomePreview()"></div>' +
+          '<div><label>' + t("custom_alias_opt") + helpLinkHtml('dat-ten-link-tuy-chinh', 'Tên rút gọn tuỳ chỉnh là gì? Xem hướng dẫn sử dụng') + '</label><input type="text" id="f_code" placeholder="ten-rieng-cua-ban" oninput="updateHomePreview()"></div>' +
           '<div><label>' + t("title_opt") + '</label><input type="text" id="f_title" placeholder="Ghi chú cho link này"></div>' +
         '</div>' +
         '<div class="row">' +
-          '<div><label>' + t("expiry_date") + '</label><input type="date" id="f_expiry"></div>' +
-          '<div><label>' + t("password_protect") + '</label><input type="text" id="f_password" placeholder="Để trống = không bảo vệ"></div>' +
+          '<div><label>' + t("expiry_date") + helpLinkHtml('dat-ngay-het-han-cho-link', 'Đặt ngày hết hạn cho link là gì? Xem hướng dẫn sử dụng') + '</label><input type="date" id="f_expiry"></div>' +
+          '<div><label>' + t("password_protect") + helpLinkHtml('bao-ve-link-bang-mat-khau', 'Bảo vệ link bằng mật khẩu là gì? Xem hướng dẫn sử dụng') + '</label><input type="text" id="f_password" placeholder="Để trống = không bảo vệ"></div>' +
         '</div>' +
         '<div id="advFields" style="display:none;margin-top:12px;">' +
           '<label>' + t("pixel_tracking") + ' (Pro/Super)</label>' +
@@ -9288,14 +9290,14 @@ function renderDashboard(app){
       '<div id="previewUrl" style="font-size:16px;font-weight:600;color:#818cf8;word-break:break-all;"></div>' +
       '</div>' +
       '<div class="row">' +
-        '<div><label>' + t("custom_alias") + '</label><input type="text" id="c_code" placeholder="tuy-chon" oninput="updatePreview()"></div>' +
+        '<div><label>' + t("custom_alias") + helpLinkHtml('dat-ten-link-tuy-chinh', 'Tên rút gọn tuỳ chỉnh là gì? Xem hướng dẫn sử dụng') + '</label><input type="text" id="c_code" placeholder="tuy-chon" oninput="updatePreview()"></div>' +
         '<div><label>' + t("title_field") + '</label><input type="text" id="c_title" placeholder="' + t("optional") + '"></div>' +
       '</div>' +
       '<div class="row">' +
         '<div><label>' + t("campaign") + '</label><input type="text" id="c_campaign" placeholder="' + t("optional") + '"></div>' +
         '<div><label>' + t("tags") + '</label><input type="text" id="c_tags" placeholder="vd: sale, q1"></div>' +
       '</div>' +
-      '<p style="margin-top:6px;"><a href="javascript:void(0)" onclick="toggleUtmFields()">' + t("utm_builder_toggle") + '</a></p>' +
+      '<p style="margin-top:6px;"><a href="javascript:void(0)" onclick="toggleUtmFields()">' + t("utm_builder_toggle") + '</a>' + helpLinkHtml('utm-tracking-la-gi-ket-hop-rut-gon-link', 'UTM Tracking là gì? Xem hướng dẫn sử dụng') + '</p>' +
       '<div id="utmFields" style="display:none;margin-top:6px;">' +
         '<p class="hint">' + t("utm_builder_hint") + '</p>' +
         '<div class="row">' +
@@ -9307,8 +9309,8 @@ function renderDashboard(app){
           '<div><label>' + t("utm_content") + '</label><input type="text" id="u_content" placeholder="' + t("optional") + '"></div>' +
         '</div>' +
       '</div>' +
-      (canExpiry ? '<div class="row"><div><label>' + t("expiry_date") + '</label><input type="date" id="c_expiry"></div>' +
-        (canCustomDomain ? '<div><label>' + t("custom_domain") + '</label><input type="text" id="c_domain" placeholder="ten.shurl.com" oninput="updatePreview()"></div>' : '<div><label>' + t("custom_domain") + '</label><input type="text" id="c_domain" placeholder="' + t("upgrade_to_unlock") + '" disabled style="opacity:0.5;"></div>') +
+      (canExpiry ? '<div class="row"><div><label>' + t("expiry_date") + helpLinkHtml('dat-ngay-het-han-cho-link', 'Đặt ngày hết hạn cho link là gì? Xem hướng dẫn sử dụng') + '</label><input type="date" id="c_expiry"></div>' +
+        (canCustomDomain ? '<div><label>' + t("custom_domain") + helpLinkHtml('tao-ten-mien-rieng-cho-link', 'Tên miền riêng là gì? Xem hướng dẫn sử dụng') + '</label><input type="text" id="c_domain" placeholder="ten.shurl.com" oninput="updatePreview()"></div>' : '<div><label>' + t("custom_domain") + '</label><input type="text" id="c_domain" placeholder="' + t("upgrade_to_unlock") + '" disabled style="opacity:0.5;"></div>') +
         '</div>' : '') +
       '<div id="createMsg"></div>' +
       '<div style="margin-top:18px;"><button class="btn btn-primary" type="submit">' + t("create_new") + '</button></div>' +
@@ -9589,7 +9591,7 @@ function renderBulk(app){
     return;
   }
   app.innerHTML = upgradeBanner("bulkqr") +
-    '<div class="card"><h1>' + t("bulk_title") + '</h1>' +
+    '<div class="card"><h1>' + t("bulk_title") + helpLinkHtml('rut-gon-link-hang-loat', 'Rút gọn link hàng loạt là gì? Xem hướng dẫn sử dụng') + '</h1>' +
     '<p class="sub">' + t("bulk_sub") + ' ' + limits.maxBulkBatch + ' ' + t("bulk_per_batch") + '</p>' +
     '<p class="hint">' + t("bulk_csv_hint") + '</p>' +
     '<textarea id="bulkInput" placeholder="' + t("bulk_input_placeholder") + '"></textarea>' +
@@ -9715,7 +9717,7 @@ function renderBulkQR(app){
 
   var qrWorkspaceHtml = (
     '<div class="card">' +
-    '<h2>' + t("qr_title") + '</h2>' +
+    '<h2>' + t("qr_title") + helpLinkHtml('tao-ma-qr-mien-phi-doi-mau', 'Tạo mã QR miễn phí — Xem hướng dẫn sử dụng') + '</h2>' +
     '<p class="hint" style="margin-top:-6px;">' + t("qr_workspace_sub") + '</p>' +
     '<div class="qr-workspace">' +
     '<div>' +
@@ -9748,7 +9750,7 @@ function renderBulkQR(app){
     '<textarea id="qrWsText" rows="3" class="qr-existing-select" style="resize:vertical;font-family:inherit;"></textarea>' +
     '</div>' +
 
-    '<div class="qr-collapsible-toggle" id="qrWsUtmToggle">' + li('plus', 12) + ' ' + t("utm_builder_toggle") + '</div>' +
+    '<div class="qr-collapsible-toggle" id="qrWsUtmToggle">' + li('plus', 12) + ' ' + t("utm_builder_toggle") + helpLinkHtml('utm-tracking-la-gi-ket-hop-rut-gon-link', 'UTM Tracking là gì? Xem hướng dẫn sử dụng') + '</div>' +
     '<div id="utmFields" style="display:none;">' +
     '<p class="hint">' + t("utm_builder_hint") + '</p>' +
     '<div class="qr-utm-grid">' +
@@ -10498,7 +10500,7 @@ function renderApiTab(app){
     '</pre>' +
     '<p class="hint">' + t("api_other") + '</p>' +
     '</div>' +
-    '<div class="card"><h2>' + t("url_tool_title") + '</h2>' +
+    '<div class="card"><h2>' + t("url_tool_title") + helpLinkHtml('url-encoder-decoder-la-gi-huong-dan-su-dung', 'URL Encoder/Decoder là gì? Xem hướng dẫn sử dụng') + '</h2>' +
     '<p class="hint">' + t("url_tool_hint") + '</p>' +
     '<label>' + t("url_tool_input_label") + '</label>' +
     '<textarea id="urlToolInput" rows="3" style="width:100%;padding:10px;border:1px solid var(--input-border);border-radius:8px;background:var(--input-bg);color:var(--text);font-size:13px;font-family:monospace;resize:vertical;"></textarea>' +
@@ -12317,6 +12319,11 @@ function li(icon, size) {
   var path = icons[icon];
   if (!path) return '';
   return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" style="' + p + '">' + path + '</svg>';
+}
+
+// Small "?" link next to a feature, pointing to its usage-guide blog post.
+function helpLinkHtml(slug, title){
+  return ' <a class="inline-help-link" href="/blog/' + slug + '" target="_blank" rel="noopener" title="' + esc(title) + '">' + li('help_circle', 14) + '</a>';
 }
 
 function loadAdminUsers(body){
