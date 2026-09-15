@@ -2224,8 +2224,8 @@ async function handleCreateQr(request, env, corsHeaders) {
 }
 
 // ===================== HANDLERS: DYNAMIC QR (QR động — QR Studio) =====================
-function qrRecordToResponse(qr, link, url) {
-  return {
+function qrRecordToResponse(qr, link, url, viewerRole) {
+  const resp = {
     id: qr.id,
     title: qr.title || "",
     code: qr.code,
@@ -2239,6 +2239,8 @@ function qrRecordToResponse(qr, link, url) {
     margin: qr.margin,
     createdAt: qr.createdAt
   };
+  if (viewerRole === "admin") resp.owner = qr.owner;
+  return resp;
 }
 
 async function handleCreateDynamicQr(request, env, url, corsHeaders) {
@@ -2293,7 +2295,7 @@ async function handleCreateDynamicQr(request, env, url, corsHeaders) {
   await putQrRecord(env, qr);
   await incrementMonthlyDynamicQrQuota(env, owner);
 
-  return json({ ok: true, qr: qrRecordToResponse(qr, link, url), remaining: quotaCheck.remaining - 1, limit: quotaCheck.limit }, 200, corsHeaders);
+  return json({ ok: true, qr: qrRecordToResponse(qr, link, url, role), remaining: quotaCheck.remaining - 1, limit: quotaCheck.limit }, 200, corsHeaders);
 }
 
 async function handleListDynamicQr(request, env, url, corsHeaders) {
@@ -2306,7 +2308,7 @@ async function handleListDynamicQr(request, env, url, corsHeaders) {
 
   const results = await Promise.all(mine.map(async (qr) => {
     const link = await getLink(env, qr.code);
-    return qrRecordToResponse(qr, link, url);
+    return qrRecordToResponse(qr, link, url, authedUser.role);
   }));
 
   const role = authedUser.role;
@@ -2356,7 +2358,7 @@ async function handleUpdateDynamicQr(request, env, url, qrId, corsHeaders) {
   if (margin !== undefined) qr.margin = (margin === "" || margin === null) ? null : parseInt(margin);
   await putQrRecord(env, qr);
 
-  return json({ ok: true, qr: qrRecordToResponse(qr, link, url) }, 200, corsHeaders);
+  return json({ ok: true, qr: qrRecordToResponse(qr, link, url, authedUser.role) }, 200, corsHeaders);
 }
 
 async function handleDeleteDynamicQr(request, env, qrId, corsHeaders) {
@@ -4933,6 +4935,11 @@ footer{text-align:center;color:var(--muted2);font-size:12px;padding:30px 20px;}
 .qr-created-table th,.qr-created-table td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;vertical-align:middle;}
 .qr-created-table img{width:40px;height:40px;border-radius:6px;}
 .qr-edit-target-row input{width:100%;padding:6px 8px;border:1px solid var(--input-border);border-radius:6px;background:var(--input-bg);color:var(--text);font-size:12px;}
+.pager{display:flex;justify-content:flex-end;align-items:center;gap:4px;margin-top:12px;flex-wrap:wrap;}
+.pager-btn{min-width:28px;height:28px;padding:0 8px;border:1px solid var(--input-border);border-radius:6px;background:var(--input-bg);color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
+.pager-btn.active{background:var(--indigo);color:#fff;border-color:var(--indigo);}
+.pager-btn:disabled{opacity:0.35;cursor:default;}
+.pager-ellipsis{color:var(--muted2);padding:0 2px;font-size:12px;}
 @media(max-width:900px){
   .qr-workspace{grid-template-columns:1fr;}
   .qr-preview-card{position:static;}
@@ -5059,7 +5066,7 @@ var i18n = {
     qr_dynamic_upgrade_btn:"Nâng cấp gói", qr_dynamic_created:"Đã lưu QR động!",
     qr_dynamic_created_desc:"Xem và quản lý ở mục “QR đã tạo” bên dưới.",
     qr_created_list_title:"QR đã tạo", qr_created_list_empty:"Bạn chưa tạo QR động nào.",
-    qr_created_col_qr:"QR", qr_created_col_title:"Tên", qr_created_col_short:"Short URL", qr_created_col_target:"Đích hiện tại",
+    qr_created_col_qr:"QR", qr_created_col_title:"Tên", qr_created_col_short:"Short URL", qr_created_col_owner:"Tên User", qr_created_col_target:"Đích hiện tại",
     qr_created_col_scans:"Lượt quét", qr_created_col_created:"Ngày tạo", qr_created_col_actions:"Thao tác",
     qr_edit_target_btn:"Chỉnh sửa URL", qr_edit_target_title:"Đổi đích cho QR này",
     qr_edit_target_placeholder:"https://dich-moi.com", qr_edit_target_save:"Lưu đích mới", qr_edit_target_cancel:"Huỷ",
@@ -5452,7 +5459,7 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     qr_dynamic_upgrade_btn:"Upgrade plan", qr_dynamic_created:"Dynamic QR saved!",
     qr_dynamic_created_desc:"View and manage it under “Created QRs” below.",
     qr_created_list_title:"Created QRs", qr_created_list_empty:"You haven't created any dynamic QR yet.",
-    qr_created_col_qr:"QR", qr_created_col_title:"Name", qr_created_col_short:"Short URL", qr_created_col_target:"Current destination",
+    qr_created_col_qr:"QR", qr_created_col_title:"Name", qr_created_col_short:"Short URL", qr_created_col_owner:"Username", qr_created_col_target:"Current destination",
     qr_created_col_scans:"Scans", qr_created_col_created:"Created", qr_created_col_actions:"Actions",
     qr_edit_target_btn:"Edit URL", qr_edit_target_title:"Change this QR's destination",
     qr_edit_target_placeholder:"https://new-destination.com", qr_edit_target_save:"Save new destination", qr_edit_target_cancel:"Cancel",
@@ -9268,6 +9275,8 @@ function renderDashboard(app){
   var canCustomDomain = limits.hasCustomDomain;
   var canExpiry = isProOrAbove(state.user);
   var isAdmin = state.user && state.user.role === "admin";
+  var linksPage = 1;
+  var LINKS_PAGE_SIZE = 10;
 
   // ====== HTML form + QR (chỉ build 1 lần) ======
   function createSectionHtml(){
@@ -9319,6 +9328,7 @@ function renderDashboard(app){
       '<th>' + t("col_link") + '</th><th>' + t("col_dest") + '</th>' + (isAdmin ? '<th>Chủ sở hữu</th>' : '') + '<th>' + t("col_clicks") + '</th><th>' + t("col_status") + '</th><th>' + t("col_created") + '</th>' +
       '</tr></thead><tbody id="linksBody"></tbody></table></div>' +
       '<p class="hint" id="emptyHint" style="margin-top:14px;display:none;">Chưa có link nào. Tạo link đầu tiên ở trên.</p>' +
+      '<div id="linksPager"></div>' +
       '</div>';
   }
 
@@ -9336,7 +9346,7 @@ function renderDashboard(app){
         var currentVal = filterEl.value || "";
         filterEl.innerHTML = '<option value="">Tất cả user</option>' +
           Object.keys(owners).sort().map(function(o){ return '<option value="' + esc(o) + '"' + (o === currentVal ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join("");
-        filterEl.onchange = function(){ renderLinkRows(); };
+        filterEl.onchange = function(){ linksPage = 1; renderLinkRows(); };
       }
     }
 
@@ -9355,7 +9365,17 @@ function renderDashboard(app){
     var emptyHint = document.getElementById("emptyHint");
     if (emptyHint) emptyHint.style.display = state.links.length === 0 ? 'block' : 'none';
 
-    tbody.innerHTML = displayLinks.map(function(l){
+    var totalPages = Math.max(1, Math.ceil(displayLinks.length / LINKS_PAGE_SIZE));
+    if (linksPage > totalPages) linksPage = totalPages;
+    if (linksPage < 1) linksPage = 1;
+    var pageLinks = displayLinks.slice((linksPage - 1) * LINKS_PAGE_SIZE, linksPage * LINKS_PAGE_SIZE);
+    var pagerEl = document.getElementById("linksPager");
+    if (pagerEl) {
+      pagerEl.innerHTML = pagerButtonsHtml(linksPage, totalPages);
+      bindPagerClicks(pagerEl, function(p){ linksPage = p; renderLinkRows(); });
+    }
+
+    tbody.innerHTML = pageLinks.map(function(l){
       var deleted = l.isDeleted === true;
       var code = esc(l.code);
       var style = deleted ? "opacity:0.5;text-decoration:line-through;" : "";
@@ -9452,6 +9472,7 @@ function renderDashboard(app){
           Object.keys(newLink).forEach(function(k){ existing[k] = newLink[k]; });
         } else {
           state.links.unshift(newLink);
+          linksPage = 1;
         }
         renderLinkRows();
         api("/api/analytics/overview").then(function(anRes){
@@ -9620,6 +9641,35 @@ function renderBulk(app){
       submitBtn.disabled = false; submitBtn.style.opacity = "1";
     });
   };
+}
+
+// ---------- PAGINATION (shared helper) ----------
+function pagerButtonsHtml(current, total){
+  if (total <= 1) return '';
+  var windowSize = 5;
+  var start = Math.max(1, current - Math.floor(windowSize / 2));
+  var end = Math.min(total, start + windowSize - 1);
+  start = Math.max(1, end - windowSize + 1);
+  var html = '<button type="button" class="pager-btn" data-page="' + (current - 1) + '"' + (current <= 1 ? ' disabled' : '') + '>‹</button>';
+  if (start > 1) {
+    html += '<button type="button" class="pager-btn" data-page="1">1</button>';
+    if (start > 2) html += '<span class="pager-ellipsis">…</span>';
+  }
+  for (var p = start; p <= end; p++) {
+    html += '<button type="button" class="pager-btn' + (p === current ? ' active' : '') + '" data-page="' + p + '">' + p + '</button>';
+  }
+  if (end < total) {
+    if (end < total - 1) html += '<span class="pager-ellipsis">…</span>';
+    html += '<button type="button" class="pager-btn" data-page="' + total + '">' + total + '</button>';
+  }
+  html += '<button type="button" class="pager-btn" data-page="' + (current + 1) + '"' + (current >= total ? ' disabled' : '') + '>›</button>';
+  return '<div class="pager">' + html + '</div>';
+}
+function bindPagerClicks(container, onPageChange){
+  if (!container) return;
+  container.querySelectorAll(".pager-btn:not([disabled])").forEach(function(btn){
+    btn.addEventListener("click", function(){ onPageChange(parseInt(btn.getAttribute("data-page"), 10)); });
+  });
 }
 
 // ---------- ANALYTICS ----------
@@ -10114,7 +10164,7 @@ function qrWsSaveDynamic(){
     msgEl.innerHTML = '<div class="msg msg-ok">' + t("qr_dynamic_created") + ' ' + t("qr_dynamic_created_desc") + '</div>';
     if (titleEl) titleEl.value = "";
     qrDynRenderQuotaBar(data.limit, data.remaining);
-    if (data.qr) { qrDynItems.unshift(data.qr); qrDynRenderList(); }
+    if (data.qr) { qrDynItems.unshift(data.qr); qrDynPage = 1; qrDynRenderList(); }
   }).catch(function(err){
     var code = err && err.code;
     if (code === "QUOTA_EXCEEDED") {
@@ -10136,6 +10186,8 @@ function qrWsSaveDynamic(){
 // the server: Cloudflare KV's list() is eventually consistent, so a GET right after a write
 // can still miss it — that caused the list to only pick up new/edited/deleted QRs on reload.
 var qrDynItems = [];
+var qrDynPage = 1;
+var QR_DYN_PAGE_SIZE = 5;
 
 function qrDynRenderList(){
   var body = document.getElementById("qrCreatedListBody");
@@ -10144,15 +10196,23 @@ function qrDynRenderList(){
     body.innerHTML = '<p class="hint">' + t("qr_created_list_empty") + '</p>';
     return;
   }
+  var isAdmin = state.user && state.user.role === "admin";
+  var totalPages = Math.max(1, Math.ceil(qrDynItems.length / QR_DYN_PAGE_SIZE));
+  if (qrDynPage > totalPages) qrDynPage = totalPages;
+  if (qrDynPage < 1) qrDynPage = 1;
+  var pageItems = qrDynItems.slice((qrDynPage - 1) * QR_DYN_PAGE_SIZE, qrDynPage * QR_DYN_PAGE_SIZE);
+
   body.innerHTML = '<div style="overflow-x:auto;"><table class="qr-created-table"><thead><tr>' +
     '<th>' + t("qr_created_col_qr") + '</th><th>' + t("qr_created_col_title") + '</th><th>' + t("qr_created_col_short") + '</th>' +
+    (isAdmin ? '<th>' + t("qr_created_col_owner") + '</th>' : '') +
     '<th>' + t("qr_created_col_target") + '</th><th>' + t("qr_created_col_scans") + '</th><th>' + t("qr_created_col_created") + '</th><th>' + t("qr_created_col_actions") + '</th>' +
     '</tr></thead><tbody>' +
-    qrDynItems.map(function(qr){
+    pageItems.map(function(qr){
       return '<tr id="qrDynRow_' + esc(qr.id) + '">' +
         '<td><img src="' + qrDynBuildImgUrl(qr, 60) + '" alt="QR"></td>' +
         '<td>' + esc(qr.title || "—") + '</td>' +
         '<td class="mono">' + esc(qr.shortUrl || "—") + '</td>' +
+        (isAdmin ? '<td style="font-size:12px;color:var(--muted2);white-space:nowrap;font-weight:600;">' + esc(qr.owner || "—") + '</td>' : '') +
         '<td class="qr-target-cell" style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(qr.targetUrl || "—") + '</td>' +
         '<td>' + fmtNum(qr.scanCount || 0) + '</td>' +
         '<td>' + esc((qr.createdAt || "").slice(0, 10)) + '</td>' +
@@ -10162,7 +10222,10 @@ function qrDynRenderList(){
         '</td>' +
         '</tr>';
     }).join("") +
-    '</tbody></table></div>';
+    '</tbody></table></div>' +
+    pagerButtonsHtml(qrDynPage, totalPages);
+
+  bindPagerClicks(body, function(p){ qrDynPage = p; qrDynRenderList(); });
 }
 
 function qrDynLoadList(){
@@ -10236,6 +10299,7 @@ function qrWsBindWorkspace(){
   qrWsMode = "static";
   qrWsResolved = { url: null, code: null };
   qrDynItems = [];
+  qrDynPage = 1;
   document.querySelectorAll(".qr-type-btn").forEach(function(btn){
     btn.addEventListener("click", function(){ qrWsSetType(btn.getAttribute("data-qrtype")); });
   });
