@@ -4921,6 +4921,11 @@ footer{text-align:center;color:var(--muted2);font-size:12px;padding:30px 20px;}
 .qr-help-link:hover{opacity:1;color:var(--indigo);}
 .inline-help-link{color:var(--muted2);opacity:0.65;text-decoration:none;display:inline-flex;vertical-align:middle;margin-left:4px;}
 .inline-help-link:hover{opacity:1;color:var(--indigo);}
+.qr-analytics-banner{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,rgba(99,102,241,0.1),rgba(124,58,237,0.08));border:1px solid rgba(99,102,241,0.25);flex-wrap:wrap;}
+.qr-analytics-banner img{width:56px;height:56px;border-radius:10px;flex-shrink:0;}
+.qr-analytics-banner-title{font-size:11px;font-weight:700;color:var(--indigo);text-transform:uppercase;letter-spacing:0.4px;display:flex;align-items:center;gap:4px;}
+.qr-analytics-banner-name{font-size:15px;font-weight:600;margin-top:2px;color:var(--text);}
+.qr-analytics-banner > a{margin-left:auto;}
 .qr-quota-bar-wrap{margin:10px 0;font-size:12px;color:var(--muted);}
 .qr-quota-bar-track{width:100%;height:6px;border-radius:3px;background:var(--stat-bg);border:1px solid var(--border);overflow:hidden;margin-top:4px;}
 .qr-quota-bar-fill{height:100%;background:var(--indigo);border-radius:3px;transition:width 0.2s ease;}
@@ -5076,6 +5081,7 @@ var i18n = {
     qr_edit_target_success:"Đã cập nhật đích — mã QR không đổi, vẫn dùng được ngay.",
     qr_delete_qr_confirm:"Xoá QR động này? Short URL bên dưới vẫn hoạt động bình thường, chỉ mục quản lý này bị xoá.",
     qr_delete_qr_btn:"Xoá",
+    qr_analytics_banner_title:"Thống kê cho QR động", qr_analytics_back:"← Quay lại QR đã tạo",
     // ===== BULK QR =====
     bulkqr:"Tạo QR hàng loạt", bulkqr_title:"Tạo mã QR hàng loạt", bulkqr_hint:"Mỗi dòng 1 link rút gọn. Tạo QR hàng loạt và tải về file Excel.",
     bulkqr_generate:"Tạo QR hàng loạt", bulkqr_download:"Tải Excel (.xls)", bulkqr_color:"Màu QR",
@@ -5469,6 +5475,7 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     qr_edit_target_success:"Destination updated — the QR code itself hasn't changed and still works.",
     qr_delete_qr_confirm:"Delete this dynamic QR? The Short URL underneath keeps working — only this management entry is removed.",
     qr_delete_qr_btn:"Delete",
+    qr_analytics_banner_title:"Stats for this dynamic QR", qr_analytics_back:"← Back to Created QRs",
     // ===== BULK QR =====
     bulkqr:"Bulk QR", bulkqr_title:"Bulk QR Code", bulkqr_hint:"One shortened link per line. Generate QR codes in bulk and download as an Excel file.",
     bulkqr_generate:"Generate bulk QR", bulkqr_download:"Download Excel (.xls)", bulkqr_color:"QR color",
@@ -10220,8 +10227,10 @@ function qrDynRenderList(){
         '<td>' + fmtNum(qr.scanCount || 0) + '</td>' +
         '<td>' + esc((qr.createdAt || "").slice(0, 10)) + '</td>' +
         '<td style="white-space:nowrap;">' +
-        '<button type="button" class="btn btn-ghost btn-sm" onclick="qrDynEditTarget(&#39;' + esc(qr.id) + '&#39;)">' + li('edit', 12) + '</button> ' +
-        '<button type="button" class="btn btn-ghost btn-sm" onclick="qrDynDeleteQr(&#39;' + esc(qr.id) + '&#39;)">' + li('trash', 12) + '</button>' +
+        '<button type="button" class="btn btn-ghost btn-sm" title="' + t("stats") + '" onclick="qrDynStats(&#39;' + esc(qr.id) + '&#39;)">' + li('chart', 12) + '</button> ' +
+        '<button type="button" class="btn btn-ghost btn-sm" title="' + t("qr_download") + '" onclick="qrDynDownload(&#39;' + esc(qr.id) + '&#39;)">' + li('download', 12) + '</button> ' +
+        '<button type="button" class="btn btn-ghost btn-sm" title="' + t("edit") + '" onclick="qrDynEditTarget(&#39;' + esc(qr.id) + '&#39;)">' + li('edit', 12) + '</button> ' +
+        '<button type="button" class="btn btn-ghost btn-sm" title="' + t("del") + '" onclick="qrDynDeleteQr(&#39;' + esc(qr.id) + '&#39;)">' + li('trash', 12) + '</button>' +
         '</td>' +
         '</tr>';
     }).join("") +
@@ -10296,6 +10305,31 @@ function qrDynDeleteQr(qrId){
   }).catch(function(err){
     alert((err && err.message) || "");
   });
+}
+
+// Carries the clicked QR động record into the analytics page so it can show a
+// QR-specific banner (thumbnail, title, back link) instead of the plain link view.
+var qrDynAnalyticsContext = null;
+
+function qrDynStats(qrId){
+  var qr = qrDynItems.filter(function(q){ return q.id === qrId; })[0];
+  if (!qr || !qr.code) return;
+  qrDynAnalyticsContext = qr;
+  navigate("analytics/" + encodeURIComponent(qr.code));
+  render();
+  renderSidebars();
+}
+
+function qrDynDownload(qrId){
+  var qr = qrDynItems.filter(function(q){ return q.id === qrId; })[0];
+  if (!qr) return;
+  var size = Math.max(qr.size || 200, 300);
+  var url = qrDynBuildImgUrl(qr, size);
+  var a = document.createElement("a");
+  a.href = url;
+  a.download = "qr-dong-" + (qr.title ? qr.title.replace(/[^a-z0-9]+/gi, "-").toLowerCase() : qr.id) + ".png";
+  a.target = "_blank";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
 
 function qrWsBindWorkspace(){
@@ -10433,7 +10467,17 @@ function renderAnalytics(app, code){
   api("/api/analytics/" + encodeURIComponent(code)).then(function(data){
     var a = data.analytics;
     var days30 = a.timeline30d.slice(-14).map(function(d){ return { date: d.date, clicks: d.clicks }; });
-    app.innerHTML = '<div class="breadcrumb"><a onclick="navigate(&#39;dashboard&#39;);">Analytics</a> <span class="sep">/</span> /' + esc(a.code) + '</div>' +
+    var qrCtx = (qrDynAnalyticsContext && qrDynAnalyticsContext.code === a.code) ? qrDynAnalyticsContext : null;
+    var qrBannerHtml = qrCtx ? (
+      '<div class="card qr-analytics-banner">' +
+      '<img src="' + qrDynBuildImgUrl(qrCtx, 70) + '" alt="QR">' +
+      '<div><div class="qr-analytics-banner-title">' + li('qr', 14) + ' ' + t("qr_analytics_banner_title") + '</div>' +
+      '<div class="qr-analytics-banner-name">' + esc(qrCtx.title || qrCtx.shortUrl || "") + '</div></div>' +
+      '<a href="#/bulkqr" class="btn btn-ghost btn-sm">' + t("qr_analytics_back") + '</a>' +
+      '</div>'
+    ) : '';
+    app.innerHTML = qrBannerHtml +
+      '<div class="breadcrumb"><a onclick="navigate(&#39;dashboard&#39;);">Analytics</a> <span class="sep">/</span> /' + esc(a.code) + '</div>' +
       '<div class="card"><a href="#/dashboard" class="hint">' + t("analytics_back") + '</a>' +
       '<h1 style="margin-top:10px;">' + t("analytics_title") + ' /' + esc(a.code) + helpLinkHtml('thong-ke-chi-tiet-link-huong-dan-doc-analytics-shurlvn', 'Thống kê chi tiết link — Xem hướng dẫn đọc') + '</h1>' +
       '<p class="sub">' + esc(a.title || a.url) + '</p>' +
