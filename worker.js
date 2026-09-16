@@ -366,7 +366,7 @@ export default {
 
       // ===== 8. ROOT =====
       if (!path) {
-        return new Response(renderAppHtml(), { headers: {
+        return new Response(renderAppHtml(env), { headers: {
           "Content-Type": "text/html; charset=utf-8",
           "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com https://www.googletagmanager.com https://googleads.g.doubleclick.net https://static.cloudflareinsights.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' data: blob: https://api.resend.com https://api.stripe.com https://www.googletagmanager.com https://www.google-analytics.com https://googleads.g.doubleclick.net https://www.google.com https://ad.doubleclick.net https://static.cloudflareinsights.com https://cloudflareinsights.com; frame-src https://pagead2.googlesyndication.com;"
         } });
@@ -397,12 +397,12 @@ export default {
       // ===== 8c. BLOG (server-rendered, indexable; posts stored in KV) =====
       if (path === "blog") {
         const publishedPosts = await getPublishedBlogPosts(env);
-        return html(renderBlogIndexPage(publishedPosts));
+        return html(renderBlogIndexPage(publishedPosts, env));
       }
       if (path.startsWith("blog/")) {
         const slug = path.slice(5);
         const post = await getBlogPost(env, slug);
-        if (post && isPostPublished(post)) return html(renderBlogPostPage(post));
+        if (post && isPostPublished(post)) return html(renderBlogPostPage(post, env));
         return html('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Không tìm thấy bài viết</title></head><body style="font-family:system-ui;text-align:center;padding:60px;"><h1>404</h1><p>Bài viết không tồn tại.</p><a href="/blog">← Xem tất cả bài viết</a></body></html>', 404);
       }
       // ===== 9. SHORTLINK REDIRECT (/:code) =====
@@ -3330,7 +3330,7 @@ async function getBlogPost(env, slug) {
   return raw ? JSON.parse(raw) : null;
 }
 
-function renderBlogLayout(titleText, descriptionText, canonicalPath, bodyHtml) {
+function renderBlogLayout(titleText, descriptionText, canonicalPath, bodyHtml, env) {
   const t = escHtml(titleText), d = escHtml(descriptionText);
   return `<!DOCTYPE html>
 <html lang="vi">
@@ -3345,6 +3345,7 @@ function renderBlogLayout(titleText, descriptionText, canonicalPath, bodyHtml) {
 <meta property="og:description" content="${d}">
 <meta property="og:url" content="https://shurlvn.com${canonicalPath}">
 <link rel="icon" type="image/png" href="/favicon.ico">
+${googleAdsGtagHead(env)}
 <style>
 body{margin:0;background:#f8fafc;color:#1e293b;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.7;}
 .wrap{max-width:760px;margin:0 auto;padding:24px 20px 60px;}
@@ -3407,20 +3408,20 @@ ${bodyHtml}
 </html>`;
 }
 
-function renderBlogIndexPage(posts) {
+function renderBlogIndexPage(posts, env) {
   const items = posts.map(p =>
     `<li><a href="/blog/${escHtml(p.slug)}">${escHtml(p.title)}</a><p class="meta">${escHtml(p.date)}</p><p>${escHtml(p.description)}</p></li>`
   ).join("");
   const body = `<h1>Blog SHURL</h1><p class="meta">Mẹo và hướng dẫn công nghệ, kèm theo cách dùng SHURL để chia sẻ link nhanh gọn hơn.</p><ul class="postlist">${items}</ul>`;
-  return renderBlogLayout("Blog SHURL — Mẹo công nghệ & rút gọn link", "Tổng hợp bài viết hướng dẫn công nghệ và mẹo dùng SHURL để rút gọn link, tạo mã QR miễn phí.", "/blog", body);
+  return renderBlogLayout("Blog SHURL — Mẹo công nghệ & rút gọn link", "Tổng hợp bài viết hướng dẫn công nghệ và mẹo dùng SHURL để rút gọn link, tạo mã QR miễn phí.", "/blog", body, env);
 }
 
-function renderBlogPostPage(post) {
+function renderBlogPostPage(post, env) {
   const body = `<h1>${escHtml(post.title)}</h1><p class="meta">Cập nhật: ${escHtml(post.date)}</p>${post.contentHtml}` +
     `<div class="cta"><h3>🚀 Trải nghiệm công cụ Rút gọn link &amp; Tạo mã QR miễn phí tại Shurlvn.com ngay hôm nay!</h3>` +
     `<p>Rút gọn mọi đường link dài thành link ngắn gọn, dễ nhớ, kèm mã QR tạo tức thì — hoàn toàn miễn phí, không cần đăng ký.</p>` +
     `<a href="https://shurlvn.com">Dùng thử Shurlvn.com miễn phí</a></div>`;
-  return renderBlogLayout(post.title, post.description, "/blog/" + post.slug, body);
+  return renderBlogLayout(post.title, post.description, "/blog/" + post.slug, body, env);
 }
 
 
@@ -4529,8 +4530,27 @@ function t(key){
   return lang[key] || i18n.vi[key] || key;
 }
 
+// Google Ads conversion tracking — id/label come from wrangler.jsonc vars
+// (GOOGLE_ADS_ID / GOOGLE_ADS_CONVERSION_LABEL) so they can be changed without
+// touching code. Also exposes GOOGLE_ADS_CONVERSION_SEND_TO for the client-side
+// conversion-fire call in bindRegisterForm().
+function googleAdsGtagHead(env) {
+  const id = env && env.GOOGLE_ADS_ID;
+  if (!id) return '';
+  const label = (env && env.GOOGLE_ADS_CONVERSION_LABEL) || '';
+  return `<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=${id}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', '${id}');
+  var GOOGLE_ADS_CONVERSION_SEND_TO = ${JSON.stringify(label ? (id + '/' + label) : '')};
+</script>`;
+}
+
 /* === LANGUAGE SWITCHER === */
-function renderAppHtml() {
+function renderAppHtml(env) {
   return `<!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -4987,15 +5007,7 @@ footer{text-align:center;color:var(--muted2);font-size:12px;padding:30px 20px;}
   .qr-created-table{display:block;overflow-x:auto;}
 }
 </style>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=AW-18446641822"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'AW-18446641822');
-</script>
+${googleAdsGtagHead(env)}
 </head>
 <body>
 <div class="app-shell">
@@ -9238,7 +9250,7 @@ function bindRegisterForm(){
     }).then(function(){ return api("/api/auth/me"); })
     .then(function(me){
       state.user = me.user; state.limits = me.limits;
-      if (typeof gtag === "function") gtag('event', 'conversion', {'send_to': 'AW-18446641822/Y7ssCLDjqfccEJ7VhdxE'});
+      if (typeof gtag === "function" && typeof GOOGLE_ADS_CONVERSION_SEND_TO !== "undefined" && GOOGLE_ADS_CONVERSION_SEND_TO) gtag('event', 'conversion', {'send_to': GOOGLE_ADS_CONVERSION_SEND_TO});
       navigate("dashboard"); render();
     })
     .catch(function(err){ msg.innerHTML = '<div class="msg msg-error">' + esc(err.message) + '</div>'; });
