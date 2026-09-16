@@ -368,7 +368,7 @@ export default {
       if (!path) {
         return new Response(renderAppHtml(), { headers: {
           "Content-Type": "text/html; charset=utf-8",
-          "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com https://www.googletagmanager.com https://googleads.g.doubleclick.net https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.resend.com https://api.stripe.com https://www.googletagmanager.com https://www.google-analytics.com https://googleads.g.doubleclick.net https://www.google.com https://ad.doubleclick.net https://static.cloudflareinsights.com https://cloudflareinsights.com; frame-src https://pagead2.googlesyndication.com;"
+          "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com https://www.googletagmanager.com https://googleads.g.doubleclick.net https://static.cloudflareinsights.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' data: blob: https://api.resend.com https://api.stripe.com https://www.googletagmanager.com https://www.google-analytics.com https://googleads.g.doubleclick.net https://www.google.com https://ad.doubleclick.net https://static.cloudflareinsights.com https://cloudflareinsights.com; frame-src https://pagead2.googlesyndication.com;"
         } });
       }
       // ===== 8b. FAVICON =====
@@ -2224,6 +2224,20 @@ async function handleCreateQr(request, env, corsHeaders) {
 }
 
 // ===================== HANDLERS: DYNAMIC QR (QR động — QR Studio) =====================
+const VALID_QR_DOT_STYLES = ["square", "rounded", "dots"];
+function validateQrLogoDataUrl(logoDataUrl) {
+  if (!logoDataUrl) return { ok: true, value: "" };
+  if (typeof logoDataUrl !== "string" || !/^data:image\/(png|jpeg);base64,/.test(logoDataUrl)) {
+    return { ok: false, error: "Logo không hợp lệ." };
+  }
+  // Client resizes to <=200x200 PNG before upload, so a valid logo is normally well
+  // under this — this cap is just defense against a modified/direct API call.
+  if (logoDataUrl.length > 300000) {
+    return { ok: false, error: "Logo quá lớn." };
+  }
+  return { ok: true, value: logoDataUrl };
+}
+
 function qrRecordToResponse(qr, link, url, viewerRole) {
   const resp = {
     id: qr.id,
@@ -2237,6 +2251,8 @@ function qrRecordToResponse(qr, link, url, viewerRole) {
     bgcolor: qr.bgcolor || "",
     size: qr.size || 200,
     margin: qr.margin,
+    dotStyle: qr.dotStyle || "square",
+    logoDataUrl: qr.logoDataUrl || "",
     createdAt: qr.createdAt
   };
   if (viewerRole === "admin") resp.owner = qr.owner;
@@ -2258,7 +2274,10 @@ async function handleCreateDynamicQr(request, env, url, corsHeaders) {
 
   let body;
   try { body = await request.json(); } catch (e) { body = {}; }
-  const { shortCode, targetUrl, title, color, bgcolor, size, margin } = body || {};
+  const { shortCode, targetUrl, title, color, bgcolor, size, margin, dotStyle, logoDataUrl } = body || {};
+
+  const logoCheck = validateQrLogoDataUrl(logoDataUrl);
+  if (!logoCheck.ok) return json({ error: logoCheck.error }, 400, corsHeaders);
 
   let link;
   if (shortCode) {
@@ -2290,6 +2309,8 @@ async function handleCreateDynamicQr(request, env, url, corsHeaders) {
     bgcolor: bgcolor || "",
     size: parseInt(size) || 200,
     margin: (margin !== undefined && margin !== "" && !isNaN(parseInt(margin))) ? parseInt(margin) : null,
+    dotStyle: VALID_QR_DOT_STYLES.includes(dotStyle) ? dotStyle : "square",
+    logoDataUrl: logoCheck.value,
     createdAt: new Date().toISOString()
   };
   await putQrRecord(env, qr);
@@ -2330,7 +2351,13 @@ async function handleUpdateDynamicQr(request, env, url, qrId, corsHeaders) {
 
   let body;
   try { body = await request.json(); } catch (e) { body = {}; }
-  const { targetUrl, title, color, bgcolor, size, margin } = body || {};
+  const { targetUrl, title, color, bgcolor, size, margin, dotStyle, logoDataUrl } = body || {};
+
+  let logoCheck = { ok: true, value: qr.logoDataUrl };
+  if (logoDataUrl !== undefined) {
+    logoCheck = validateQrLogoDataUrl(logoDataUrl);
+    if (!logoCheck.ok) return json({ error: logoCheck.error }, 400, corsHeaders);
+  }
 
   const link = await getLink(env, qr.code);
   if (!link) return json({ error: "Short URL gốc của QR này không còn tồn tại." }, 404, corsHeaders);
@@ -2356,6 +2383,8 @@ async function handleUpdateDynamicQr(request, env, url, qrId, corsHeaders) {
   if (bgcolor !== undefined) qr.bgcolor = bgcolor;
   if (size !== undefined) qr.size = parseInt(size) || qr.size;
   if (margin !== undefined) qr.margin = (margin === "" || margin === null) ? null : parseInt(margin);
+  if (dotStyle !== undefined) qr.dotStyle = VALID_QR_DOT_STYLES.includes(dotStyle) ? dotStyle : qr.dotStyle;
+  if (logoDataUrl !== undefined) qr.logoDataUrl = logoCheck.value;
   await putQrRecord(env, qr);
 
   return json({ ok: true, qr: qrRecordToResponse(qr, link, url, authedUser.role) }, 200, corsHeaders);
@@ -4899,6 +4928,9 @@ footer{text-align:center;color:var(--muted2);font-size:12px;padding:30px 20px;}
 .qr-size-row{display:flex;gap:8px;flex-wrap:wrap;}
 .qr-size-btn{padding:8px 14px;border:1px solid var(--input-border);border-radius:8px;background:var(--input-bg);color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
 .qr-size-btn.active{border-color:var(--indigo);background:rgba(99,102,241,0.12);color:var(--indigo);}
+.qr-logo-upload-wrap{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:4px;}
+.qr-logo-upload-wrap img{width:34px;height:34px;border-radius:6px;object-fit:contain;background:var(--stat-bg);border:1px solid var(--border);}
+.qr-dotstyle-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
 .qr-preview-card{position:sticky;top:16px;text-align:center;padding:28px 20px;}
 .qr-preview-box{width:240px;height:240px;margin:0 auto;border-radius:16px;background:var(--stat-bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;}
 .qr-preview-box img{max-width:100%;max-height:100%;display:block;}
@@ -4991,6 +5023,7 @@ footer{text-align:center;color:var(--muted2);font-size:12px;padding:30px 20px;}
     </main>
   </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.9.2/lib/qr-code-styling.js"></script>
 <script>
 var LANGS = ["vi", "en", "ko", "zh", "hi", "ja", "fr", "es"];
 
@@ -5045,6 +5078,8 @@ var i18n = {
     qr_desc:"Nhập bất kỳ URL nào (đã rút gọn hoặc chưa) để tạo QR Code ngay. Mỗi lần tạo QR trừ 1 lượt hạn mức/ngày.",
     qr_url_label:"URL cần tạo QR", qr_color:"Màu sắc", qr_size:"Kích cỡ", qr_btn:"Tạo QR",
     qr_bgcolor:"Màu nền", qr_bg_transparent:"Nền trong suốt", qr_margin:"Viền (margin)", qr_margin_default:"Mặc định", qr_format:"Định dạng",
+    qr_logo_label:"Logo (tùy chọn)", qr_logo_upload_btn:"Tải lên logo", qr_logo_error_type:"Chỉ chấp nhận file PNG hoặc JPG.", qr_logo_error_size:"File quá lớn (tối đa 2MB).",
+    qr_dot_style_label:"Kiểu QR", qr_dot_style_square:"Vuông", qr_dot_style_rounded:"Bo tròn", qr_dot_style_dots:"Chấm",
     qr_copy_link:"Sao chép link", qr_download:"Tải PNG", qr_processing:"Đang tạo QR...",
     qr_quota_error:"Hết lượt tạo QR hôm nay",
     qr_workspace_sub:"Tạo và tùy chỉnh QR Code trực tiếp — thay đổi gì cũng thấy ngay, không cần bấm tạo lại.",
@@ -5439,6 +5474,8 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     qr_desc:"Enter any URL (shortened or not) to create a QR Code instantly. Each QR generation deducts 1 from your daily quota.",
     qr_url_label:"URL for QR code", qr_color:"Color", qr_size:"Size", qr_btn:"Generate QR",
     qr_bgcolor:"Background color", qr_bg_transparent:"Transparent background", qr_margin:"Margin", qr_margin_default:"Default", qr_format:"Format",
+    qr_logo_label:"Logo (optional)", qr_logo_upload_btn:"Upload logo", qr_logo_error_type:"Only PNG or JPG files are accepted.", qr_logo_error_size:"File too large (max 2MB).",
+    qr_dot_style_label:"QR style", qr_dot_style_square:"Square", qr_dot_style_rounded:"Rounded", qr_dot_style_dots:"Dots",
     qr_copy_link:"Copy link", qr_download:"Download PNG", qr_processing:"Generating QR...",
     qr_quota_error:"Daily QR generation quota reached",
     qr_workspace_sub:"Create and customize your QR Code live — every change shows instantly, no need to re-generate.",
@@ -9783,6 +9820,27 @@ function renderBulkQR(app){
     '<div class="qr-presets" id="qrWsPresets"></div>' +
     '<div class="qr-contrast-warn" id="qrWsContrastWarn">' + li('alert', 12) + ' ' + t("qr_contrast_warning") + '</div>' +
 
+    '<div class="qr-color-row" style="margin-top:14px;">' +
+    '<div class="qr-color-field">' +
+    '<label>' + t("qr_logo_label") + '</label>' +
+    '<div class="qr-logo-upload-wrap">' +
+    '<input type="file" id="qrWsLogoFile" accept="image/png,image/jpeg" style="display:none;">' +
+    '<button type="button" class="btn btn-ghost btn-sm" id="qrWsLogoUploadBtn">' + li('upload', 12) + ' ' + t("qr_logo_upload_btn") + '</button>' +
+    '<img id="qrWsLogoPreview" style="display:none;" alt="logo">' +
+    '<button type="button" class="btn btn-ghost btn-sm" id="qrWsLogoRemoveBtn" style="display:none;">' + li('x', 12) + '</button>' +
+    '</div>' +
+    '<div id="qrWsLogoMsg" class="hint" style="font-size:11px;"></div>' +
+    '</div>' +
+    '<div class="qr-color-field">' +
+    '<label>' + t("qr_dot_style_label") + '</label>' +
+    '<div class="qr-dotstyle-row" id="qrWsDotStyleRow">' +
+    '<button type="button" class="qr-size-btn active" data-dotstyle="square">' + t("qr_dot_style_square") + '</button>' +
+    '<button type="button" class="qr-size-btn" data-dotstyle="rounded">' + t("qr_dot_style_rounded") + '</button>' +
+    '<button type="button" class="qr-size-btn" data-dotstyle="dots">' + t("qr_dot_style_dots") + '</button>' +
+    '</div>' +
+    '</div>' +
+    '</div>' +
+
     '<div class="qr-step-label">' + t("qr_size") + '</div>' +
     '<div class="qr-size-row" id="qrWsSizeRow">' +
     ['150', '200', '300', '400'].map(function(sz){
@@ -9879,24 +9937,51 @@ function qrWsIsValid(data){
   return true;
 }
 
-function qrWsBuildUrl(format){
-  var data = qrWsGetData();
-  if (!data) return "";
+// QR rendering runs entirely client-side via the qr-code-styling library (loaded
+// in <head>) so we can support a center logo and dot/corner style variants —
+// api.qrserver.com (still used by Bulk QR) has no way to do either of those.
+var qrWsDotStyle = "square";
+var qrWsLogoDataUrl = null;
+var qrWsCurrentQr = null;
+
+function qrWsCornerStyles(dotStyle){
+  if (dotStyle === "rounded") return { square: "extra-rounded", dot: "dot" };
+  if (dotStyle === "dots") return { square: "dot", dot: "dot" };
+  return { square: "square", dot: "square" };
+}
+
+function qrWsReadFormOptions(){
   var colorEl = document.getElementById("qrWsColor");
   var bgEl = document.getElementById("qrWsBgColor");
   var transEl = document.getElementById("qrWsBgTransparent");
   var sizeEl = document.getElementById("qrWsSize");
   var marginEl = document.getElementById("qrWsMargin");
-  var color = (colorEl ? colorEl.value : "#000000").replace("#", "");
   var transparent = transEl ? transEl.checked : true;
-  var bg = transparent ? "" : (bgEl ? bgEl.value.replace("#", "") : "");
-  var size = sizeEl ? sizeEl.value : "200";
-  var margin = marginEl ? marginEl.value : "";
-  var url = "https://api.qrserver.com/v1/create-qr-code/?size=" + size + "x" + size + "&data=" + encodeURIComponent(data) + "&color=" + color;
-  if (bg) url += "&bgcolor=" + bg;
-  if (margin !== "") url += "&margin=" + margin;
-  url += "&format=" + (format || "png");
-  return url;
+  return {
+    color: colorEl ? colorEl.value : "#000000",
+    bg: transparent ? null : (bgEl ? bgEl.value : "#ffffff"),
+    size: parseInt(sizeEl ? sizeEl.value : "200", 10) || 200,
+    margin: (marginEl && marginEl.value !== "") ? parseInt(marginEl.value, 10) : 4
+  };
+}
+
+function qrWsBuildStyling(data, opts, sizeOverride){
+  var corners = qrWsCornerStyles(qrWsDotStyle);
+  var size = sizeOverride || opts.size;
+  return new QRCodeStyling({
+    width: size,
+    height: size,
+    type: "canvas",
+    data: data,
+    margin: opts.margin,
+    qrOptions: { errorCorrectionLevel: qrWsLogoDataUrl ? "H" : "M" },
+    dotsOptions: { color: opts.color, type: qrWsDotStyle },
+    cornersSquareOptions: { color: opts.color, type: corners.square },
+    cornersDotOptions: { color: opts.color, type: corners.dot },
+    backgroundOptions: { color: opts.bg || "rgba(0,0,0,0)" },
+    image: qrWsLogoDataUrl || undefined,
+    imageOptions: { crossOrigin: "anonymous", margin: 6, imageSize: 0.35, hideBackgroundDots: true }
+  });
 }
 
 function qrWsHexLuma(hex){
@@ -9946,15 +10031,16 @@ function qrWsUpdatePreview(){
     disableBtns();
     return;
   }
-  var imgUrl = qrWsBuildUrl("png");
+  var opts = qrWsReadFormOptions();
   box.innerHTML = "";
-  var img = document.createElement("img");
-  img.alt = "QR";
-  img.style.maxWidth = "100%";
-  img.style.maxHeight = "100%";
-  img.onerror = function(){ box.innerHTML = '<div class="qr-preview-error">' + t("qr_preview_error") + '</div>'; disableBtns(); };
-  img.src = imgUrl;
-  box.appendChild(img);
+  try {
+    qrWsCurrentQr = qrWsBuildStyling(data, opts, Math.min(opts.size, 240));
+    qrWsCurrentQr.append(box);
+  } catch (e) {
+    box.innerHTML = '<div class="qr-preview-error">' + t("qr_preview_error") + '</div>';
+    disableBtns();
+    return;
+  }
   if (dataEl) dataEl.textContent = data;
   if (dlPng) dlPng.disabled = false;
   if (dlSvg) dlSvg.disabled = false;
@@ -10012,7 +10098,7 @@ function qrWsSetMode(mode){
 function qrWsSetSize(size){
   var input = document.getElementById("qrWsSize");
   if (input) input.value = size;
-  document.querySelectorAll(".qr-size-btn").forEach(function(b){
+  document.querySelectorAll("#qrWsSizeRow .qr-size-btn").forEach(function(b){
     b.classList.toggle("active", b.getAttribute("data-size") === String(size));
   });
   qrWsUpdatePreview();
@@ -10032,14 +10118,69 @@ function qrWsApplyPreset(fg, bg){
   qrWsUpdatePreview();
 }
 
+function qrWsSetDotStyle(style){
+  qrWsDotStyle = (style === "rounded" || style === "dots") ? style : "square";
+  document.querySelectorAll("#qrWsDotStyleRow .qr-size-btn").forEach(function(b){
+    b.classList.toggle("active", b.getAttribute("data-dotstyle") === qrWsDotStyle);
+  });
+  qrWsUpdatePreview();
+}
+
+function qrWsHandleLogoFile(file){
+  var msgEl = document.getElementById("qrWsLogoMsg");
+  if (msgEl) msgEl.textContent = "";
+  if (!file) return;
+  if (file.type !== "image/png" && file.type !== "image/jpeg") {
+    if (msgEl) msgEl.textContent = t("qr_logo_error_type");
+    return;
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    if (msgEl) msgEl.textContent = t("qr_logo_error_size");
+    return;
+  }
+  var reader = new FileReader();
+  reader.onload = function(){
+    var img = new Image();
+    img.onload = function(){
+      // Downscale to a small fixed size before storing — keeps the QR record's
+      // saved payload (for QR động) small regardless of the original upload size.
+      var MAX = 200;
+      var scale = Math.min(1, MAX / Math.max(img.width, img.height));
+      var w = Math.max(1, Math.round(img.width * scale));
+      var h = Math.max(1, Math.round(img.height * scale));
+      var canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+      qrWsLogoDataUrl = canvas.toDataURL("image/png");
+      var preview = document.getElementById("qrWsLogoPreview");
+      var removeBtn = document.getElementById("qrWsLogoRemoveBtn");
+      if (preview) { preview.src = qrWsLogoDataUrl; preview.style.display = "inline-block"; }
+      if (removeBtn) removeBtn.style.display = "inline-flex";
+      qrWsUpdatePreview();
+    };
+    img.onerror = function(){ if (msgEl) msgEl.textContent = t("qr_logo_error_type"); };
+    img.src = String(reader.result || "");
+  };
+  reader.readAsDataURL(file);
+}
+
+function qrWsRemoveLogo(){
+  qrWsLogoDataUrl = null;
+  var preview = document.getElementById("qrWsLogoPreview");
+  var removeBtn = document.getElementById("qrWsLogoRemoveBtn");
+  var fileInput = document.getElementById("qrWsLogoFile");
+  if (preview) { preview.style.display = "none"; preview.src = ""; }
+  if (removeBtn) removeBtn.style.display = "none";
+  if (fileInput) fileInput.value = "";
+  qrWsUpdatePreview();
+}
+
 function qrWsDownload(format){
-  var url = qrWsBuildUrl(format);
-  if (!url) return;
-  var a = document.createElement("a");
-  a.href = url;
-  a.download = "qr_" + Date.now() + "." + format;
-  a.target = "_blank";
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  var data = qrWsGetData();
+  if (!data || !qrWsIsValid(data)) return;
+  var opts = qrWsReadFormOptions();
+  var qr = qrWsBuildStyling(data, opts);
+  qr.download({ name: "qr_" + Date.now(), extension: format === "svg" ? "svg" : "png" });
 }
 
 function qrWsCopyData(){
@@ -10126,14 +10267,33 @@ function qrDynRenderQuotaBar(limit, remaining){
     '<div class="qr-quota-bar-track"><div class="qr-quota-bar-fill' + (pct >= 90 ? ' warn' : '') + '" style="width:' + pct + '%;"></div></div>';
 }
 
-function qrDynBuildImgUrl(qr, size){
-  var color = (qr.color || "#000000").replace("#", "");
-  var bg = (qr.bgcolor || "").replace("#", "");
+function qrDynBuildStyling(qr, size){
+  var corners = qrWsCornerStyles(qr.dotStyle || "square");
   var s = size || qr.size || 150;
-  var url = "https://api.qrserver.com/v1/create-qr-code/?size=" + s + "x" + s + "&data=" + encodeURIComponent(qr.shortUrl || "") + "&color=" + color;
-  if (bg) url += "&bgcolor=" + bg;
-  if (qr.margin !== null && qr.margin !== undefined) url += "&margin=" + qr.margin;
-  return url;
+  return new QRCodeStyling({
+    width: s,
+    height: s,
+    type: "canvas",
+    data: qr.shortUrl || "",
+    margin: (qr.margin !== null && qr.margin !== undefined) ? qr.margin : 4,
+    qrOptions: { errorCorrectionLevel: qr.logoDataUrl ? "H" : "M" },
+    dotsOptions: { color: qr.color || "#000000", type: qr.dotStyle || "square" },
+    cornersSquareOptions: { color: qr.color || "#000000", type: corners.square },
+    cornersDotOptions: { color: qr.color || "#000000", type: corners.dot },
+    backgroundOptions: { color: qr.bgcolor || "rgba(0,0,0,0)" },
+    image: qr.logoDataUrl || undefined,
+    imageOptions: { crossOrigin: "anonymous", margin: 4, imageSize: 0.35, hideBackgroundDots: true }
+  });
+}
+
+// Renders a QR into an <img> asynchronously (QRCodeStyling's raw output is a Promise),
+// via a blob: object URL — used for thumbnails where markup is built as an HTML string
+// before the element exists in the DOM.
+function qrDynPaintImg(imgEl, qr, size){
+  if (!imgEl) return;
+  qrDynBuildStyling(qr, size).getRawData("png").then(function(blob){
+    if (blob) imgEl.src = URL.createObjectURL(blob);
+  }).catch(function(){});
 }
 
 function qrWsSaveDynamic(){
@@ -10158,7 +10318,9 @@ function qrWsSaveDynamic(){
     color: colorEl ? colorEl.value : "#000000",
     bgcolor: (transEl && transEl.checked) ? "" : (bgEl ? bgEl.value : ""),
     size: sizeEl ? sizeEl.value : "200",
-    margin: marginEl ? marginEl.value : ""
+    margin: marginEl ? marginEl.value : "",
+    dotStyle: qrWsDotStyle,
+    logoDataUrl: qrWsLogoDataUrl || ""
   };
   if (qrWsResolved.code && qrWsResolved.url === val) {
     payload.shortCode = qrWsResolved.code;
@@ -10219,7 +10381,7 @@ function qrDynRenderList(){
     '</tr></thead><tbody>' +
     pageItems.map(function(qr){
       return '<tr id="qrDynRow_' + esc(qr.id) + '">' +
-        '<td><img src="' + qrDynBuildImgUrl(qr, 60) + '" alt="QR"></td>' +
+        '<td><img id="qrDynThumb_' + esc(qr.id) + '" alt="QR"></td>' +
         '<td>' + esc(qr.title || "—") + '</td>' +
         '<td class="mono">' + esc(qr.shortUrl || "—") + '</td>' +
         (isAdmin ? '<td style="font-size:12px;color:var(--muted2);white-space:nowrap;font-weight:600;">' + esc(qr.owner || "—") + '</td>' : '') +
@@ -10238,6 +10400,10 @@ function qrDynRenderList(){
     pagerButtonsHtml(qrDynPage, totalPages);
 
   bindPagerClicks(body, function(p){ qrDynPage = p; qrDynRenderList(); });
+
+  pageItems.forEach(function(qr){
+    qrDynPaintImg(document.getElementById("qrDynThumb_" + qr.id), qr, 60);
+  });
 }
 
 function qrDynLoadList(){
@@ -10324,12 +10490,8 @@ function qrDynDownload(qrId){
   var qr = qrDynItems.filter(function(q){ return q.id === qrId; })[0];
   if (!qr) return;
   var size = Math.max(qr.size || 200, 300);
-  var url = qrDynBuildImgUrl(qr, size);
-  var a = document.createElement("a");
-  a.href = url;
-  a.download = "qr-dong-" + (qr.title ? qr.title.replace(/[^a-z0-9]+/gi, "-").toLowerCase() : qr.id) + ".png";
-  a.target = "_blank";
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  var name = "qr-dong-" + (qr.title ? qr.title.replace(/[^a-z0-9]+/gi, "-").toLowerCase() : qr.id);
+  qrDynBuildStyling(qr, size).download({ name: name, extension: "png" });
 }
 
 function qrWsBindWorkspace(){
@@ -10337,15 +10499,26 @@ function qrWsBindWorkspace(){
   qrWsResolved = { url: null, code: null };
   qrDynItems = [];
   qrDynPage = 1;
+  qrWsDotStyle = "square";
+  qrWsLogoDataUrl = null;
   document.querySelectorAll(".qr-type-btn").forEach(function(btn){
     btn.addEventListener("click", function(){ qrWsSetType(btn.getAttribute("data-qrtype")); });
   });
   document.querySelectorAll(".qr-mode-btn").forEach(function(btn){
     btn.addEventListener("click", function(){ qrWsSetMode(btn.getAttribute("data-qrmode")); });
   });
-  document.querySelectorAll(".qr-size-btn").forEach(function(btn){
+  document.querySelectorAll("#qrWsSizeRow .qr-size-btn").forEach(function(btn){
     btn.addEventListener("click", function(){ qrWsSetSize(btn.getAttribute("data-size")); });
   });
+  document.querySelectorAll("#qrWsDotStyleRow .qr-size-btn").forEach(function(btn){
+    btn.addEventListener("click", function(){ qrWsSetDotStyle(btn.getAttribute("data-dotstyle")); });
+  });
+  var logoFileEl = document.getElementById("qrWsLogoFile");
+  var logoUploadBtn = document.getElementById("qrWsLogoUploadBtn");
+  var logoRemoveBtn = document.getElementById("qrWsLogoRemoveBtn");
+  if (logoUploadBtn && logoFileEl) logoUploadBtn.addEventListener("click", function(){ logoFileEl.click(); });
+  if (logoFileEl) logoFileEl.addEventListener("change", function(){ qrWsHandleLogoFile(logoFileEl.files && logoFileEl.files[0]); });
+  if (logoRemoveBtn) logoRemoveBtn.addEventListener("click", qrWsRemoveLogo);
 
   var presetsBox = document.getElementById("qrWsPresets");
   if (presetsBox) {
@@ -10470,7 +10643,7 @@ function renderAnalytics(app, code){
     var qrCtx = (qrDynAnalyticsContext && qrDynAnalyticsContext.code === a.code) ? qrDynAnalyticsContext : null;
     var qrBannerHtml = qrCtx ? (
       '<div class="card qr-analytics-banner">' +
-      '<img src="' + qrDynBuildImgUrl(qrCtx, 70) + '" alt="QR">' +
+      '<img id="qrAnalyticsBannerImg" alt="QR">' +
       '<div><div class="qr-analytics-banner-title">' + li('qr', 14) + ' ' + t("qr_analytics_banner_title") + '</div>' +
       '<div class="qr-analytics-banner-name">' + esc(qrCtx.title || qrCtx.shortUrl || "") + '</div></div>' +
       '<a href="#/bulkqr" class="btn btn-ghost btn-sm">' + t("qr_analytics_back") + '</a>' +
@@ -10505,6 +10678,7 @@ function renderAnalytics(app, code){
         return '<tr><td style="font-size:12px;color:var(--muted);">' + fmtDate(c.timestamp) + '</td><td>' + esc(c.device) + '</td><td>' + esc(c.browser) + '</td><td>' + esc(c.country) + '</td><td>' + esc(c.referrer) + '</td></tr>';
       }).join("") +
       '</tbody></table></div>' + (a.recentClicks.length === 0 ? '<p class="hint">' + t("analytics_no_clicks") + '</p>' : '') + '</div>';
+    if (qrCtx) qrDynPaintImg(document.getElementById("qrAnalyticsBannerImg"), qrCtx, 70);
   }).catch(function(err){
     app.innerHTML = '<div class="card"><div class="msg msg-error">' + esc(err.message) + '</div></div>';
   });
