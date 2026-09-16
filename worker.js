@@ -2225,6 +2225,7 @@ async function handleCreateQr(request, env, corsHeaders) {
 
 // ===================== HANDLERS: DYNAMIC QR (QR động — QR Studio) =====================
 const VALID_QR_DOT_STYLES = ["square", "rounded", "dots"];
+const VALID_QR_FRAME_STYLES = ["none", "cat", "bear", "panda", "rabbit", "heart"];
 
 // Anti bait-and-switch: a QR động's whole point is that its destination can change
 // after the code is printed/shared — the exact opposite of what a payment link needs.
@@ -2274,6 +2275,7 @@ function qrRecordToResponse(qr, link, url, viewerRole) {
     size: qr.size || 200,
     margin: qr.margin,
     dotStyle: qr.dotStyle || "square",
+    frameStyle: qr.frameStyle || "none",
     logoDataUrl: qr.logoDataUrl || "",
     createdAt: qr.createdAt
   };
@@ -2296,7 +2298,7 @@ async function handleCreateDynamicQr(request, env, url, corsHeaders) {
 
   let body;
   try { body = await request.json(); } catch (e) { body = {}; }
-  const { shortCode, targetUrl, title, color, bgcolor, size, margin, dotStyle, logoDataUrl } = body || {};
+  const { shortCode, targetUrl, title, color, bgcolor, size, margin, dotStyle, frameStyle, logoDataUrl } = body || {};
 
   const logoCheck = validateQrLogoDataUrl(logoDataUrl);
   if (!logoCheck.ok) return json({ error: logoCheck.error }, 400, corsHeaders);
@@ -2338,6 +2340,7 @@ async function handleCreateDynamicQr(request, env, url, corsHeaders) {
     size: parseInt(size) || 200,
     margin: (margin !== undefined && margin !== "" && !isNaN(parseInt(margin))) ? parseInt(margin) : null,
     dotStyle: VALID_QR_DOT_STYLES.includes(dotStyle) ? dotStyle : "square",
+    frameStyle: VALID_QR_FRAME_STYLES.includes(frameStyle) ? frameStyle : "none",
     logoDataUrl: logoCheck.value,
     createdAt: new Date().toISOString()
   };
@@ -2379,7 +2382,7 @@ async function handleUpdateDynamicQr(request, env, url, qrId, corsHeaders) {
 
   let body;
   try { body = await request.json(); } catch (e) { body = {}; }
-  const { targetUrl, title, color, bgcolor, size, margin, dotStyle, logoDataUrl } = body || {};
+  const { targetUrl, title, color, bgcolor, size, margin, dotStyle, frameStyle, logoDataUrl } = body || {};
 
   let logoCheck = { ok: true, value: qr.logoDataUrl };
   if (logoDataUrl !== undefined) {
@@ -2415,6 +2418,7 @@ async function handleUpdateDynamicQr(request, env, url, qrId, corsHeaders) {
   if (size !== undefined) qr.size = parseInt(size) || qr.size;
   if (margin !== undefined) qr.margin = (margin === "" || margin === null) ? null : parseInt(margin);
   if (dotStyle !== undefined) qr.dotStyle = VALID_QR_DOT_STYLES.includes(dotStyle) ? dotStyle : qr.dotStyle;
+  if (frameStyle !== undefined) qr.frameStyle = VALID_QR_FRAME_STYLES.includes(frameStyle) ? frameStyle : qr.frameStyle;
   if (logoDataUrl !== undefined) qr.logoDataUrl = logoCheck.value;
   await putQrRecord(env, qr);
 
@@ -4985,6 +4989,10 @@ footer{text-align:center;color:var(--muted2);font-size:12px;padding:30px 20px;}
 .qr-logo-locked:hover{opacity:1;border-color:var(--indigo);color:var(--indigo);}
 .qr-logo-locked-lock{display:flex;line-height:0;}
 .qr-dotstyle-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+.qr-frame-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+.qr-frame-btn{display:flex;flex-direction:column;align-items:center;gap:4px;width:56px;padding:8px 4px;border:1.5px solid var(--input-border);border-radius:10px;background:var(--input-bg);color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;}
+.qr-frame-btn .emoji{font-size:20px;line-height:1;}
+.qr-frame-btn.active{border-color:var(--indigo);background:rgba(99,102,241,0.12);color:var(--indigo);}
 .qr-preview-card{position:sticky;top:16px;text-align:center;padding:28px 20px;}
 .qr-preview-box{width:240px;height:240px;margin:0 auto;border-radius:16px;background:var(--stat-bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;}
 .qr-preview-box img{max-width:100%;max-height:100%;display:block;}
@@ -5127,6 +5135,8 @@ var i18n = {
     qr_logo_label:"Logo (tùy chọn)", qr_logo_upload_btn:"Tải lên logo", qr_logo_error_type:"Chỉ chấp nhận file PNG hoặc JPG.", qr_logo_error_size:"File quá lớn (tối đa 2MB).",
     qr_logo_locked_hint:"Đăng ký miễn phí để dùng logo riêng cho QR",
     qr_dot_style_label:"Kiểu QR", qr_dot_style_square:"Vuông", qr_dot_style_rounded:"Bo tròn", qr_dot_style_dots:"Chấm",
+    qr_frame_label:"QR sáng tạo", qr_frame_none:"Tiêu chuẩn", qr_frame_cat:"Mèo", qr_frame_bear:"Gấu", qr_frame_panda:"Panda", qr_frame_rabbit:"Thỏ", qr_frame_heart:"Trái tim",
+    qr_frame_hint:"Khung trang trí bao quanh mã QR — không ảnh hưởng khả năng quét.",
     qr_copy_link:"Sao chép link", qr_download:"Tải PNG", qr_processing:"Đang tạo QR...",
     qr_quota_error:"Hết lượt tạo QR hôm nay",
     qr_workspace_sub:"Tạo và tùy chỉnh QR Code trực tiếp — thay đổi gì cũng thấy ngay, không cần bấm tạo lại.",
@@ -5524,6 +5534,8 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     qr_logo_label:"Logo (optional)", qr_logo_upload_btn:"Upload logo", qr_logo_error_type:"Only PNG or JPG files are accepted.", qr_logo_error_size:"File too large (max 2MB).",
     qr_logo_locked_hint:"Sign up free to use a custom logo on your QR",
     qr_dot_style_label:"QR style", qr_dot_style_square:"Square", qr_dot_style_rounded:"Rounded", qr_dot_style_dots:"Dots",
+    qr_frame_label:"Creative QR", qr_frame_none:"Standard", qr_frame_cat:"Cat", qr_frame_bear:"Bear", qr_frame_panda:"Panda", qr_frame_rabbit:"Bunny", qr_frame_heart:"Heart",
+    qr_frame_hint:"A decorative frame around the QR — doesn't affect scannability.",
     qr_copy_link:"Copy link", qr_download:"Download PNG", qr_processing:"Generating QR...",
     qr_quota_error:"Daily QR generation quota reached",
     qr_workspace_sub:"Create and customize your QR Code live — every change shows instantly, no need to re-generate.",
@@ -9900,6 +9912,21 @@ function renderBulkQR(app){
     '</div>' +
     '</div>' +
 
+    '<div class="qr-step-label">' + t("qr_frame_label") + '</div>' +
+    '<div class="qr-frame-row" id="qrWsFrameRow">' +
+    [
+      { key: "none", emoji: "⬜", label: t("qr_frame_none") },
+      { key: "cat", emoji: "🐱", label: t("qr_frame_cat") },
+      { key: "bear", emoji: "🐻", label: t("qr_frame_bear") },
+      { key: "panda", emoji: "🐼", label: t("qr_frame_panda") },
+      { key: "rabbit", emoji: "🐰", label: t("qr_frame_rabbit") },
+      { key: "heart", emoji: "❤️", label: t("qr_frame_heart") }
+    ].map(function(f){
+      return '<button type="button" class="qr-frame-btn' + (f.key === "none" ? " active" : "") + '" data-frame="' + f.key + '"><span class="emoji">' + f.emoji + '</span>' + f.label + '</button>';
+    }).join('') +
+    '</div>' +
+    '<div class="hint" style="font-size:11px;margin-top:4px;">' + t("qr_frame_hint") + '</div>' +
+
     '<div class="qr-step-label">' + t("qr_size") + '</div>' +
     '<div class="qr-size-row" id="qrWsSizeRow">' +
     ['150', '200', '300', '400'].map(function(sz){
@@ -10043,6 +10070,110 @@ function qrWsBuildStyling(data, opts, sizeOverride){
   });
 }
 
+// ---------- QR sáng tạo (decorative frame around the QR — purely cosmetic) ----------
+// Frames only draw in the padding OUTSIDE the QR's own box, and are always drawn
+// BEFORE the QR image is placed on top — so even if a shape's geometry dips under
+// where the QR sits, the opaque QR image completely covers it. The actual QR pixels
+// (the only part a scanner reads) are never touched, drawn, or altered by this.
+var qrWsFrameStyle = "none";
+var QR_FRAME_PADDING_RATIO = 0.32;
+
+function qrFrameCanvasSize(qrSize, frameStyle){
+  if (!frameStyle || frameStyle === "none") return qrSize;
+  return Math.round(qrSize * (1 + QR_FRAME_PADDING_RATIO * 2));
+}
+
+function qrDrawEar(ctx, cx, baseY, halfWidth, height, tipOffsetX){
+  ctx.beginPath();
+  ctx.moveTo(cx - halfWidth, baseY);
+  ctx.lineTo(cx + (tipOffsetX || 0), baseY - height);
+  ctx.lineTo(cx + halfWidth, baseY);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function qrDrawFrame(ctx, frameStyle, qrX, qrY, qrSize, color){
+  if (!frameStyle || frameStyle === "none") return;
+  var c = color || "#000000";
+  ctx.save();
+  if (frameStyle === "cat") {
+    ctx.fillStyle = c;
+    qrDrawEar(ctx, qrX + qrSize * 0.22, qrY + qrSize * 0.04, qrSize * 0.13, qrSize * 0.24, -qrSize * 0.03);
+    qrDrawEar(ctx, qrX + qrSize * 0.78, qrY + qrSize * 0.04, qrSize * 0.13, qrSize * 0.24, qrSize * 0.03);
+    ctx.strokeStyle = c;
+    ctx.lineWidth = Math.max(1.5, qrSize * 0.008);
+    ctx.lineCap = "round";
+    [-1, 0, 1].forEach(function(i){
+      var wy = qrY + qrSize * 0.52 + i * qrSize * 0.08;
+      ctx.beginPath(); ctx.moveTo(qrX, wy); ctx.lineTo(qrX - qrSize * 0.16, wy + i * qrSize * 0.025); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(qrX + qrSize, wy); ctx.lineTo(qrX + qrSize * 1.16, wy + i * qrSize * 0.025); ctx.stroke();
+    });
+  } else if (frameStyle === "bear" || frameStyle === "panda") {
+    ctx.fillStyle = frameStyle === "panda" ? "#1a1a1a" : c;
+    var r = qrSize * 0.14;
+    ctx.beginPath(); ctx.arc(qrX + qrSize * 0.14, qrY + qrSize * 0.06, r, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(qrX + qrSize * 0.86, qrY + qrSize * 0.06, r, 0, Math.PI * 2); ctx.fill();
+  } else if (frameStyle === "rabbit") {
+    ctx.fillStyle = c;
+    [0.36, 0.64].forEach(function(fx){
+      ctx.beginPath();
+      ctx.ellipse(qrX + qrSize * fx, qrY - qrSize * 0.06, qrSize * 0.085, qrSize * 0.24, 0, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  } else if (frameStyle === "heart") {
+    var cx = qrX + qrSize / 2;
+    var topY = qrY + qrSize * 0.06;
+    var w = qrSize * 0.62;
+    ctx.strokeStyle = c;
+    ctx.lineWidth = Math.max(2, qrSize * 0.02);
+    ctx.beginPath();
+    ctx.moveTo(cx, qrY + qrSize * 1.1);
+    ctx.bezierCurveTo(cx - w * 1.3, qrY + qrSize * 0.55, cx - w * 0.9, topY - qrSize * 0.16, cx, topY + qrSize * 0.1);
+    ctx.bezierCurveTo(cx + w * 0.9, topY - qrSize * 0.16, cx + w * 1.3, qrY + qrSize * 0.55, cx, qrY + qrSize * 1.1);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// Composites the QR (given as a PNG Blob, from getRawData) onto a canvas with the
+// selected decorative frame drawn behind it. Resolves to a <canvas>.
+function qrComposeFrame(qrBlob, frameStyle, qrSize, color){
+  return new Promise(function(resolve, reject){
+    var objUrl = URL.createObjectURL(qrBlob);
+    var img = new Image();
+    img.onload = function(){
+      URL.revokeObjectURL(objUrl);
+      var boxSize = qrFrameCanvasSize(qrSize, frameStyle);
+      var offset = Math.round((boxSize - qrSize) / 2);
+      var canvas = document.createElement("canvas");
+      canvas.width = boxSize;
+      canvas.height = boxSize;
+      var ctx = canvas.getContext("2d");
+      qrDrawFrame(ctx, frameStyle, offset, offset, qrSize, color);
+      // Solid backing behind the QR itself: if "Nền trong suốt" (transparent background)
+      // is on, the QR's own quiet zone has alpha=0, which would otherwise let the frame
+      // decoration show through underneath instead of being fully covered. A flat white
+      // backing guarantees the QR's light modules stay a clean, uniform light color no
+      // matter what's drawn behind it — the actual dark modules are opaque either way.
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(offset, offset, qrSize, qrSize);
+      ctx.drawImage(img, offset, offset, qrSize, qrSize);
+      resolve(canvas);
+    };
+    img.onerror = function(){ URL.revokeObjectURL(objUrl); reject(new Error("image load failed")); };
+    img.src = objUrl;
+  });
+}
+
+function qrWsSetFrameStyle(style){
+  var valid = ["none", "cat", "bear", "panda", "rabbit", "heart"];
+  qrWsFrameStyle = valid.indexOf(style) !== -1 ? style : "none";
+  document.querySelectorAll("#qrWsFrameRow .qr-frame-btn").forEach(function(b){
+    b.classList.toggle("active", b.getAttribute("data-frame") === qrWsFrameStyle);
+  });
+  qrWsUpdatePreview();
+}
+
 function qrWsHexLuma(hex){
   hex = (hex || "").replace("#", "");
   if (hex.length !== 6) return null;
@@ -10091,10 +10222,25 @@ function qrWsUpdatePreview(){
     return;
   }
   var opts = qrWsReadFormOptions();
+  var previewSize = Math.min(opts.size, 240);
   box.innerHTML = "";
   try {
-    qrWsCurrentQr = qrWsBuildStyling(data, opts, Math.min(opts.size, 240));
-    qrWsCurrentQr.append(box);
+    qrWsCurrentQr = qrWsBuildStyling(data, opts, previewSize);
+    if (qrWsFrameStyle === "none") {
+      qrWsCurrentQr.append(box);
+      if (dlSvg) dlSvg.disabled = false;
+    } else {
+      qrWsCurrentQr.getRawData("png").then(function(blob){
+        return qrComposeFrame(blob, qrWsFrameStyle, previewSize, opts.color);
+      }).then(function(canvas){
+        box.innerHTML = "";
+        box.appendChild(canvas);
+      }).catch(function(){
+        box.innerHTML = '<div class="qr-preview-error">' + t("qr_preview_error") + '</div>';
+      });
+      // SVG export doesn't carry the decorative frame — keep it off while a frame is active.
+      if (dlSvg) dlSvg.disabled = true;
+    }
   } catch (e) {
     box.innerHTML = '<div class="qr-preview-error">' + t("qr_preview_error") + '</div>';
     disableBtns();
@@ -10102,7 +10248,6 @@ function qrWsUpdatePreview(){
   }
   if (dataEl) dataEl.textContent = data;
   if (dlPng) dlPng.disabled = false;
-  if (dlSvg) dlSvg.disabled = false;
   if (copyBtn) copyBtn.disabled = false;
 }
 
@@ -10239,6 +10384,19 @@ function qrWsDownload(format){
   if (!data || !qrWsIsValid(data)) return;
   var opts = qrWsReadFormOptions();
   var qr = qrWsBuildStyling(data, opts);
+  if (format === "png" && qrWsFrameStyle !== "none") {
+    qr.getRawData("png").then(function(blob){
+      return qrComposeFrame(blob, qrWsFrameStyle, opts.size, opts.color);
+    }).then(function(canvas){
+      canvas.toBlob(function(blob){
+        var a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "qr_" + Date.now() + ".png";
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      });
+    });
+    return;
+  }
   qr.download({ name: "qr_" + Date.now(), extension: format === "svg" ? "svg" : "png" });
 }
 
@@ -10350,8 +10508,16 @@ function qrDynBuildStyling(qr, size){
 // before the element exists in the DOM.
 function qrDynPaintImg(imgEl, qr, size){
   if (!imgEl) return;
-  qrDynBuildStyling(qr, size).getRawData("png").then(function(blob){
-    if (blob) imgEl.src = URL.createObjectURL(blob);
+  var s = size || qr.size || 150;
+  var frameStyle = qr.frameStyle || "none";
+  qrDynBuildStyling(qr, s).getRawData("png").then(function(blob){
+    if (frameStyle === "none") {
+      if (blob) imgEl.src = URL.createObjectURL(blob);
+      return;
+    }
+    return qrComposeFrame(blob, frameStyle, s, qr.color).then(function(canvas){
+      canvas.toBlob(function(framedBlob){ if (framedBlob) imgEl.src = URL.createObjectURL(framedBlob); });
+    });
   }).catch(function(){});
 }
 
@@ -10379,6 +10545,7 @@ function qrWsSaveDynamic(){
     size: sizeEl ? sizeEl.value : "200",
     margin: marginEl ? marginEl.value : "",
     dotStyle: qrWsDotStyle,
+    frameStyle: qrWsFrameStyle,
     logoDataUrl: qrWsLogoDataUrl || ""
   };
   if (qrWsResolved.code && qrWsResolved.url === val) {
@@ -10550,7 +10717,21 @@ function qrDynDownload(qrId){
   if (!qr) return;
   var size = Math.max(qr.size || 200, 300);
   var name = "qr-dong-" + (qr.title ? qr.title.replace(/[^a-z0-9]+/gi, "-").toLowerCase() : qr.id);
-  qrDynBuildStyling(qr, size).download({ name: name, extension: "png" });
+  var frameStyle = qr.frameStyle || "none";
+  if (frameStyle === "none") {
+    qrDynBuildStyling(qr, size).download({ name: name, extension: "png" });
+    return;
+  }
+  qrDynBuildStyling(qr, size).getRawData("png").then(function(blob){
+    return qrComposeFrame(blob, frameStyle, size, qr.color);
+  }).then(function(canvas){
+    canvas.toBlob(function(blob){
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = name + ".png";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    });
+  });
 }
 
 function qrWsBindWorkspace(){
@@ -10560,6 +10741,7 @@ function qrWsBindWorkspace(){
   qrDynPage = 1;
   qrWsDotStyle = "square";
   qrWsLogoDataUrl = null;
+  qrWsFrameStyle = "none";
   document.querySelectorAll(".qr-type-btn").forEach(function(btn){
     btn.addEventListener("click", function(){ qrWsSetType(btn.getAttribute("data-qrtype")); });
   });
@@ -10571,6 +10753,9 @@ function qrWsBindWorkspace(){
   });
   document.querySelectorAll("#qrWsDotStyleRow .qr-size-btn").forEach(function(btn){
     btn.addEventListener("click", function(){ qrWsSetDotStyle(btn.getAttribute("data-dotstyle")); });
+  });
+  document.querySelectorAll("#qrWsFrameRow .qr-frame-btn").forEach(function(btn){
+    btn.addEventListener("click", function(){ qrWsSetFrameStyle(btn.getAttribute("data-frame")); });
   });
   var logoFileEl = document.getElementById("qrWsLogoFile");
   var logoUploadBtn = document.getElementById("qrWsLogoUploadBtn");
