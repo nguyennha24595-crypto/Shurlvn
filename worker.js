@@ -2225,6 +2225,28 @@ async function handleCreateQr(request, env, corsHeaders) {
 
 // ===================== HANDLERS: DYNAMIC QR (QR động — QR Studio) =====================
 const VALID_QR_DOT_STYLES = ["square", "rounded", "dots"];
+
+// Anti bait-and-switch: a QR động's whole point is that its destination can change
+// after the code is printed/shared — the exact opposite of what a payment link needs.
+// Someone could set a real payment page as the destination to earn trust, then quietly
+// swap it for a fraudulent one without the printed QR ever changing. So payment-looking
+// URLs are refused as a QR động destination in both directions (create AND edit) — QR
+// tĩnh (destination baked in, can never change) is the correct choice for those.
+// This is a domain heuristic, not a guarantee: it catches common providers, not every
+// possible payment page.
+const PAYMENT_URL_PATTERNS = [
+  /vietqr\.(io|net|vn)/i, /napas\.com\.vn/i, /payoo\.vn/i, /onepay\.vn/i,
+  /momo\.vn/i, /zalopay\.vn/i, /vnpay\.vn/i, /shopeepay\.vn/i, /viettelpay\.vn/i,
+  /paypal\.com/i, /checkout\.stripe\.com/i, /pay\.google\.com/i, /cash\.app/i, /venmo\.com/i,
+  /vietcombank\.com\.vn/i, /techcombank\.com\.vn/i, /bidv\.com\.vn/i, /acb\.com\.vn/i,
+  /mbbank\.com\.vn/i, /agribank\.com\.vn/i, /vpbank\.com\.vn/i, /sacombank\.com\.vn/i,
+  /tpb\.vn/i, /vib\.com\.vn/i, /hdbank\.com\.vn/i, /msb\.com\.vn/i, /ocb\.com\.vn/i,
+  /\/\/[^\/]*\bpay(ment)?\b/i
+];
+function looksLikePaymentUrl(u) {
+  if (!u) return false;
+  return PAYMENT_URL_PATTERNS.some(re => re.test(u));
+}
 function validateQrLogoDataUrl(logoDataUrl) {
   if (!logoDataUrl) return { ok: true, value: "" };
   if (typeof logoDataUrl !== "string" || !/^data:image\/(png|jpeg);base64,/.test(logoDataUrl)) {
@@ -2286,7 +2308,13 @@ async function handleCreateDynamicQr(request, env, url, corsHeaders) {
     if (role !== "admin" && link.owner !== owner) {
       return json({ error: "Bạn không sở hữu Short URL này." }, 403, corsHeaders);
     }
+    if (looksLikePaymentUrl(link.url)) {
+      return json({ error: "Short URL này đang trỏ tới một trang thanh toán — không thể dùng cho QR động vì đích có thể bị đổi sau khi phát hành. Hãy dùng QR tĩnh cho nội dung thanh toán." }, 403, corsHeaders);
+    }
   } else if (targetUrl) {
+    if (looksLikePaymentUrl(targetUrl)) {
+      return json({ error: "Không thể tạo QR động trỏ tới trang thanh toán — QR động cho phép đổi đích sau khi phát hành, tiềm ẩn rủi ro bị lợi dụng. Hãy dùng QR tĩnh (đích cố định) cho nội dung thanh toán." }, 403, corsHeaders);
+    }
     const linkQuotaCheck = checkDailyQuota(userRecord, role, 1);
     if (!linkQuotaCheck.ok) {
       return json({ error: linkQuotaCheck.message }, 403, corsHeaders);
@@ -2370,6 +2398,9 @@ async function handleUpdateDynamicQr(request, env, url, qrId, corsHeaders) {
     }
     if (await isDomainBlacklisted(env, targetUrl)) {
       return json({ error: "URL đích mới nằm trong danh sách đen bảo mật." }, 400, corsHeaders);
+    }
+    if (looksLikePaymentUrl(targetUrl)) {
+      return json({ error: "Không thể đổi đích QR động sang trang thanh toán — QR động có thể bị đổi đích sau này, tiềm ẩn rủi ro bị lợi dụng để lừa đảo. Hãy dùng QR tĩnh (đích cố định) cho nội dung thanh toán." }, 403, corsHeaders);
     }
     if (!link.destinationHistory) link.destinationHistory = [];
     link.destinationHistory.push({ oldUrl: link.url, changedAt: new Date().toISOString() });
@@ -4950,6 +4981,9 @@ footer{text-align:center;color:var(--muted2);font-size:12px;padding:30px 20px;}
 .qr-size-btn.active{border-color:var(--indigo);background:rgba(99,102,241,0.12);color:var(--indigo);}
 .qr-logo-upload-wrap{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:4px;}
 .qr-logo-upload-wrap img{width:34px;height:34px;border-radius:6px;object-fit:contain;background:var(--stat-bg);border:1px solid var(--border);}
+.qr-logo-locked{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border:1px dashed var(--input-border);border-radius:8px;background:var(--input-bg);color:var(--muted2);font-size:13px;font-weight:600;cursor:pointer;margin-top:4px;opacity:0.75;}
+.qr-logo-locked:hover{opacity:1;border-color:var(--indigo);color:var(--indigo);}
+.qr-logo-locked-lock{display:flex;line-height:0;}
 .qr-dotstyle-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
 .qr-preview-card{position:sticky;top:16px;text-align:center;padding:28px 20px;}
 .qr-preview-box{width:240px;height:240px;margin:0 auto;border-radius:16px;background:var(--stat-bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;}
@@ -5091,6 +5125,7 @@ var i18n = {
     qr_url_label:"URL cần tạo QR", qr_color:"Màu sắc", qr_size:"Kích cỡ", qr_btn:"Tạo QR",
     qr_bgcolor:"Màu nền", qr_bg_transparent:"Nền trong suốt", qr_margin:"Viền (margin)", qr_margin_default:"Mặc định", qr_format:"Định dạng",
     qr_logo_label:"Logo (tùy chọn)", qr_logo_upload_btn:"Tải lên logo", qr_logo_error_type:"Chỉ chấp nhận file PNG hoặc JPG.", qr_logo_error_size:"File quá lớn (tối đa 2MB).",
+    qr_logo_locked_hint:"Đăng ký miễn phí để dùng logo riêng cho QR",
     qr_dot_style_label:"Kiểu QR", qr_dot_style_square:"Vuông", qr_dot_style_rounded:"Bo tròn", qr_dot_style_dots:"Chấm",
     qr_copy_link:"Sao chép link", qr_download:"Tải PNG", qr_processing:"Đang tạo QR...",
     qr_quota_error:"Hết lượt tạo QR hôm nay",
@@ -5487,6 +5522,7 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     qr_url_label:"URL for QR code", qr_color:"Color", qr_size:"Size", qr_btn:"Generate QR",
     qr_bgcolor:"Background color", qr_bg_transparent:"Transparent background", qr_margin:"Margin", qr_margin_default:"Default", qr_format:"Format",
     qr_logo_label:"Logo (optional)", qr_logo_upload_btn:"Upload logo", qr_logo_error_type:"Only PNG or JPG files are accepted.", qr_logo_error_size:"File too large (max 2MB).",
+    qr_logo_locked_hint:"Sign up free to use a custom logo on your QR",
     qr_dot_style_label:"QR style", qr_dot_style_square:"Square", qr_dot_style_rounded:"Rounded", qr_dot_style_dots:"Dots",
     qr_copy_link:"Copy link", qr_download:"Download PNG", qr_processing:"Generating QR...",
     qr_quota_error:"Daily QR generation quota reached",
@@ -9750,6 +9786,23 @@ function renderBulkQR(app){
   var canUse = !!limits.hasBulkQr;
   var dynLimit = limits.maxDynamicQrPerMonth || 0;
   var dynAllowed = dynLimit > 0;
+  var logoAllowed = !!state.user;
+
+  var qrLogoFieldHtml = logoAllowed ? (
+    '<div class="qr-logo-upload-wrap">' +
+    '<input type="file" id="qrWsLogoFile" accept="image/png,image/jpeg" style="display:none;">' +
+    '<button type="button" class="btn btn-ghost btn-sm" id="qrWsLogoUploadBtn">' + li('upload', 12) + ' ' + t("qr_logo_upload_btn") + '</button>' +
+    '<img id="qrWsLogoPreview" style="display:none;" alt="logo">' +
+    '<button type="button" class="btn btn-ghost btn-sm" id="qrWsLogoRemoveBtn" style="display:none;">' + li('x', 12) + '</button>' +
+    '</div>' +
+    '<div id="qrWsLogoMsg" class="hint" style="font-size:11px;"></div>'
+  ) : (
+    '<div class="qr-logo-locked" onclick="navRegister()" title="' + t("qr_logo_locked_hint") + '">' +
+    '<div class="qr-logo-locked-lock">' + li('lock_icon', 14) + '</div>' +
+    '<span>' + t("qr_logo_upload_btn") + '</span>' +
+    '</div>' +
+    '<div class="hint" style="font-size:11px;">' + t("qr_logo_locked_hint") + '</div>'
+  );
 
   var dynTeaserCta = !state.user
     ? '<button type="button" class="btn btn-primary btn-sm" style="width:100%;" onclick="navRegister()">' + t("qr_dyn_teaser_cta_guest") + '</button>'
@@ -9835,13 +9888,7 @@ function renderBulkQR(app){
     '<div class="qr-color-row" style="margin-top:14px;">' +
     '<div class="qr-color-field">' +
     '<label>' + t("qr_logo_label") + '</label>' +
-    '<div class="qr-logo-upload-wrap">' +
-    '<input type="file" id="qrWsLogoFile" accept="image/png,image/jpeg" style="display:none;">' +
-    '<button type="button" class="btn btn-ghost btn-sm" id="qrWsLogoUploadBtn">' + li('upload', 12) + ' ' + t("qr_logo_upload_btn") + '</button>' +
-    '<img id="qrWsLogoPreview" style="display:none;" alt="logo">' +
-    '<button type="button" class="btn btn-ghost btn-sm" id="qrWsLogoRemoveBtn" style="display:none;">' + li('x', 12) + '</button>' +
-    '</div>' +
-    '<div id="qrWsLogoMsg" class="hint" style="font-size:11px;"></div>' +
+    qrLogoFieldHtml +
     '</div>' +
     '<div class="qr-color-field">' +
     '<label>' + t("qr_dot_style_label") + '</label>' +
