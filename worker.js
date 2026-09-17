@@ -315,8 +315,12 @@ export default {
       // ===== 4f. DYNAMIC QR (QR Studio — QR động, hạn mức theo tháng) =====
       if (path === "api/qr/dynamic" && method === "GET") return handleListDynamicQr(request, env, url, corsHeaders);
       if (path === "api/qr/dynamic" && method === "POST") return handleCreateDynamicQr(request, env, url, corsHeaders);
+      if (path === "api/qr/dynamic/accept-terms" && method === "POST") return handleAcceptQrDynamicTerms(request, env, corsHeaders);
       if (path.startsWith("api/qr/dynamic/") && method === "PUT") return handleUpdateDynamicQr(request, env, url, decodeURIComponent(path.slice("api/qr/dynamic/".length)), corsHeaders);
       if (path.startsWith("api/qr/dynamic/") && method === "DELETE") return handleDeleteDynamicQr(request, env, decodeURIComponent(path.slice("api/qr/dynamic/".length)), corsHeaders);
+
+      // ===== 4g. QR INSPECT (Scanner QR — public, read-only) =====
+      if (path === "api/inspect" && method === "GET") return handleInspectQr(request, env, url, corsHeaders);
 
       // ===== 5. REPORTS (public submit) =====
       if (path === "api/reports" && method === "POST") return handleCreateReport(request, env, corsHeaders);
@@ -368,13 +372,25 @@ export default {
       if (!path) {
         return new Response(renderAppHtml(env), { headers: {
           "Content-Type": "text/html; charset=utf-8",
-          "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com https://www.googletagmanager.com https://googleads.g.doubleclick.net https://static.cloudflareinsights.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' data: blob: https://api.resend.com https://api.stripe.com https://www.googletagmanager.com https://www.google-analytics.com https://googleads.g.doubleclick.net https://www.google.com https://ad.doubleclick.net https://static.cloudflareinsights.com https://cloudflareinsights.com; frame-src https://pagead2.googlesyndication.com;"
+          "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com https://www.googletagmanager.com https://googleads.g.doubleclick.net https://static.cloudflareinsights.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' data: blob: https://api.resend.com https://api.stripe.com https://www.googletagmanager.com https://www.google-analytics.com https://googleads.g.doubleclick.net https://www.google.com https://www.google.com.vn https://www.googleadservices.com https://ad.doubleclick.net https://static.cloudflareinsights.com https://cloudflareinsights.com; frame-src https://pagead2.googlesyndication.com; worker-src 'self' blob:;"
         } });
       }
       // ===== 8b. FAVICON =====
       if (path === "favicon.ico") {
         const bytes = Uint8Array.from(atob(FAVICON_PNG_BASE64), c => c.charCodeAt(0));
         return new Response(bytes, { headers: { "Content-Type": "image/png", "Cache-Control": "public, max-age=604800" } });
+      }
+      // ===== 8c. QR-SCANNER LIBRARY (same-origin proxy — the UMD build's worker file
+      // uses a relative dynamic import() that fails to resolve when loaded cross-origin
+      // from a CDN, so we mirror both files under our own origin) =====
+      if (path === "assets/qr-scanner.umd.min.js" || path === "assets/qr-scanner-worker.min.js") {
+        const upstream = await fetch("https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/" + path.slice("assets/".length));
+        if (!upstream.ok) return new Response("Not found", { status: 404 });
+        return new Response(upstream.body, { headers: { "Content-Type": "application/javascript; charset=utf-8", "Cache-Control": "public, max-age=604800, immutable" } });
+      }
+      if (path === "robots.txt") {
+        const robots = "User-agent: *\nAllow: /\nSitemap: https://shurlvn.com/sitemap.xml\n";
+        return new Response(robots, { headers: { "Content-Type": "text/plain; charset=utf-8" } });
       }
       if (path === "sitemap.xml") {
         const today = new Date().toISOString().split("T")[0];
@@ -414,9 +430,22 @@ export default {
 
   async scheduled(event, env, ctx) {
     ctx.waitUntil(refreshCfAnalyticsCache(env));
-    ctx.waitUntil(purgeExpiredLinks(env));
+    ctx.waitUntil(purgeExpiredLinksLogged(env));
   }
 };
+
+// Wraps purgeExpiredLinks with a KV-persisted run log so admin/overview can show whether the
+// hourly cleanup cron actually ran and what it did — a silent failure here would otherwise be
+// invisible (there's no other signal that purgeExpiredLinks stopped running).
+async function purgeExpiredLinksLogged(env) {
+  const ranAt = new Date().toISOString();
+  try {
+    const result = await purgeExpiredLinks(env);
+    await env.LINKS_KV.put("cron_purge_log", JSON.stringify({ ok: true, ranAt, checked: result.checked, purged: result.purged }));
+  } catch (e) {
+    await env.LINKS_KV.put("cron_purge_log", JSON.stringify({ ok: false, ranAt, error: String(e && e.message || e) }));
+  }
+}
 
 // ===================== TIỆN ÍCH CHUNG =====================
 function json(body, status, corsHeaders, extraHeaders) {
@@ -852,6 +881,11 @@ async function handleLogin(request, env, corsHeaders) {
 
   async function recordFailedAttempt() {
     await env.LINKS_KV.put(attemptsKey, String(attempts + 1), { expirationTtl: LOGIN_LOCKOUT_TTL });
+    // Global counter for admin visibility (separate from the per-username lockout above,
+    // which only tracks enough to lock one account, not overall failed-login volume).
+    const dayKey = "failedlogin_count:" + new Date().toISOString().slice(0, 10);
+    const dayCount = parseInt(await env.LINKS_KV.get(dayKey) || "0");
+    await env.LINKS_KV.put(dayKey, String(dayCount + 1), { expirationTtl: 2 * 86400 });
   }
 
   const user = await getUser(env, cleanUser);
@@ -1040,12 +1074,19 @@ async function handleMe(request, env, corsHeaders) {
   if (user.roleExpiry && new Date(user.roleExpiry) < new Date()) {
     user.role = "free";
     delete user.roleExpiry;
-    await putUser(env, user);
+    // getAuthenticatedUser() returns a sanitized copy without salt/hash — persisting it
+    // directly would silently wipe the user's password. Fetch the full record to save instead.
+    const fullUser = await getUser(env, user.username);
+    if (fullUser) {
+      fullUser.role = "free";
+      delete fullUser.roleExpiry;
+      await putUser(env, fullUser);
+    }
   }
 
   try { await env.LINKS_KV.put("lastseen:" + user.username.toLowerCase(), String(Date.now()), { expirationTtl: 3600 }); } catch(e) {}
 
-  return json({ user, limits: TIER_CONFIG[user.role] }, 200, corsHeaders);
+  return json({ user, limits: await getEffectiveTierConfig(env, user.role) }, 200, corsHeaders);
 }
 
 async function handleGenerateToken(request, env, corsHeaders) {
@@ -1380,9 +1421,34 @@ async function isKeywordBlacklisted(env, code, role) {
 }
 
 // ===================== HANDLERS: QUOTA =====================
-function checkDailyQuota(user, role, addCount) {
+// Admin có thể override dailyLinks/maxBulkBatch/monthlyApiLimit theo từng gói ở tab Cài đặt
+// (sys:settings.tierOverrides) — merge lên trên TIER_CONFIG mặc định. Cache 30s như các list
+// khác trong file này (env._linksCache, env._usersCache) để không đọc KV trên mỗi request.
+async function getTierOverrides(env) {
+  if (env._tierOverridesCache && env._tierOverridesCacheTime && (Date.now() - env._tierOverridesCacheTime < 30000)) {
+    return env._tierOverridesCache;
+  }
+  const raw = await env.LINKS_KV.get("sys:settings");
+  const overrides = (raw && JSON.parse(raw).tierOverrides) || {};
+  env._tierOverridesCache = overrides;
+  env._tierOverridesCacheTime = Date.now();
+  return overrides;
+}
+async function getEffectiveTierConfig(env, role) {
+  const base = TIER_CONFIG[role];
+  if (!base) return base;
+  const overrides = await getTierOverrides(env);
+  const ov = overrides[role];
+  if (!ov) return base;
+  const merged = { ...base };
+  if (typeof ov.dailyLinks === "number") merged.dailyLinks = ov.dailyLinks;
+  if (typeof ov.maxBulkBatch === "number") merged.maxBulkBatch = ov.maxBulkBatch;
+  if (typeof ov.monthlyApiLimit === "number") merged.monthlyApiLimit = ov.monthlyApiLimit;
+  return merged;
+}
+async function checkDailyQuota(env, user, role, addCount) {
   if (role === "admin") return { ok: true };
-  const limit = TIER_CONFIG[role].dailyLinks;
+  const limit = (await getEffectiveTierConfig(env, role)).dailyLinks;
   const today = todayStr();
   let currentCount = 0;
   if (user && user.dailyQuota && user.dailyQuota.date === today) {
@@ -1405,7 +1471,7 @@ async function incrementDailyQuota(env, ownerUsername, count) {
   }
   await putUser(env, user);
 }
-function checkMonthlyApiQuota(user, role) {
+async function checkMonthlyApiQuota(env, user, role) {
   if (role === "admin") return { ok: true };
   if (user && user.tierExpiresAt && role !== "admin" && new Date(user.tierExpiresAt) < new Date()) {
     return { ok: false, code: "TIER_EXPIRED", message: "Gói của bạn đã hết hạn. Vui lòng nâng cấp để tiếp tục sử dụng API.", upgradeUrl: "#/pricing" };
@@ -1413,7 +1479,7 @@ function checkMonthlyApiQuota(user, role) {
   if (!TIER_CONFIG[role].hasApi) {
     return { ok: false, code: "API_NOT_AVAILABLE", message: "Gói hiện tại chưa hỗ trợ API. Nâng cấp PRO hoặc SUPER để sử dụng.", upgradeUrl: "#/pricing" };
   }
-  const limit = TIER_CONFIG[role].monthlyApiLimit;
+  const limit = (await getEffectiveTierConfig(env, role)).monthlyApiLimit;
   const thisMonth = thisMonthStr();
   let currentCount = 0;
   if (user && user.monthlyApiQuota && user.monthlyApiQuota.month === thisMonth) {
@@ -1650,17 +1716,18 @@ async function handleCreateLink(request, env, url, corsHeaders) {
   const owner = authedUser ? authedUser.username : `guest_${getClientIp(request).replace(/[^a-zA-Z0-9]/g, "_")}`;
 
   const userRecord = authedUser ? await getUser(env, authedUser.username) : null;
-  const quotaCheck = checkDailyQuota(userRecord, role, 1);
+  const quotaCheck = await checkDailyQuota(env, userRecord, role, 1);
   if (!quotaCheck.ok) {
     return json({ success: false, error: { code: quotaCheck.code || "QUOTA_EXCEEDED", message: quotaCheck.message, upgrade_url: "#/pricing" } }, 403, corsHeaders);
   }
   // Guest quota bằng IP
   if (!authedUser) {
+    const guestDailyLinks = (await getEffectiveTierConfig(env, "guest")).dailyLinks;
     const ip = getClientIp(request);
     const guestKey = "guest_quota:" + ip + ":" + todayStr();
     const guestCount = parseInt(await env.LINKS_KV.get(guestKey) || "0");
-    if (guestCount >= TIER_CONFIG.guest.dailyLinks) {
-      return json({ error: "Khách chưa đăng ký chỉ được tạo " + TIER_CONFIG.guest.dailyLinks + " link/ngày. Vui lòng đăng ký miễn phí." }, 403, corsHeaders);
+    if (guestCount >= guestDailyLinks) {
+      return json({ error: "Khách chưa đăng ký chỉ được tạo " + guestDailyLinks + " link/ngày. Vui lòng đăng ký miễn phí." }, 403, corsHeaders);
     }
     await env.LINKS_KV.put(guestKey, String(guestCount + 1), { expirationTtl: 86400 });
   }
@@ -1708,8 +1775,9 @@ async function handleBulkCreateLinks(request, env, url, corsHeaders) {
   if (rawUrls.length === 0) {
     return json({ error: "Danh sách URLs không hợp lệ." }, 400, corsHeaders);
   }
-  if (rawUrls.length > limits.maxBulkBatch) {
-    return json({ error: `Giới hạn mỗi lần tải lên tối đa ${limits.maxBulkBatch} links cho gói ${role.toUpperCase()}.` }, 400, corsHeaders);
+  const effectiveMaxBulkBatch = (await getEffectiveTierConfig(env, role)).maxBulkBatch;
+  if (rawUrls.length > effectiveMaxBulkBatch) {
+    return json({ error: `Giới hạn mỗi lần tải lên tối đa ${effectiveMaxBulkBatch} links cho gói ${role.toUpperCase()}.` }, 400, corsHeaders);
   }
 
   // Normalize: chấp nhận cả string và object
@@ -1737,7 +1805,7 @@ async function handleBulkCreateLinks(request, env, url, corsHeaders) {
   }
 
   const userRecord = await getUser(env, owner);
-  const quotaCheck = checkDailyQuota(userRecord, role, validItems.length);
+  const quotaCheck = await checkDailyQuota(env, userRecord, role, validItems.length);
   if (!quotaCheck.ok) {
     return json({ error: quotaCheck.message }, 403, corsHeaders);
   }
@@ -2128,7 +2196,7 @@ async function handleApiShorten(request, env, url, corsHeaders) {
   const owner = authedUser.username;
   const userRecord = await getUser(env, owner);
 
-  const quotaCheck = checkMonthlyApiQuota(userRecord, role);
+  const quotaCheck = await checkMonthlyApiQuota(env, userRecord, role);
   if (!quotaCheck.ok) {
     return json({ success: false, error: { code: quotaCheck.code || "API_ERROR", message: quotaCheck.message, upgrade_url: quotaCheck.upgradeUrl || "#/pricing" }, ...(quotaCheck.retryAt ? { retry_after: quotaCheck.retryAt } : {}) }, 403, corsHeaders);
   }
@@ -2193,7 +2261,7 @@ async function handleCreateQr(request, env, corsHeaders) {
   const userRecord = await getUser(env, owner);
 
   // Kiểm tra hạn mức daily
-  const quotaCheck = checkDailyQuota(userRecord, role, 1);
+  const quotaCheck = await checkDailyQuota(env, userRecord, role, 1);
   if (!quotaCheck.ok) {
     return json({ error: quotaCheck.message }, 403, corsHeaders);
   }
@@ -2289,6 +2357,10 @@ async function handleCreateDynamicQr(request, env, url, corsHeaders) {
   const owner = authedUser.username;
   const userRecord = await getUser(env, owner);
 
+  if (!userRecord.qrTermsAcceptedAt) {
+    return json({ error: "Vui lòng đọc và đồng ý Cam kết sử dụng QR động trước khi tạo.", code: "QR_TERMS_NOT_ACCEPTED" }, 403, corsHeaders);
+  }
+
   const quotaCheck = checkMonthlyDynamicQrQuota(userRecord, role);
   if (!quotaCheck.ok) {
     return json({ error: quotaCheck.message, code: quotaCheck.code, upgradeUrl: quotaCheck.upgradeUrl }, 403, corsHeaders);
@@ -2315,7 +2387,7 @@ async function handleCreateDynamicQr(request, env, url, corsHeaders) {
     if (looksLikePaymentUrl(targetUrl)) {
       return json({ error: "Không thể tạo QR động trỏ tới trang thanh toán — QR động cho phép đổi đích sau khi phát hành, tiềm ẩn rủi ro bị lợi dụng. Hãy dùng QR tĩnh (đích cố định) cho nội dung thanh toán." }, 403, corsHeaders);
     }
-    const linkQuotaCheck = checkDailyQuota(userRecord, role, 1);
+    const linkQuotaCheck = await checkDailyQuota(env, userRecord, role, 1);
     if (!linkQuotaCheck.ok) {
       return json({ error: linkQuotaCheck.message }, 403, corsHeaders);
     }
@@ -2345,6 +2417,23 @@ async function handleCreateDynamicQr(request, env, url, corsHeaders) {
   await incrementMonthlyDynamicQrQuota(env, owner);
 
   return json({ ok: true, qr: qrRecordToResponse(qr, link, url, role), remaining: quotaCheck.remaining - 1, limit: quotaCheck.limit }, 200, corsHeaders);
+}
+
+async function handleAcceptQrDynamicTerms(request, env, corsHeaders) {
+  const authedUser = await getAuthenticatedUser(request, env);
+  if (!authedUser) return requireAuthResponse(corsHeaders, request);
+
+  // getAuthenticatedUser() returns a sanitized copy without salt/hash — persisting it
+  // directly would silently wipe the user's password. Fetch the full record to save instead.
+  const fullUser = await getUser(env, authedUser.username);
+  if (!fullUser) return json({ error: "Không tìm thấy tài khoản." }, 400, corsHeaders);
+
+  if (!fullUser.qrTermsAcceptedAt) {
+    fullUser.qrTermsAcceptedAt = new Date().toISOString();
+    await putUser(env, fullUser);
+  }
+
+  return json({ ok: true, qrTermsAcceptedAt: fullUser.qrTermsAcceptedAt }, 200, corsHeaders);
 }
 
 async function handleListDynamicQr(request, env, url, corsHeaders) {
@@ -2433,6 +2522,45 @@ async function handleDeleteDynamicQr(request, env, qrId, corsHeaders) {
 
   await deleteQrRecord(env, qrId);
   return json({ ok: true }, 200, corsHeaders);
+}
+
+// ===================== HANDLERS: QR INSPECTOR (Scanner QR) =====================
+// Public, read-only lookup for whatever a scanned QR decodes to. Never records a click
+// (unlike visiting the link itself) — this is purely "what would happen if I opened this?".
+async function handleInspectQr(request, env, url, corsHeaders) {
+  const reqUrl = new URL(request.url);
+  const data = reqUrl.searchParams.get("data") || "";
+
+  let parsed;
+  try { parsed = new URL(data); } catch (e) { parsed = null; }
+  if (!parsed || (parsed.protocol !== "http:" && parsed.protocol !== "https:")) {
+    return json({ type: "text", raw: data }, 200, corsHeaders);
+  }
+
+  if (parsed.hostname === reqUrl.hostname) {
+    const code = parsed.pathname.replace(/^\//, "").split("/")[0];
+    const link = code ? await getLink(env, code) : null;
+    if (link) {
+      const qrRecords = await listAllQrRecords(env);
+      const isDynamic = qrRecords.some(q => q.code === code);
+      return json({
+        type: "shurl_link",
+        code,
+        destination: link.url,
+        isEnabled: link.isEnabled !== false,
+        isExpired: !!(link.expiryDate && new Date(link.expiryDate) < new Date()),
+        hasPassword: !!link.password,
+        isDynamic
+      }, 200, corsHeaders);
+    }
+  }
+
+  return json({
+    type: "url",
+    hostname: parsed.hostname,
+    isPaymentLike: looksLikePaymentUrl(data),
+    isBlacklisted: await isDomainBlacklisted(env, data)
+  }, 200, corsHeaders);
 }
 
 // ===================== HANDLERS: REPORTS =====================
@@ -3491,9 +3619,10 @@ async function handleRedirect(request, env, url, path, ctx) {
       destUrl = link.deepLinks.ios;
     } else if (/Android/i.test(ua) && link.deepLinks.android) {
       destUrl = link.deepLinks.android;
-    } else if (link.deepLinks.fallback) {
-      destUrl = link.deepLinks.fallback;
     }
+    // Desktop/other UAs: keep destUrl as-is (link.url or the A/B pick above).
+    // deepLinks.fallback always equals link.url at creation time, so applying it
+    // here would silently override the A/B pick — see bug found via live testing.
   }
 
   if (link.pixels && link.pixels.length > 0) {
@@ -4356,11 +4485,17 @@ async function handleSavePromoSettings(request, env, corsHeaders) {
 // Xóa vĩnh viễn các link đã ở trong "thùng rác" (isDeleted=true) quá 24h,
 // đúng như lời hứa hiển thị cho user lúc bấm xóa ("Sẽ xóa sau 24h").
 async function purgeExpiredLinks(env) {
-  const cutoffMs = Date.now() - 24 * 3600 * 1000;
+  const trashCutoffMs = Date.now() - 24 * 3600 * 1000;
+  // Links a user set an expiry date on (not the trash) keep working as normal links until they
+  // expire, then just stop redirecting (410) so the owner can still edit/revive them for a while.
+  // Only after this much longer grace period do we reclaim the KV storage for good.
+  const expiryCutoffMs = Date.now() - 30 * 24 * 3600 * 1000;
   const links = await listAllLinks(env);
   let purged = 0;
   for (const link of links) {
-    if (link.isDeleted && link.deletedAt && new Date(link.deletedAt).getTime() < cutoffMs) {
+    const trashExpired = link.isDeleted && link.deletedAt && new Date(link.deletedAt).getTime() < trashCutoffMs;
+    const longExpired = !link.isDeleted && link.expiryDate && new Date(link.expiryDate).getTime() < expiryCutoffMs;
+    if (trashExpired || longExpired) {
       await deleteLinkKV(env, link.code);
       purged++;
     }
@@ -4379,6 +4514,10 @@ async function refreshCfAnalyticsCache(env) {
   try {
     const now = new Date();
     const start = new Date(now.getTime() - 24 * 3600000);
+    // Requests/errors "hôm nay" chỉ tính từ 0h UTC hôm nay (bộ đếm thật sự reset mỗi ngày,
+    // khớp với chu kỳ reset hạn mức Workers của Cloudflare) — tách riêng khỏi cửa sổ 24h
+    // trượt bên trên, cửa sổ đó chỉ dùng để vẽ biểu đồ 24h cho đầy đủ dữ liệu.
+    const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
     const query = "query WorkerStats($accountTag: string!, $scriptName: string!, $start: Time!, $end: Time!) {" +
       " viewer { accounts(filter: { accountTag: $accountTag }) {" +
       " workersInvocationsAdaptive(filter: { scriptName: $scriptName, datetimeHour_geq: $start, datetimeHour_leq: $end }, limit: 100, orderBy: [datetimeHour_ASC]) {" +
@@ -4403,7 +4542,7 @@ async function refreshCfAnalyticsCache(env) {
     const hourly = groups.map(function(g){
       const req = (g.sum && g.sum.requests) || 0;
       const err = (g.sum && g.sum.errors) || 0;
-      todayRequests += req; todayErrors += err;
+      if (new Date(g.dimensions.datetimeHour) >= todayStart) { todayRequests += req; todayErrors += err; }
       if (g.quantiles && g.quantiles.cpuTimeP90 != null) lastCpuP90 = g.quantiles.cpuTimeP90;
       return { hour: g.dimensions.datetimeHour, requests: req, errors: err };
     });
@@ -4438,7 +4577,9 @@ async function handleAdminOverview(request, env, corsHeaders) {
     },
     payments: { paidUsers: 0, stripe: 0, qr: 0, pendingQr: 0, revenueUsd: 0, revenueVnd: 0 },
     reports: { pending: 0, total: 0 },
-    userGrowth: []
+    userGrowth: [],
+    cronPurge: null,
+    failedLoginsToday: 0
   };
   try {
     var lsList = await env.LINKS_KV.list({ prefix: "lastseen:", limit: 1000 });
@@ -4453,6 +4594,13 @@ async function handleAdminOverview(request, env, corsHeaders) {
   try {
     var reports = await listReports(env);
     result.reports = { pending: reports.filter(function(r){ return !r.dismissed; }).length, total: reports.length };
+  } catch(e) {}
+  try {
+    var purgeLogRaw = await env.LINKS_KV.get("cron_purge_log");
+    if (purgeLogRaw) result.cronPurge = JSON.parse(purgeLogRaw);
+  } catch(e) {}
+  try {
+    result.failedLoginsToday = parseInt(await env.LINKS_KV.get("failedlogin_count:" + todayStr) || "0");
   } catch(e) {}
   try {
     var raw = await env.LINKS_KV.get("cf_analytics_cache");
@@ -4603,9 +4751,14 @@ function renderAppHtml(env) {
 .lang-dropdown .lang-item{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:8px;font-size:13px;cursor:pointer;color:var(--text);}
 .lang-dropdown .lang-item:hover{background:rgba(99,102,241,0.15);}
 .lang-dropdown .lang-item.active{color:var(--lang-active-color);font-weight:700;}
-#app{transition:opacity 0.13s ease;}
+#app{transition:opacity 0.18s ease, transform 0.18s ease;}
 @keyframes modalPop{from{opacity:0;transform:translateY(20px) scale(0.95);}to{opacity:1;transform:translateY(0) scale(1);}}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+#app .card{animation:fadeInUp 0.35s ease-out both;}
+#app .card:nth-of-type(2){animation-delay:0.05s;}
+#app .card:nth-of-type(3){animation-delay:0.1s;}
+#app .card:nth-of-type(4){animation-delay:0.15s;}
+#app .card:nth-of-type(n+5){animation-delay:0.2s;}
 .fade-in{animation:fadeInUp 0.25s ease-out;}
 @keyframes shimmer{0%{background-position:-200% 0;}100%{background-position:200% 0;}}
 .brand{transition:filter 0.3s ease;}
@@ -4716,7 +4869,7 @@ function renderAppHtml(env) {
 .sb-user-menu-item svg{color:var(--muted);flex-shrink:0;}
 .sb-user-menu-sep{height:1px;background:var(--border);margin:4px 0;}
 .sb-content{flex:1;padding:20px;overflow-x:hidden;}
-.sb-content #app{transition:opacity 0.13s ease;}
+.sb-content #app{transition:opacity 0.18s ease, transform 0.18s ease;}
 .sb-overlay{display:none;position:fixed;inset:0;background:var(--overlay-bg);backdrop-filter:blur(4px);z-index:25;}
 .sb-overlay.show{display:block;}
 .upsell-card{background:var(--upsell-bg);border:1px solid var(--upsell-border);border-radius:16px;padding:20px;overflow:visible;position:relative;}
@@ -5007,16 +5160,20 @@ footer{text-align:center;color:var(--muted2);font-size:12px;padding:30px 20px;}
 .qr-help-link:hover{opacity:1;color:var(--indigo);}
 .inline-help-link{color:var(--muted2);opacity:0.65;text-decoration:none;display:inline-flex;vertical-align:middle;margin-left:4px;}
 .inline-help-link:hover{opacity:1;color:var(--indigo);}
-.qr-analytics-banner{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,rgba(99,102,241,0.1),rgba(124,58,237,0.08));border:1px solid rgba(99,102,241,0.25);flex-wrap:wrap;}
-.qr-analytics-banner img{width:56px;height:56px;border-radius:10px;flex-shrink:0;}
+.qr-analytics-banner{display:flex;align-items:center;gap:16px;background:linear-gradient(135deg,rgba(99,102,241,0.1),rgba(124,58,237,0.08));border:1px solid rgba(99,102,241,0.25);flex-wrap:wrap;}
+.qr-analytics-banner-imgwrap{background:#fff;padding:10px;border-radius:12px;flex-shrink:0;line-height:0;}
+.qr-analytics-banner img{width:160px;height:160px;display:block;}
 .qr-analytics-banner-title{font-size:11px;font-weight:700;color:var(--indigo);text-transform:uppercase;letter-spacing:0.4px;display:flex;align-items:center;gap:4px;}
 .qr-analytics-banner-name{font-size:15px;font-weight:600;margin-top:2px;color:var(--text);}
 .qr-analytics-banner > a{margin-left:auto;}
+@media(max-width:640px){.qr-analytics-banner{justify-content:center;text-align:center;}.qr-analytics-banner > a{margin-left:0;width:100%;justify-content:center;}}
 .qr-quota-bar-wrap{margin:10px 0;font-size:12px;color:var(--muted);}
 .qr-quota-bar-track{width:100%;height:6px;border-radius:3px;background:var(--stat-bg);border:1px solid var(--border);overflow:hidden;margin-top:4px;}
 .qr-quota-bar-fill{height:100%;background:var(--indigo);border-radius:3px;transition:width 0.2s ease;}
 .qr-quota-bar-fill.warn{background:var(--amber);}
 .qr-dynamic-panel{margin-top:14px;padding-top:14px;border-top:1px dashed var(--border);}
+.qr-dyn-terms-badge{display:flex;align-items:center;gap:6px;margin-top:10px;font-size:12px;color:var(--muted);cursor:pointer;}
+.qr-dyn-terms-badge:hover{text-decoration:underline;}
 .qr-dyn-teaser{position:relative;background:linear-gradient(160deg,var(--stat-bg),rgba(99,102,241,0.08));border:1px solid var(--border);border-radius:12px;padding:16px;}
 .qr-dyn-teaser-lock{position:absolute;top:12px;right:12px;color:var(--muted2);opacity:0.7;}
 .qr-dyn-teaser h4{margin:0 26px 8px 0;font-size:14px;}
@@ -5070,6 +5227,7 @@ ${googleAdsGtagHead(env)}
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.9.2/lib/qr-code-styling.js"></script>
+<script src="/assets/qr-scanner.umd.min.js"></script>
 <script>
 var LANGS = ["vi", "en", "ko", "zh", "hi", "ja", "fr", "es"];
 
@@ -5155,6 +5313,15 @@ var i18n = {
     qr_dynamic_not_available_desc:"Nâng cấp lên Plus trở lên để tạo QR có thể đổi đích bất cứ lúc nào.",
     qr_dynamic_upgrade_btn:"Nâng cấp gói", qr_dynamic_created:"Đã lưu QR động!",
     qr_dynamic_created_desc:"Xem và quản lý ở mục “QR đã tạo” bên dưới.",
+    qr_dyn_terms_title:"Cam kết sử dụng QR động",
+    qr_dyn_terms_intro:"QR động cho phép bạn đổi đích liên kết bất cứ lúc nào mà không cần in lại mã QR mới — phù hợp cho menu nhà hàng, banner khuyến mãi, sản phẩm, sự kiện, danh thiếp... Trước khi sử dụng, vui lòng đọc và tuân thủ các quy tắc sau:",
+    qr_dyn_terms_rule1:"Không sử dụng QR động để lừa đảo, giả mạo thương hiệu/tổ chức, hoặc đánh cắp thông tin cá nhân (phishing).",
+    qr_dyn_terms_rule2:"Không trỏ đích đến nội dung vi phạm pháp luật Việt Nam: cờ bạc trái phép, mã độc/virus, khiêu dâm, hàng cấm.",
+    qr_dyn_terms_rule3:"Bạn chịu trách nhiệm hoàn toàn về nội dung đích mỗi khi thay đổi sau khi phát hành QR.",
+    qr_dyn_terms_rule4:"SHURL có quyền tạm ngưng hoặc xoá QR động vi phạm mà không cần báo trước.",
+    qr_dyn_terms_link:"Xem đầy đủ Điều khoản sử dụng",
+    qr_dyn_terms_agree_btn:"Tôi đã đọc và đồng ý", qr_dyn_terms_later_btn:"Để sau", qr_dyn_terms_close_btn:"Đóng",
+    qr_dyn_terms_badge:"Cam kết tuân thủ điều khoản QR động",
     qr_created_list_title:"QR đã tạo", qr_created_list_empty:"Bạn chưa tạo QR động nào.",
     qr_created_col_qr:"QR", qr_created_col_title:"Tên", qr_created_col_short:"Short URL", qr_created_col_owner:"Tên User", qr_created_col_target:"Đích hiện tại",
     qr_created_col_scans:"Lượt quét", qr_created_col_created:"Ngày tạo", qr_created_col_actions:"Thao tác",
@@ -5177,7 +5344,7 @@ var i18n = {
     col_link:"Link", col_dest:"Đích", col_clicks:"Clicks", col_status:"Trạng thái", col_created:"Ngày tạo",
     status:"Trạng thái", created:"Ngày tạo", actions:"Thao tác",
     copy:"Chép", copied:"Đã copy ✓", stats:"Thống kê", edit:"Sửa", del:"Xoá",
-    enabled:"Bật", disabled:"Tắt", deleted:"Đã xóa", undo_delete:"Hủy xóa", force_delete:"Xoá ngay",
+    enabled:"Bật", disabled:"Tắt", deleted:"Đã xóa", link_expired_badge:"Hết hạn", undo_delete:"Hủy xóa", force_delete:"Xoá ngay",
     delete_link_title:"Xóa link?", delete_link_desc:"Link sẽ bị gạch và tự xóa sau 24h. Bạn có thể khôi phục trong thời gian này.", btn_ok:"Đồng ý", btn_cancel:"Hủy", maintenance_feature_prefix:"Tính năng đang bảo trì",
     pricing_downgrade_blocked:"Bạn đang ở gói {tier}, không thể mua gói thấp hơn!", acct_session_active:"Đang hoạt động", analytics_stats_hint:"Bấm vào \\\"Thống kê\\\" trên mỗi link trong Short URLs để xem chi tiết.",
     btn_confirm:"Xác nhận", btn_understood:"Đã hiểu", contact_support_btn:"✉️ Liên hệ hỗ trợ",
@@ -5476,6 +5643,45 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     guide_admin_step2:"Quản lý dữ liệu và người dùng — Duyệt báo cáo, blacklist, voucher và thanh toán.",
     guide_admin_step3:"Kiểm tra các thiết lập quản trị — Bảo trì, bảo mật, nhật ký và thông báo.",
     guide_admin_cta:"Mở Admin",
+    guide_scanner_title:"Quét & Kiểm tra QR",
+    guide_scanner_desc:"Quét mã QR bằng camera hoặc ảnh tải lên, xem nội dung giải mã và kiểm tra độ an toàn trước khi bấm vào.",
+    guide_scanner_step1:"Bật camera hoặc tải ảnh QR lên.",
+    guide_scanner_step2:"Xem nội dung đã giải mã — link, văn bản, v.v.",
+    guide_scanner_step3:"Đọc cảnh báo an toàn trước khi mở link.",
+    scanner_page_title:"Quét & Kiểm tra QR",
+    scanner_camera_start:"Bắt Đầu Quét",
+    scanner_camera_stop:"Dừng Quét",
+    scanner_upload_label:"hoặc tải ảnh QR lên",
+    scanner_scan_again:"Quét mã khác",
+    scanner_mode_title:"Chọn Chế Độ Quét",
+    scanner_mode_camera:"Quét Từ Camera",
+    scanner_mode_file:"Quét Từ File",
+    scanner_camera_permission_hint:"Cho phép truy cập camera và hướng nó vào mã QR để quét.",
+    scanner_file_dropzone:"Chọn ảnh QR để tải lên",
+    scanner_result_title:"Kết Quả",
+    scanner_result_empty_title:"Không tìm thấy mã QR",
+    scanner_result_empty_desc:"Chọn chế độ quét và bắt đầu quét để xem kết quả ở đây.",
+    scanner_flash_on:"Bật đèn",
+    scanner_flash_off:"Tắt đèn",
+    scanner_switch_camera:"Đổi camera",
+    scanner_result_raw:"Nội dung giải mã",
+    scanner_result_domain:"Tên miền",
+    scanner_safety_ok:"An toàn — không phát hiện dấu hiệu đáng ngờ.",
+    scanner_safety_warning:"Cảnh báo — link này có dấu hiệu liên quan thanh toán hoặc nằm trong danh sách chặn. Cẩn thận trước khi mở.",
+    scanner_shurl_link_title:"Đây là Short URL của Shurl",
+    scanner_shurl_link_dest:"Đích hiện tại",
+    scanner_shurl_link_type_dynamic:"QR động — đích có thể đã bị đổi sau khi in",
+    scanner_shurl_link_type_static:"Link thường",
+    scanner_shurl_link_disabled:"Link này đã bị tắt.",
+    scanner_shurl_link_expired:"Link này đã hết hạn.",
+    scanner_shurl_link_password:"Link này có bảo vệ bằng mật khẩu.",
+    scanner_no_camera:"Trình duyệt không hỗ trợ camera hoặc bạn chưa cấp quyền truy cập.",
+    scanner_scanning_hint:"Đưa mã QR vào khung hình...",
+    scanner_decode_fail:"Không đọc được mã QR trong ảnh này. Thử ảnh rõ nét hơn.",
+    qr_print_check_title:"Kiểm tra trước khi in",
+    qr_print_check_ok:"Đã kiểm tra: QR này quét được.",
+    qr_print_check_fail:"QR này có thể khó quét — thử giảm logo, tăng kích cỡ hoặc tăng độ tương phản màu.",
+    qr_print_check_size_hint:"Khuyến nghị in tối thiểu 2×2cm khi quét gần bằng điện thoại, từ 5×5cm trở lên nếu quét xa hơn 30cm.",
     notif_title:"Thông báo", notif_empty:"Không có thông báo nào", notif_from:"Từ:", notif_new:"Mới", notif_ok:"Đã hiểu", crown_hint:"Xem hướng dẫn tính năng", crown_upgrade_to_unlock:"Nâng cấp để mở khóa tính năng này", demo_bulkqr_title:"Bulk QR — Tạo QR hàng loạt", demo_webhooks_title:"Webhooks — Tự động gửi sự kiện", demo_campaigns_title:"Campaigns — Quản lý nhóm link", demo_export_title:"Export — Xuất dữ liệu", demo_api_title:"API — Tích hợp hệ thống ngoài", demo_dashboard_title:"Dashboard — Quản lý Short URL", demo_bulkqr_s1_t:"Nhập nhiều URL vào ô văn bản", demo_bulkqr_s1_d:"Mỗi dòng 1 URL", demo_bulkqr_s2_t:"Bấm nút Tạo QR", demo_bulkqr_s2_d:"Hệ thống tạo QR cho từng URL", demo_bulkqr_s3_t:"Tải về tất cả QR", demo_bulkqr_s3_d:"File ZIP chứa tất cả QR Code", demo_webhooks_s1_t:"Thêm URL đích webhook", demo_webhooks_s1_d:"URL nhận thông báo khi có event", demo_webhooks_s2_t:"Khi ai đó click link", demo_webhooks_s2_d:"Webhook tự động POST event tới URL", demo_webhooks_s3_t:"Hệ thống bên ngoài nhận data", demo_webhooks_s3_d:"IP, quốc gia, thiết bị, thời gian", demo_campaigns_s1_t:"Tạo Campaign mới", demo_campaigns_s1_d:"Đặt tên và mô tả chiến dịch", demo_campaigns_s2_t:"Thêm Short URL vào Campaign", demo_campaigns_s2_d:"Nhiều link trong 1 nhóm", demo_campaigns_s3_t:"Xem Analytics tổng hợp", demo_campaigns_s3_d:"Thống kê tất cả link trong Campaign", demo_export_s1_t:"Chọn định dạng CSV hoặc JSON", demo_export_s1_d:"Xuất toàn bộ link và thống kê", demo_export_s2_t:"Bấm nút Export", demo_export_s2_d:"Hệ thống tổng hợp dữ liệu", demo_export_s3_t:"Tải file về máy", demo_export_s3_d:"File chứa tất cả link + clicks + ngày tạo", demo_api_s1_t:"Tạo API Token", demo_api_s1_d:"Token dùng để xác thực API", demo_api_s2_t:"Gửi POST /api/v1/shorten", demo_api_s2_d:"Tạo Short URL từ hệ thống ngoài", demo_api_s3_t:"Nhận kết quả JSON", demo_api_s3_d:"Short URL code + link đầy đủ", demo_dashboard_s1_t:"Tạo Short URL", demo_dashboard_s1_d:"Dán URL dài → tạo link ngắn", demo_dashboard_s2_t:"Quản lý link", demo_dashboard_s2_d:"Copy, QR, Analytics, Edit, Delete", demo_dashboard_s3_t:"Xem thống kê", demo_dashboard_s3_d:"Số link, tổng clicks", demo_anim_url:"URL", demo_anim_qr:"QR", demo_anim_ok:"✓", demo_anim_link_click:"Link click", demo_anim_event:"Event", demo_anim_post:"POST → URL", demo_anim_external:"External System", demo_anim_campaign:"Campaign", demo_anim_analytics:"Analytics", demo_anim_data:"Data", demo_anim_export:"Export", demo_anim_csv:"CSV/JSON", demo_anim_app:"App", demo_anim_url_long:"URL dài", demo_anim_clicks:"Clicks", api_tier_expired:"Gói của bạn đã hết hạn. Vui lòng nâng cấp để tiếp tục sử dụng API.", api_not_available:"Gói hiện tại chưa hỗ trợ API. Nâng cấp PRO hoặc SUPER để sử dụng.", api_quota_exceeded:"Bạn đã dùng hết hạn mức API", api_upgrade_to_continue:"Vui lòng nâng cấp để tiếp tục sử dụng.", api_upgrade_to_increase:"Vui lòng nâng cấp để tăng giới hạn.",
     feedback_title:"Góp ý & Hỗ trợ", feedback_btn:"Góp ý", feedback_type_bug:"Báo lỗi", feedback_type_feature:"Yêu cầu tính năng", feedback_type_question:"Hỏi đáp", feedback_type_other:"Khác", feedback_label_message:"Nội dung", feedback_placeholder:"Mô tả vấn đề, góp ý hoặc câu hỏi của bạn...", feedback_label_email:"Email (tùy chọn)", feedback_email_placeholder:"email@example.com", feedback_cancel:"Hủy", feedback_submit:"Gửi", feedback_success_title:"Đã gửi!", feedback_success_desc:"Cảm ơn bạn! Chúng tôi sẽ xem xét và phản hồi sớm.", feedback_close:"Đóng", feedback_error:"Có lỗi xảy ra, vui lòng thử lại.", admin_feedback_tab:"Góp ý", admin_no_feedback:"Chưa có góp ý nào.", acct_overview:"Tổng quan tài khoản", acct_total_clicks:"Tổng lượt click", acct_profile_title:"Hồ sơ tài khoản", acct_username:"Tên đăng nhập", acct_joined:"Ngày tham gia", acct_plan_title:"Gói hiện tại", acct_plan_active:"Đang sử dụng", acct_plan_running:"Đang hoạt động ✓", acct_plan_expired:"Đã hết hạn", acct_free:"Miễn phí", acct_joined_label:"Tham gia", acct_expiry_label:"Hết hạn", acct_start_label:"Bắt đầu", acct_upgrade_plan:"Nâng cấp gói", acct_manage_plan:"Quản lý gói", acct_pay_plan:"Gói", acct_pay_method:"Phương thức", acct_pay_amount:"Số tiền", acct_voucher_title:"Kích hoạt bằng mã Voucher", acct_voucher_hint:"Nhập mã voucher để kích hoạt ưu đãi hoặc gói dịch vụ.", acct_voucher_placeholder:"Nhập mã voucher", acct_voucher_btn:"Kích hoạt", acct_security_title:"Bảo mật", acct_2fa_enabled:"Đã bật ✓", acct_2fa_disabled:"Chưa bật", acct_session:"Phiên đăng nhập", acct_current_device:"Thiết bị hiện tại", acct_browser:"Trình duyệt", acct_bank_qr:"Ngân hàng QR", acct_pay_method_stripe:"Stripe", adm_notif_sys:"Thông báo hệ thống", adm_notif_empty:"Không có thông báo mới", adm_notif_read:"Đã đọc", adm_notif_unread:"Chưa đọc", adm_notif_delete:"Xóa", adm_notif_delete_confirm:"Xóa thông báo này?", adm_notif_deleted:"Đã xóa thông báo", adm_notif_not_found:"Không tìm thấy thông báo", adm_notif_missing_id:"Thiếu ID thông báo", adm_notif_from:"Từ", adm_notif_to:"Gửi tới", adm_notif_all_users:"Tất cả users", adm_notif_close:"Đóng", fb_detail_title:"Chi tiết góp ý", fb_detail_type:"Loại", fb_detail_sender:"Người gửi", fb_detail_anonymous:"Ẩn danh", fb_detail_page:"Trang", fb_detail_time:"Thời gian", fb_detail_status:"Trạng thái", fb_status_new:"Mới", fb_status_replied:"Đã phản hồi", fb_status_closed:"Đã đóng", fb_type_bug:"Báo lỗi", fb_type_feature:"Yêu cầu tính năng", fb_type_question:"Hỏi đáp", fb_type_other:"Khác", notif_mark_all_read:"Đánh dấu tất cả đã đọc", notif_marked_all:"Đã đọc tất cả",
   },
@@ -5552,6 +5758,15 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     qr_dynamic_not_available_desc:"Upgrade to Plus or above to create QR codes whose destination you can change anytime.",
     qr_dynamic_upgrade_btn:"Upgrade plan", qr_dynamic_created:"Dynamic QR saved!",
     qr_dynamic_created_desc:"View and manage it under “Created QRs” below.",
+    qr_dyn_terms_title:"Dynamic QR usage commitment",
+    qr_dyn_terms_intro:"Dynamic QR lets you change the destination link anytime without reprinting the QR code — great for restaurant menus, promo banners, products, events, business cards... Before using it, please read and follow these rules:",
+    qr_dyn_terms_rule1:"Don't use dynamic QR for fraud, brand/organization impersonation, or phishing for personal information.",
+    qr_dyn_terms_rule2:"Don't point the destination to illegal content: illegal gambling, malware/viruses, pornography, prohibited goods.",
+    qr_dyn_terms_rule3:"You are fully responsible for the destination content whenever you change it after the QR is published.",
+    qr_dyn_terms_rule4:"SHURL may suspend or delete a dynamic QR that violates these rules without prior notice.",
+    qr_dyn_terms_link:"View full Terms of Service",
+    qr_dyn_terms_agree_btn:"I have read and agree", qr_dyn_terms_later_btn:"Later", qr_dyn_terms_close_btn:"Close",
+    qr_dyn_terms_badge:"Committed to dynamic QR usage terms",
     qr_created_list_title:"Created QRs", qr_created_list_empty:"You haven't created any dynamic QR yet.",
     qr_created_col_qr:"QR", qr_created_col_title:"Name", qr_created_col_short:"Short URL", qr_created_col_owner:"Username", qr_created_col_target:"Current destination",
     qr_created_col_scans:"Scans", qr_created_col_created:"Created", qr_created_col_actions:"Actions",
@@ -7569,10 +7784,11 @@ function guideCard(page){
     api: '<svg width="56" height="56" viewBox="0 0 56 56" fill="none"><rect x="1" y="4" width="16" height="11" rx="2" stroke="var(--indigo)" stroke-width="2" fill="none"/><circle cx="5" cy="8" r="1.2" fill="var(--indigo)"/><circle cx="5" cy="11" r="1.2" fill="var(--indigo)"/><path d="M8 8h7M8 11h5" stroke="var(--indigo)" stroke-width="1.2"/><text x="2" y="3" font-size="4" fill="var(--muted)" font-family="sans-serif">App</text><path d="M17 9.5h4" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round"/><path d="M21 9.5l1.5 1.5L21 12.5" stroke="var(--muted)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><rect x="25" y="4" width="14" height="11" rx="2" stroke="var(--sky)" stroke-width="2" fill="var(--sky)" opacity="0.08"/><rect x="25" y="4" width="14" height="11" rx="2" stroke="var(--sky)" stroke-width="2" fill="none"/><text x="28" y="11" font-size="6" fill="var(--sky)" font-family="monospace" font-weight="bold">API</text><path d="M39 9.5h4" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round"/><path d="M43 9.5l1.5 1.5L43 12.5" stroke="var(--muted)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><rect x="47" y="4" width="8" height="11" rx="2" stroke="var(--green)" stroke-width="2" fill="none"/><text x="48.5" y="10" font-size="3.5" fill="var(--green)" font-family="monospace">SHORT</text><text x="49" y="13" font-size="3.5" fill="var(--green)" font-family="monospace">URL</text><path d="M9 15v5M7 18l2 2 2-2" stroke="var(--muted)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 15v5M30 18l2 2 2-2" stroke="var(--muted)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><rect x="1" y="24" width="54" height="10" rx="2" stroke="var(--muted)" stroke-width="1" fill="none" opacity="0.2"/><text x="4" y="31" font-size="6" fill="var(--muted)" font-family="sans-serif">POST /api/v1/shorten</text></svg>',
     pricing: '<svg width="56" height="56" viewBox="0 0 56 56" fill="none"><rect x="4" y="8" width="14" height="20" rx="3" stroke="var(--muted)" stroke-width="2" fill="none"/><rect x="21" y="4" width="14" height="24" rx="3" stroke="var(--indigo)" stroke-width="2" fill="none"/><rect x="38" y="12" width="14" height="16" rx="3" stroke="var(--sky)" stroke-width="2" fill="none"/><path d="M8 16h6M25 12h6M42 20h6" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round"/><path d="M4 34h48" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/><path d="M14 40l4 4 8-10" stroke="var(--green)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     account: '<svg width="56" height="56" viewBox="0 0 56 56" fill="none"><circle cx="28" cy="16" r="8" stroke="var(--indigo)" stroke-width="2" fill="none"/><path d="M14 44c0-8 6-12 14-12s14 4 14 12" stroke="var(--indigo)" stroke-width="2" fill="none" stroke-linecap="round"/><rect x="6" y="6" width="44" height="44" rx="6" stroke="var(--muted)" stroke-width="1.5" fill="none" opacity="0.2"/><path d="M40 12l3 3 5-5" stroke="var(--green)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    admin: '<svg width="56" height="56" viewBox="0 0 56 56" fill="none"><path d="M28 6L8 14v12c0 12 8 20 20 24 12-4 20-12 20-24V14L28 6z" stroke="var(--indigo)" stroke-width="2" fill="none"/><path d="M20 28l6 6 12-12" stroke="var(--green)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="28" cy="28" r="3" fill="var(--indigo)" opacity="0.3"/></svg>'
+    admin: '<svg width="56" height="56" viewBox="0 0 56 56" fill="none"><path d="M28 6L8 14v12c0 12 8 20 20 24 12-4 20-12 20-24V14L28 6z" stroke="var(--indigo)" stroke-width="2" fill="none"/><path d="M20 28l6 6 12-12" stroke="var(--green)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="28" cy="28" r="3" fill="var(--indigo)" opacity="0.3"/></svg>',
+    scanner: '<svg width="56" height="56" viewBox="0 0 56 56" fill="none"><path d="M4 16V9a3 3 0 0 1 3-3h7" stroke="var(--indigo)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M42 6h7a3 3 0 0 1 3 3v7" stroke="var(--indigo)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M52 40v7a3 3 0 0 1-3 3h-7" stroke="var(--indigo)" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M14 50H7a3 3 0 0 1-3-3v-7" stroke="var(--indigo)" stroke-width="2.5" fill="none" stroke-linecap="round"/><rect x="16" y="16" width="8" height="8" fill="var(--sky)" opacity="0.7"/><rect x="32" y="16" width="8" height="8" fill="var(--sky)" opacity="0.7"/><rect x="16" y="32" width="8" height="8" fill="var(--sky)" opacity="0.7"/><rect x="32" y="32" width="8" height="8" fill="var(--green)"/><path d="M4 28h48" stroke="var(--green)" stroke-width="2" stroke-dasharray="3 3" opacity="0.6"/></svg>'
   };
-  var titles = { home: t("guide_home_title"), shorturls: t("guide_shorturls_title"), dashboard: t("guide_dashboard_title"), bulkqr: t("guide_bulkqr_title"), analytics: t("guide_analytics_title"), webhooks: t("guide_webhooks_title"), export: t("guide_export_title"), campaigns: t("guide_campaigns_title"), team: t("guide_team_title"), api: t("guide_api_title"), pricing: t("guide_pricing_title"), account: t("guide_account_title"), admin: t("guide_admin_title") };
-  var descs = { home: t("guide_home_desc"), shorturls: t("guide_shorturls_desc"), dashboard: t("guide_dashboard_desc"), bulkqr: t("guide_bulkqr_desc"), analytics: t("guide_analytics_desc"), webhooks: t("guide_webhooks_desc"), export: t("guide_export_desc"), campaigns: t("guide_campaigns_desc"), team: t("guide_team_desc"), api: t("guide_api_desc"), pricing: t("guide_pricing_desc"), account: t("guide_account_desc"), admin: t("guide_admin_desc") };
+  var titles = { home: t("guide_home_title"), shorturls: t("guide_shorturls_title"), dashboard: t("guide_dashboard_title"), bulkqr: t("guide_bulkqr_title"), analytics: t("guide_analytics_title"), webhooks: t("guide_webhooks_title"), export: t("guide_export_title"), campaigns: t("guide_campaigns_title"), team: t("guide_team_title"), api: t("guide_api_title"), pricing: t("guide_pricing_title"), account: t("guide_account_title"), admin: t("guide_admin_title"), scanner: t("guide_scanner_title") };
+  var descs = { home: t("guide_home_desc"), shorturls: t("guide_shorturls_desc"), dashboard: t("guide_dashboard_desc"), bulkqr: t("guide_bulkqr_desc"), analytics: t("guide_analytics_desc"), webhooks: t("guide_webhooks_desc"), export: t("guide_export_desc"), campaigns: t("guide_campaigns_desc"), team: t("guide_team_desc"), api: t("guide_api_desc"), pricing: t("guide_pricing_desc"), account: t("guide_account_desc"), admin: t("guide_admin_desc"), scanner: t("guide_scanner_desc") };
   var steps = {
     home: [t("guide_home_step1"), t("guide_home_step2"), t("guide_home_step3")],
     shorturls: [t("guide_shorturls_step1"), t("guide_shorturls_step2"), t("guide_shorturls_step3")],
@@ -7586,7 +7802,8 @@ function guideCard(page){
     api: [t("guide_api_step1"), t("guide_api_step2"), t("guide_api_step3")],
     pricing: [t("guide_pricing_step1"), t("guide_pricing_step2"), t("guide_pricing_step3")],
     account: [t("guide_account_step1"), t("guide_account_step2"), t("guide_account_step3")],
-    admin: [t("guide_admin_step1"), t("guide_admin_step2"), t("guide_admin_step3")]
+    admin: [t("guide_admin_step1"), t("guide_admin_step2"), t("guide_admin_step3")],
+    scanner: [t("guide_scanner_step1"), t("guide_scanner_step2"), t("guide_scanner_step3")]
   };
   var stepsHtml = steps[page].map(function(s, i) {
     return '<div class="guide-step"><span class="guide-step-num">' + (i + 1) + '</span><span>' + s + '</span></div>';
@@ -7910,6 +8127,7 @@ function fmtDate(iso){
   try { var d = new Date(iso); return d.toLocaleDateString("vi-VN") + " " + d.toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"}); } catch(e){ return iso; }
 }
 function fmtNum(n){ n = n || 0; return n.toLocaleString("vi-VN"); }
+function isLinkExpired(l){ return !!(l.expiryDate && new Date(l.expiryDate) < new Date()); }
 function isProOrAbove(user){
   return user && (user.role === "pro" || user.role === "super" || user.role === "admin");
 }
@@ -8511,41 +8729,43 @@ function toggleAdminNotifications() {
   panel.id = "adminNotifPanel";
   panel.style.cssText = "position:fixed;top:60px;right:16px;width:320px;max-height:400px;overflow-y:auto;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;box-shadow:0 8px 32px rgba(0,0,0,0.2);z-index:9999;";
   
-  var html = '<div style="font-weight:700;font-size:14px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border);">🔔 Thông báo</div>';
-  
-  if (n.payments.length > 0) {
-    html += '<div style="font-weight:700;font-size:12px;color:var(--muted);padding:4px 0;">Đơn thanh toán chờ duyệt (' + n.payments.length + ')</div>';
-    n.payments.slice(0, 5).forEach(function(p) {
-      html += '<div class="notif-item" data-nav="admin" style="padding:6px 8px;border-radius:6px;cursor:pointer;">💳 ' + esc(p.tier) + ' — ' + esc(p.username) + ' — ' + (p.vndPrice ? p.vndPrice.toLocaleString() + 'đ' : '') + '</div>';
-    });
+  var hasWork = n.payments.length > 0 || n.reports.length > 0;
+  var hasNotifs = n.adminNotifs && n.adminNotifs.length > 0;
+  var html = '<div style="font-weight:700;font-size:14px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border);">' + li('bell', 16) + ' Thông báo</div>';
+
+  if (hasWork) {
+    html += '<div style="font-weight:700;font-size:11px;color:var(--indigo);text-transform:uppercase;letter-spacing:0.4px;padding:4px 0;">Cần xử lý</div>';
+    if (n.payments.length > 0) {
+      html += '<div style="font-weight:600;font-size:12px;color:var(--muted);padding:4px 0;">Đơn thanh toán chờ duyệt (' + n.payments.length + ')</div>';
+      n.payments.slice(0, 5).forEach(function(p) {
+        html += '<div class="notif-item" data-nav="admin-qrpayments" style="padding:6px 8px;border-radius:6px;cursor:pointer;">💳 ' + esc(p.tier) + ' — ' + esc(p.username) + ' — ' + (p.vndPrice ? p.vndPrice.toLocaleString() + 'đ' : '') + '</div>';
+      });
+    }
+    if (n.reports.length > 0) {
+      html += '<div style="font-weight:600;font-size:12px;color:var(--muted);padding:4px 0;margin-top:8px;">Báo cáo vi phạm (' + n.reports.length + ')</div>';
+      n.reports.slice(0, 5).forEach(function(r) {
+        html += '<div class="notif-item" data-nav="admin-reports" style="padding:6px 8px;border-radius:6px;cursor:pointer;">' + li("alert", 12) + ' ' + esc(r.reason || r.url || 'Báo cáo') + '</div>';
+      });
+    }
   }
-  if (n.reports.length > 0) {
-    html += '<div style="font-weight:700;font-size:12px;color:var(--muted);padding:4px 0;margin-top:8px;">Báo cáo vi phạm (' + n.reports.length + ')</div>';
-    n.reports.slice(0, 5).forEach(function(r) {
-      html += '<div class="notif-item" data-nav="admin" style="padding:6px 8px;border-radius:6px;cursor:pointer;">' + li("alert", 12) + ' ' + esc(r.reason || r.url || 'Báo cáo') + '</div>';
-    });
-  }
-  if (n.adminNotifs && n.adminNotifs.length > 0) {
-    html += '<div style="font-weight:700;font-size:12px;color:var(--muted);padding:4px 0;margin-top:8px;">' + t("adm_notif_sys") + ' ("' + n.adminNotifs.length + ')</div>';
+  if (hasNotifs) {
+    html += '<div style="font-weight:700;font-size:11px;color:var(--indigo);text-transform:uppercase;letter-spacing:0.4px;padding:4px 0;margin-top:' + (hasWork ? '10px' : '0') + ';">' + t("adm_notif_sys") + '</div>';
     n.adminNotifs.slice(0, 5).forEach(function(an) {
       var iconMap = { info: "i", warning: "!", success: "v", danger: "x", feedback: "fb" };
       var icon = iconMap[an.type] || "*";
       html += '<div class="notif-item" data-nav="admin-notif" data-notifid="' + esc(an.id) + '" style="padding:6px 8px;border-radius:6px;cursor:pointer;">[' + icon + '] ' + esc(an.title) + ' - <span style="font-size:11px;color:var(--muted);">' + esc(an.message.substring(0, 80)) + '</span></div>';
     });
   }
-  if (n.payments.length === 0 && n.reports.length === 0 && (!n.adminNotifs || n.adminNotifs.length === 0)) {
-    html += '<div style="padding:8px;color:var(--muted);font-size:13px;">' + t("adm_notif_empty") + '<"/div>';
+  if (!hasWork && !hasNotifs) {
+    html += '<div style="padding:8px;color:var(--muted);font-size:13px;">' + t("adm_notif_empty") + '</div>';
   }
-  // Link to admin notifications tab
-  html += '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);"><a href="#/admin" onclick="closeNotifPanelAndGoNotif()" style="display:block;text-align:center;padding:8px;border-radius:6px;background:rgba(99,102,241,0.1);color:#818cf1;font-weight:600;font-size:13px;text-decoration:none;">Xem tất cả thông báo</a></div>';
-  // Link to admin broadcast
-  html += '<a href="#/admin" onclick="closeNotifPanelAndBroadcast()" style="display:block;text-align:center;margin-top:4px;padding:8px;border-radius:6px;background:rgba(16,185,129,0.1);color:#10b981;font-weight:600;font-size:13px;text-decoration:none;">Gửi thông báo</a>';
-  function closeNotifPanelAndGoNotif() { var p = document.getElementById("adminNotifPanel"); if (p) p.remove(); setTimeout(function(){ navigate("admin"); setTimeout(function(){ adminTab = "notifications"; render(); }, 200); }, 100); }
-  function closeNotifPanelAndBroadcast() { var p = document.getElementById("adminNotifPanel"); if (p) p.remove(); setTimeout(function(){ navigate("admin"); setTimeout(function(){ adminTab = "notifications"; render(); }, 200); }, 100); }
-  
+  // Single link to the notifications tab (view sent history + compose a new one — same page)
+  html += '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);"><a href="#/admin" onclick="closeNotifPanelAndGoTab(&#39;notifications&#39;)" style="display:block;text-align:center;padding:8px;border-radius:6px;background:rgba(99,102,241,0.1);color:#818cf1;font-weight:600;font-size:13px;text-decoration:none;">Quản lý thông báo</a></div>';
+  function closeNotifPanelAndGoTab(tab) { var p = document.getElementById("adminNotifPanel"); if (p) p.remove(); setTimeout(function(){ navigate("admin"); setTimeout(function(){ adminTab = tab; render(); }, 200); }, 100); }
+
   panel.innerHTML = html;
   document.body.appendChild(panel);
-  
+
   // Attach event listeners instead of inline handlers
   var items = panel.querySelectorAll(".notif-item");
   items.forEach(function(item) {
@@ -8556,8 +8776,14 @@ function toggleAdminNotifications() {
       if (nav === "admin-notif") {
         var notifId = this.getAttribute("data-notifid");
         api("/api/notifications/" + encodeURIComponent(notifId), "POST").catch(function(){});
-        navigate("admin");
-        setTimeout(function(){ adminTab = "notifications"; render(); }, 200);
+        closeNotifPanelAndGoTab("notifications");
+        return;
+      } else if (nav === "admin-qrpayments") {
+        closeNotifPanelAndGoTab("qrpayments");
+        return;
+      } else if (nav === "admin-reports") {
+        closeNotifPanelAndGoTab("reports");
+        return;
       } else if (nav) {
         navigate(nav);
       }
@@ -8591,6 +8817,7 @@ function renderNav() {
   html += sbItem("dashboard", "chart", tr("dashboard", "Bảng điều khiển"));
   html += '<div class="sb-section-label">Links</div>';
   html += sbItem("bulkqr", "qr", "QR Codes");
+  html += sbItem("scanner", "scan", "Scanner QR");
   html += '<div class="sb-section-label">Tools</div>';
   html += sbItem("bulk", "package", "Bulk");
   html += sbItem("webhooks", "zap", "Webhooks");
@@ -8706,11 +8933,12 @@ function render(){
   var app = document.getElementById("app");
   var authRoutes = ["dashboard","team","campaigns","admin","account"];
   if (authRoutes.indexOf(route) !== -1 && !state.user){ navigate("login"); return; }
-  var majorRoutes = ["home","bulkqr","login","register","forgot-password","dashboard","bulk","api","webhooks","export","team","campaigns","account","pricing","admin","terms","privacy"];
+  var majorRoutes = ["home","bulkqr","scanner","login","register","forgot-password","dashboard","bulk","api","webhooks","export","team","campaigns","account","pricing","admin","terms","privacy"];
   var isMajor = majorRoutes.indexOf(route) !== -1 || route.indexOf("reset-password") === 0;
   function doRender(){
     if (route === "home") renderHome(app);
     else if (route === "bulkqr") { renderBulkQR(app); bindCrownHints(); }
+    else if (route === "scanner") renderScanner(app);
     else if (route === "login") renderLogin(app);
     else if (route === "register") renderRegister(app);
     else if (route === "forgot-password") renderForgotPassword(app);
@@ -8730,10 +8958,12 @@ function render(){
     else if (route.indexOf("analytics/") === 0) renderAnalytics(app, decodeURIComponent(route.slice(10)));
     else app.innerHTML = '<div class="card"><p class="sub">Không tìm thấy trang.</p></div>';
     app.style.opacity = "1";
+    app.style.transform = "none";
   }
   if (isMajor){
     app.style.opacity = "0";
-    setTimeout(doRender, 130);
+    app.style.transform = "translateY(6px) scale(0.99)";
+    setTimeout(doRender, 160);
   } else {
     doRender();
   }
@@ -8958,6 +9188,7 @@ function updateLinkList(){
         (isAdmin ? '<td style="font-size:12px;color:var(--muted2);">' + esc(l.owner || "") + '</td>' : '') +
         '<td>' + fmtNum(l.totalClicks) + '</td>' +
         '<td>' + (deleted ? '<span class="badge badge-guest">' + t("deleted") + '</span>' :
+                   isLinkExpired(l) ? '<span class="badge badge-guest">' + t("link_expired_badge") + '</span>' :
                    l.isEnabled === false ? '<span class="badge badge-guest">' + t("disabled") + '</span>' :
                    '<span class="badge badge-free">' + t("enabled") + '</span>') + '</td>' +
         '<td style="white-space:nowrap;font-size:12px;color:var(--muted);">' + fmtDate(l.createdAt) + '</td>' +
@@ -9483,6 +9714,7 @@ function renderDashboard(app){
         (isAdmin ? '<td style="font-size:12px;color:var(--muted2);white-space:nowrap;font-weight:600;">' + esc(l.owner || "") + '</td>' : '') +
         '<td>' + fmtNum(l.totalClicks) + '</td>' +
         '<td>' + (deleted ? '<span class="badge badge-guest">' + t("deleted") + '</span>' :
+                   isLinkExpired(l) ? '<span class="badge badge-guest">' + t("link_expired_badge") + '</span>' :
                    l.isEnabled === false ? '<span class="badge badge-guest">' + t("disabled") + '</span>' :
                    '<span class="badge badge-free">' + t("enabled") + '</span>') + '</td>' +
         '<td style="white-space:nowrap;font-size:12px;color:var(--muted);">' + fmtDate(l.createdAt) + '</td>' +
@@ -9676,6 +9908,194 @@ function openEditModal(link){
   };
 }
 
+// ---------- SCANNER QR (Quét & Kiểm tra QR) ----------
+function renderScanner(app){
+  app.innerHTML = guideCard("scanner") +
+    '<div class="page-head"><h1>' + li('scan', 24) + ' ' + t("scanner_page_title") + '</h1></div>' +
+    '<div class="qr-workspace">' +
+    '<div>' +
+      '<div class="card">' +
+        '<h3 style="margin-top:0;">' + li('scan', 16) + ' ' + t("scanner_mode_title") + '</h3>' +
+        '<div style="display:flex;gap:10px;flex-wrap:wrap;">' +
+          '<button type="button" class="btn btn-primary" id="scannerModeCameraBtn" style="flex:1;justify-content:center;min-width:160px;">' + li('camera', 14) + ' ' + t("scanner_mode_camera") + '</button>' +
+          '<button type="button" class="btn btn-ghost" id="scannerModeFileBtn" style="flex:1;justify-content:center;min-width:160px;">' + li('upload', 14) + ' ' + t("scanner_mode_file") + '</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="card" id="scannerCameraSection">' +
+        '<h3 style="margin-top:0;">' + li('camera', 16) + ' ' + t("scanner_mode_camera") + '</h3>' +
+        '<div class="qr-csv-drop" style="border-style:solid;background:rgba(56,189,248,0.08);border-color:rgba(56,189,248,0.3);color:var(--text);text-align:left;display:flex;gap:8px;align-items:center;">' + li('info', 14) + ' <span>' + t("scanner_camera_permission_hint") + '</span></div>' +
+        '<div id="scannerCameraBox" style="margin-top:12px;border:1px solid var(--border);border-radius:12px;min-height:260px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:var(--stat-bg);position:relative;">' +
+          '<div id="scannerCameraPlaceholder" style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:20px;">' +
+            '<div style="opacity:0.35;">' + li('camera', 48) + '</div>' +
+            '<button type="button" class="btn btn-primary" id="scannerCameraBtn">' + li('scan', 14) + ' ' + t("scanner_camera_start") + '</button>' +
+          '</div>' +
+          '<video id="scannerVideo" playsinline muted style="width:100%;display:none;"></video>' +
+        '</div>' +
+        '<div id="scannerCameraControls" style="display:none;gap:10px;justify-content:center;margin-top:10px;flex-wrap:wrap;">' +
+          '<button type="button" class="btn btn-ghost btn-sm" id="scannerFlashBtn" style="display:none;">' + li('zap', 12) + ' ' + t("scanner_flash_on") + '</button>' +
+          '<button type="button" class="btn btn-ghost btn-sm" id="scannerSwitchBtn">' + li('refresh_cw', 12) + ' ' + t("scanner_switch_camera") + '</button>' +
+        '</div>' +
+        '<p class="hint" id="scannerHint" style="text-align:center;display:none;margin-top:8px;">' + t("scanner_scanning_hint") + '</p>' +
+        '<div id="scannerMsg"></div>' +
+      '</div>' +
+      '<div class="card" id="scannerFileSection" style="display:none;">' +
+        '<h3 style="margin-top:0;">' + li('upload', 16) + ' ' + t("scanner_mode_file") + '</h3>' +
+        '<label class="qr-csv-drop" style="cursor:pointer;display:block;padding:30px 14px;">' + li('upload', 20) + '<br><span style="margin-top:6px;display:inline-block;">' + t("scanner_file_dropzone") + '</span>' +
+        '<input type="file" id="scannerFileInput" accept="image/*" style="display:none;"></label>' +
+      '</div>' +
+    '</div>' +
+    '<div class="card qr-preview-card" id="scannerResultCard" style="text-align:left;">' +
+      '<h3 style="margin-top:0;">' + li('scan', 16) + ' ' + t("scanner_result_title") + '</h3>' +
+      '<div id="scannerResultBody">' + scannerEmptyResultHtml() + '</div>' +
+    '</div>' +
+    '</div>';
+
+  var video = document.getElementById("scannerVideo");
+  var cameraPlaceholder = document.getElementById("scannerCameraPlaceholder");
+  var cameraControls = document.getElementById("scannerCameraControls");
+  var flashBtn = document.getElementById("scannerFlashBtn");
+  var switchBtn = document.getElementById("scannerSwitchBtn");
+  var cameraBtn = document.getElementById("scannerCameraBtn");
+  var fileInput = document.getElementById("scannerFileInput");
+  var hint = document.getElementById("scannerHint");
+  var msg = document.getElementById("scannerMsg");
+  var resultBody = document.getElementById("scannerResultBody");
+  var modeCameraBtn = document.getElementById("scannerModeCameraBtn");
+  var modeFileBtn = document.getElementById("scannerModeFileBtn");
+  var cameraSection = document.getElementById("scannerCameraSection");
+  var fileSection = document.getElementById("scannerFileSection");
+  var qrScannerInstance = null;
+  var scanning = false;
+  var facingMode = "environment";
+
+  function setMode(mode){
+    stopCamera();
+    var isCamera = mode !== "file";
+    cameraSection.style.display = isCamera ? "block" : "none";
+    fileSection.style.display = isCamera ? "none" : "block";
+    modeCameraBtn.className = "btn " + (isCamera ? "btn-primary" : "btn-ghost");
+    modeFileBtn.className = "btn " + (isCamera ? "btn-ghost" : "btn-primary");
+  }
+  modeCameraBtn.onclick = function(){ setMode("camera"); };
+  modeFileBtn.onclick = function(){ setMode("file"); };
+
+  function stopCamera(){
+    scanning = false;
+    if (qrScannerInstance) { qrScannerInstance.destroy(); qrScannerInstance = null; }
+    video.style.display = "none";
+    cameraPlaceholder.style.display = "flex";
+    cameraControls.style.display = "none";
+    flashBtn.style.display = "none";
+    hint.style.display = "none";
+    cameraBtn.innerHTML = li('scan', 14) + ' ' + t("scanner_camera_start");
+  }
+
+  function startCamera(){
+    if (typeof QrScanner === "undefined" || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      msg.innerHTML = '<div class="msg msg-error">' + t("scanner_no_camera") + '</div>';
+      return;
+    }
+    video.style.display = "block";
+    cameraPlaceholder.style.display = "none";
+    qrScannerInstance = new QrScanner(video, function(result){
+      stopCamera();
+      handleDecoded(result.data);
+    }, {
+      highlightScanRegion: true,
+      highlightCodeOutline: true,
+      returnDetailedScanResult: true,
+      preferredCamera: facingMode
+    });
+    qrScannerInstance.start().then(function(){
+      hint.style.display = "block";
+      cameraControls.style.display = "flex";
+      msg.innerHTML = "";
+      scanning = true;
+      cameraBtn.innerHTML = li('scan', 14) + ' ' + t("scanner_camera_stop");
+      qrScannerInstance.hasFlash().then(function(has){
+        flashBtn.style.display = has ? "inline-flex" : "none";
+      }).catch(function(){});
+    }).catch(function(){
+      msg.innerHTML = '<div class="msg msg-error">' + t("scanner_no_camera") + '</div>';
+      stopCamera();
+    });
+  }
+
+  cameraBtn.onclick = function(){ if (scanning) stopCamera(); else startCamera(); };
+
+  flashBtn.onclick = function(){
+    if (!qrScannerInstance) return;
+    qrScannerInstance.toggleFlash().then(function(){
+      flashBtn.innerHTML = li('zap', 12) + ' ' + (qrScannerInstance.isFlashOn() ? t("scanner_flash_off") : t("scanner_flash_on"));
+    }).catch(function(){});
+  };
+
+  switchBtn.onclick = function(){
+    if (!qrScannerInstance) return;
+    facingMode = facingMode === "environment" ? "user" : "environment";
+    qrScannerInstance.setCamera(facingMode).catch(function(){});
+  };
+
+  fileInput.addEventListener("change", function(){
+    var file = fileInput.files && fileInput.files[0];
+    if (!file) return;
+    if (typeof QrScanner === "undefined") {
+      resultBody.innerHTML = '<div class="msg msg-error">' + t("scanner_decode_fail") + '</div>' + scannerEmptyResultHtml();
+      fileInput.value = "";
+      return;
+    }
+    QrScanner.scanImage(file, { returnDetailedScanResult: true }).then(function(result){
+      handleDecoded(result.data);
+    }).catch(function(){
+      resultBody.innerHTML = '<div class="msg msg-error">' + t("scanner_decode_fail") + '</div>' + scannerEmptyResultHtml();
+    }).then(function(){
+      fileInput.value = "";
+    });
+  });
+
+  function handleDecoded(text){
+    resultBody.innerHTML = '<p class="hint">' + t("processing") + '</p>';
+    fetch("/api/inspect?data=" + encodeURIComponent(text)).then(function(r){ return r.json(); }).then(function(info){
+      resultBody.innerHTML = scannerResultHtml(text, info);
+      var again = document.getElementById("scannerAgainBtn");
+      if (again) again.onclick = function(){ resultBody.innerHTML = scannerEmptyResultHtml(); };
+    }).catch(function(){
+      resultBody.innerHTML = '<div class="msg msg-error">' + t("scanner_decode_fail") + '</div>';
+    });
+  }
+}
+
+function scannerEmptyResultHtml(){
+  return '<div style="text-align:center;padding:40px 10px;color:var(--muted);">' +
+    '<div style="opacity:0.3;margin-bottom:10px;display:flex;justify-content:center;">' + li('scan', 40) + '</div>' +
+    '<div style="font-weight:600;color:var(--text);margin-bottom:4px;">' + t("scanner_result_empty_title") + '</div>' +
+    '<div style="font-size:13px;">' + t("scanner_result_empty_desc") + '</div>' +
+    '</div>';
+}
+
+function scannerResultHtml(raw, info){
+  var html = '<div style="font-size:12px;color:var(--muted);margin-bottom:4px;">' + t("scanner_result_raw") + '</div>';
+  html += '<div style="font-size:14px;font-weight:600;word-break:break-all;margin-bottom:12px;">' + esc(raw) + '</div>';
+
+  if (info.type === "shurl_link") {
+    html += '<div class="msg msg-ok">' + t("scanner_shurl_link_title") + '</div>';
+    html += '<div style="font-size:13px;line-height:1.8;">';
+    html += '<b>' + t("scanner_shurl_link_dest") + ':</b> ' + esc(info.destination) + '<br>';
+    html += (info.isDynamic ? t("scanner_shurl_link_type_dynamic") : t("scanner_shurl_link_type_static")) + '<br>';
+    if (!info.isEnabled) html += '<span style="color:var(--red);">' + t("scanner_shurl_link_disabled") + '</span><br>';
+    if (info.isExpired) html += '<span style="color:var(--red);">' + t("scanner_shurl_link_expired") + '</span><br>';
+    if (info.hasPassword) html += t("scanner_shurl_link_password") + '<br>';
+    html += '</div>';
+  } else if (info.type === "url") {
+    var unsafe = info.isPaymentLike || info.isBlacklisted;
+    html += '<div class="msg ' + (unsafe ? 'msg-error' : 'msg-ok') + '">' + (unsafe ? t("scanner_safety_warning") : t("scanner_safety_ok")) + '</div>';
+    html += '<div style="font-size:13px;"><b>' + t("scanner_result_domain") + ':</b> ' + esc(info.hostname) + '</div>';
+  }
+
+  html += '<div style="margin-top:14px;"><button type="button" class="btn btn-ghost btn-sm" id="scannerAgainBtn">' + t("scanner_scan_again") + '</button></div>';
+  return html;
+}
+
 // ---------- BULK ----------
 function renderBulk(app){
   var limits = state.limits || {};
@@ -9812,7 +10232,8 @@ function renderBulkQR(app){
     '<input type="text" id="qrWsDynamicTitle" class="qr-existing-select" placeholder="' + t("qr_dynamic_title_placeholder") + '">' +
     '<div class="qr-quota-bar-wrap" id="qrDynQuotaBar"></div>' +
     '<button type="button" class="btn btn-primary btn-sm" id="qrWsDynamicSaveBtn" style="width:100%;margin-top:8px;" onclick="qrWsSaveDynamic()">' + li('save', 12) + ' ' + t("qr_dynamic_save_btn") + '</button>' +
-    '<div id="qrWsDynamicMsg" style="margin-top:8px;"></div>'
+    '<div id="qrWsDynamicMsg" style="margin-top:8px;"></div>' +
+    '<div class="qr-dyn-terms-badge" onclick="qrDynShowTermsModal(null)">' + li('shield', 14) + ' ' + t("qr_dyn_terms_badge") + '</div>'
   ) : (
     '<div class="qr-dyn-teaser">' +
     '<div class="qr-dyn-teaser-lock">' + li('lock_icon', 20) + '</div>' +
@@ -9923,6 +10344,11 @@ function renderBulkQR(app){
     '<button class="btn btn-primary btn-sm" id="qrWsDlPngBtn" disabled>' + li('download', 12) + ' ' + t("qr_download") + '</button>' +
     '<button class="btn btn-ghost btn-sm" id="qrWsDlSvgBtn" disabled>' + t("qr_download_svg") + '</button>' +
     '<button class="btn btn-ghost btn-sm" id="qrWsCopyBtn" disabled>' + t("qr_copy_link") + '</button>' +
+    '</div>' +
+    '<div id="qrWsPrintCheck" style="display:none;text-align:left;margin-top:14px;">' +
+    '<div style="font-size:12px;color:var(--muted);margin-bottom:6px;">' + t("qr_print_check_title") + '</div>' +
+    '<div id="qrWsPrintCheckMsg"></div>' +
+    '<p class="hint" style="margin-top:6px;">' + t("qr_print_check_size_hint") + '</p>' +
     '</div>' +
     '<div class="qr-dynamic-panel" id="qrWsDynamicPanel" style="display:none;text-align:left;">' +
     dynPanelInnerHtml +
@@ -10077,16 +10503,19 @@ function qrWsUpdatePreview(){
     if (dlSvg) dlSvg.disabled = true;
     if (copyBtn) copyBtn.disabled = true;
   };
+  var printPanel = document.getElementById("qrWsPrintCheck");
   var data = qrWsGetData();
   if (!data) {
     box.innerHTML = '<div class="qr-preview-empty">' + t("qr_preview_empty") + '</div>';
     if (dataEl) dataEl.textContent = "";
+    if (printPanel) printPanel.style.display = "none";
     disableBtns();
     return;
   }
   if (!qrWsIsValid(data)) {
     box.innerHTML = '<div class="qr-preview-error">' + t("qr_preview_invalid") + '</div>';
     if (dataEl) dataEl.textContent = "";
+    if (printPanel) printPanel.style.display = "none";
     disableBtns();
     return;
   }
@@ -10097,6 +10526,7 @@ function qrWsUpdatePreview(){
     qrWsCurrentQr.append(box);
   } catch (e) {
     box.innerHTML = '<div class="qr-preview-error">' + t("qr_preview_error") + '</div>';
+    if (printPanel) printPanel.style.display = "none";
     disableBtns();
     return;
   }
@@ -10104,6 +10534,41 @@ function qrWsUpdatePreview(){
   if (dlPng) dlPng.disabled = false;
   if (dlSvg) dlSvg.disabled = false;
   if (copyBtn) copyBtn.disabled = false;
+  qrWsCheckPrintReady(data);
+}
+
+function qrWsCheckPrintReady(data){
+  var panel = document.getElementById("qrWsPrintCheck");
+  var msgEl = document.getElementById("qrWsPrintCheckMsg");
+  if (!panel || !msgEl || !qrWsCurrentQr) { if (panel) panel.style.display = "none"; return; }
+  if (typeof QrScanner === "undefined") { panel.style.display = "none"; return; }
+  panel.style.display = "block";
+  msgEl.innerHTML = '<p class="hint" style="margin:0;">' + t("processing") + '</p>';
+  qrWsCurrentQr.getRawData("png").then(function(blob){
+    if (!blob) throw new Error("no blob");
+    var objUrl = URL.createObjectURL(blob);
+    var img = new Image();
+    img.onload = function(){
+      var c = document.createElement("canvas");
+      c.width = img.width; c.height = img.height;
+      var cx = c.getContext("2d", { willReadFrequently: true });
+      cx.fillStyle = "#ffffff";
+      cx.fillRect(0, 0, c.width, c.height);
+      cx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(objUrl);
+      QrScanner.scanImage(c, { returnDetailedScanResult: true }).then(function(decoded){
+        if (decoded && decoded.data === data) {
+          msgEl.innerHTML = '<div class="msg msg-ok" style="margin:0;">' + t("qr_print_check_ok") + '</div>';
+        } else {
+          msgEl.innerHTML = '<div class="msg msg-error" style="margin:0;">' + t("qr_print_check_fail") + '</div>';
+        }
+      }).catch(function(){
+        msgEl.innerHTML = '<div class="msg msg-error" style="margin:0;">' + t("qr_print_check_fail") + '</div>';
+      });
+    };
+    img.onerror = function(){ URL.revokeObjectURL(objUrl); panel.style.display = "none"; };
+    img.src = objUrl;
+  }).catch(function(){ panel.style.display = "none"; });
 }
 
 var qrWsDebounceTimer = null;
@@ -10356,6 +10821,50 @@ function qrDynPaintImg(imgEl, qr, size){
 }
 
 function qrWsSaveDynamic(){
+  if (!state.user) return;
+  if (!state.user.qrTermsAcceptedAt) { qrDynShowTermsModal(qrWsDoSaveDynamic); return; }
+  qrWsDoSaveDynamic();
+}
+
+function qrDynShowTermsModal(onAccept){
+  var overlay = document.createElement("div");
+  overlay.className = "overlay";
+  var rules = [1,2,3,4].map(function(n){ return '<li>' + t("qr_dyn_terms_rule" + n) + '</li>'; }).join("");
+  var footerHtml = onAccept
+    ? '<button type="button" class="btn btn-ghost" id="qrDynTermsLaterBtn">' + t("qr_dyn_terms_later_btn") + '</button>' +
+      '<button type="button" class="btn btn-primary" id="qrDynTermsAgreeBtn">' + t("qr_dyn_terms_agree_btn") + '</button>'
+    : '<button type="button" class="btn btn-primary" id="qrDynTermsCloseBtn">' + t("qr_dyn_terms_close_btn") + '</button>';
+  overlay.innerHTML =
+    '<div class="modal" style="max-width:480px;animation:modalPop 0.25s ease;transform-origin:bottom center;">' +
+    '<h2 style="display:flex;align-items:center;gap:8px;">' + li('shield', 20) + ' ' + t("qr_dyn_terms_title") + '</h2>' +
+    '<p class="hint">' + t("qr_dyn_terms_intro") + '</p>' +
+    '<ul style="margin:12px 0;padding-left:20px;font-size:13px;line-height:1.6;">' + rules + '</ul>' +
+    '<a href="#/terms" target="_blank" style="font-size:12px;">' + t("qr_dyn_terms_link") + '</a>' +
+    '<div id="qrDynTermsMsg" style="margin-top:8px;"></div>' +
+    '<div class="actions" style="margin-top:16px;">' + footerHtml + '</div>' +
+    '</div>';
+  document.body.appendChild(overlay);
+  overlay.addEventListener("click", function(e){ if (e.target === overlay) document.body.removeChild(overlay); });
+  var closeBtn = document.getElementById("qrDynTermsCloseBtn");
+  if (closeBtn) closeBtn.onclick = function(){ document.body.removeChild(overlay); };
+  var laterBtn = document.getElementById("qrDynTermsLaterBtn");
+  if (laterBtn) laterBtn.onclick = function(){ document.body.removeChild(overlay); };
+  var agreeBtn = document.getElementById("qrDynTermsAgreeBtn");
+  if (agreeBtn) agreeBtn.onclick = function(){
+    agreeBtn.disabled = true;
+    api("/api/qr/dynamic/accept-terms", "POST").then(function(data){
+      state.user.qrTermsAcceptedAt = data.qrTermsAcceptedAt;
+      document.body.removeChild(overlay);
+      if (onAccept) onAccept();
+    }).catch(function(err){
+      agreeBtn.disabled = false;
+      var msgEl = document.getElementById("qrDynTermsMsg");
+      if (msgEl) msgEl.innerHTML = '<div class="msg msg-error">' + esc((err && err.message) || "") + '</div>';
+    });
+  };
+}
+
+function qrWsDoSaveDynamic(){
   var urlEl = document.getElementById("qrWsUrl");
   var btn = document.getElementById("qrWsDynamicSaveBtn");
   var msgEl = document.getElementById("qrWsDynamicMsg");
@@ -10404,6 +10913,9 @@ function qrWsSaveDynamic(){
     } else if (code === "DYNAMIC_QR_NOT_AVAILABLE") {
       msgEl.innerHTML = '<div class="qr-quota-exceeded"><h4>' + t("qr_dynamic_not_available_title") + '</h4><p>' + t("qr_dynamic_not_available_desc") + '</p>' +
         '<button type="button" class="btn btn-primary btn-sm" style="margin-top:6px;" onclick="navigate(&#39;pricing&#39;)">' + t("qr_dynamic_upgrade_btn") + '</button></div>';
+    } else if (code === "QR_TERMS_NOT_ACCEPTED") {
+      msgEl.innerHTML = "";
+      qrDynShowTermsModal(qrWsDoSaveDynamic);
     } else {
       msgEl.innerHTML = '<div class="msg msg-error">' + esc((err && err.message) || "") + '</div>';
     }
@@ -10684,7 +11196,7 @@ function renderAnalyticsOverview(app){
         html += '<td><div class="mono" style="color:var(--code-color);font-weight:700;word-break:break-all;">' + esc(l.shortUrl || (location.origin + "/" + l.code)) + '</div><div style="color:var(--muted);font-size:12px;">' + esc(l.title || "") + '</div></td>';
         html += '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + esc(l.url) + '">' + esc(l.url) + '</td>';
         html += '<td style="font-weight:700;">' + fmtNum(l.totalClicks) + '</td>';
-        html += '<td>' + (deleted ? '<span class="badge badge-guest">' + t("deleted") + '</span>' : l.isEnabled === false ? '<span class="badge badge-guest">' + t("disabled") + '</span>' : '<span class="badge badge-free">' + t("enabled") + '</span>') + '</td>';
+        html += '<td>' + (deleted ? '<span class="badge badge-guest">' + t("deleted") + '</span>' : isLinkExpired(l) ? '<span class="badge badge-guest">' + t("link_expired_badge") + '</span>' : l.isEnabled === false ? '<span class="badge badge-guest">' + t("disabled") + '</span>' : '<span class="badge badge-free">' + t("enabled") + '</span>') + '</td>';
         html += '</tr>';
       });
       html += '</tbody></table></div></div>';
@@ -10702,9 +11214,10 @@ function renderAnalytics(app, code){
     var qrCtx = (qrDynAnalyticsContext && qrDynAnalyticsContext.code === a.code) ? qrDynAnalyticsContext : null;
     var qrBannerHtml = qrCtx ? (
       '<div class="card qr-analytics-banner">' +
-      '<img id="qrAnalyticsBannerImg" alt="QR">' +
+      '<div class="qr-analytics-banner-imgwrap"><img id="qrAnalyticsBannerImg" alt="QR"></div>' +
       '<div><div class="qr-analytics-banner-title">' + li('qr', 14) + ' ' + t("qr_analytics_banner_title") + '</div>' +
-      '<div class="qr-analytics-banner-name">' + esc(qrCtx.title || qrCtx.shortUrl || "") + '</div></div>' +
+      '<div class="qr-analytics-banner-name">' + esc(qrCtx.title || qrCtx.shortUrl || "") + '</div>' +
+      '<div class="hint" style="margin-top:4px;">' + esc(qrCtx.shortUrl || "") + '</div></div>' +
       '<a href="#/bulkqr" class="btn btn-ghost btn-sm">' + t("qr_analytics_back") + '</a>' +
       '</div>'
     ) : '';
@@ -10737,7 +11250,7 @@ function renderAnalytics(app, code){
         return '<tr><td style="font-size:12px;color:var(--muted);">' + fmtDate(c.timestamp) + '</td><td>' + esc(c.device) + '</td><td>' + esc(c.browser) + '</td><td>' + esc(c.country) + '</td><td>' + esc(c.referrer) + '</td></tr>';
       }).join("") +
       '</tbody></table></div>' + (a.recentClicks.length === 0 ? '<p class="hint">' + t("analytics_no_clicks") + '</p>' : '') + '</div>';
-    if (qrCtx) qrDynPaintImg(document.getElementById("qrAnalyticsBannerImg"), qrCtx, 70);
+    if (qrCtx) qrDynPaintImg(document.getElementById("qrAnalyticsBannerImg"), qrCtx, 320);
   }).catch(function(err){
     app.innerHTML = '<div class="card"><div class="msg msg-error">' + esc(err.message) + '</div></div>';
   });
@@ -11468,6 +11981,8 @@ function renderAccount(app){
   if (l.hasBulkShorten) limitsHtml += acctUsageBar(t("bulk_title"), l.maxBulkBatch, l.maxBulkBatch === 999999);
   // API Requests
   if (l.hasApi) limitsHtml += acctUsageBar('API Requests', l.monthlyApiLimit, l.monthlyApiLimit === 999999);
+  // Dynamic QR per month
+  if (l.maxDynamicQrPerMonth) limitsHtml += acctUsageBar('QR động/tháng', l.maxDynamicQrPerMonth, l.maxDynamicQrPerMonth === 999999);
   // Feature toggles
   limitsHtml += '<div style="border-top:1px solid var(--border);padding-top:12px;display:flex;flex-direction:column;gap:6px;font-size:13px;">';
   limitsHtml += acctFeatRow(t("custom_alias"), l.hasCustomAlias);
@@ -11874,6 +12389,17 @@ function renderOverviewCards(container, data){
   cards += ovCard('card', 'Doanh thu', revenueVal, 'Stripe + QR (thành công)', 'var(--purple)');
   cards += ovCard('alert', 'Đơn QR chờ duyệt', fmtNum(p.pendingQr || 0), p.pendingQr > 0 ? 'Cần xử lý' : 'Không có đơn chờ', p.pendingQr > 0 ? 'var(--amber)' : 'var(--muted)');
   cards += ovCard('alert', 'Báo cáo chờ xử lý', fmtNum(rp.pending || 0), rp.pending > 0 ? 'Cần xem xét' : 'Không có báo cáo mới', rp.pending > 0 ? 'var(--red)' : 'var(--muted)');
+  var cp = data.cronPurge;
+  var cronStale = cp && (Date.now() - new Date(cp.ranAt).getTime()) > 2 * 3600 * 1000;
+  if (!cp) {
+    cards += ovCard('trash', 'Cron dọn dẹp', 'Chưa chạy', 'Chưa có lần chạy nào được ghi nhận', 'var(--muted)');
+  } else if (!cp.ok) {
+    cards += ovCard('trash', 'Cron dọn dẹp', 'Lỗi', fmtDate(cp.ranAt) + ' — ' + esc(cp.error || ''), 'var(--red)');
+  } else {
+    cards += ovCard('trash', 'Cron dọn dẹp', fmtNum(cp.purged) + ' đã xóa', (cronStale ? '⚠ Chưa chạy lại >2h — ' : '') + fmtDate(cp.ranAt) + ' · kiểm tra ' + fmtNum(cp.checked) + ' link', cronStale ? 'var(--amber)' : 'var(--green)');
+  }
+  var fl = data.failedLoginsToday || 0;
+  cards += ovCard('lock', 'Đăng nhập thất bại hôm nay', fmtNum(fl), fl > 0 ? 'Theo dõi nếu tăng bất thường' : 'Không có', fl >= 10 ? 'var(--red)' : fl > 0 ? 'var(--amber)' : 'var(--muted)');
   var lastUpdated = data.workers && data.workers.requests && data.workers.requests.available ? 'Cập nhật: ' + new Date().toLocaleTimeString() : '';
   var html = '<div class="ov-refresh"><h2>' + li('chart', 18) + ' System Overview</h2><div style="display:flex;gap:8px;align-items:center;">' + (lastUpdated ? '<span style="font-size:11px;color:var(--muted);">' + lastUpdated + '</span>' : '') + '<button class="btn btn-sm" id="ovSyncCfBtn" title="Gọi Cloudflare GraphQL Analytics API ngay thay vì chờ cron hàng giờ">' + li('chart', 14) + ' Đồng bộ Cloudflare Analytics</button><button class="btn btn-sm" id="ovRefreshBtn">' + li('undo', 14) + ' Làm mới</button></div></div>';
   html += '<div id="ovSyncMsg"></div>';
@@ -11988,18 +12514,18 @@ function loadAdminMaintenance(body){
     var m = data.maintenance || {};
     var globalMaint = m.global || { active: false, note: "" };
     var features = [
-      { key: "stripe", label: "Stripe (Thanh toán thẻ)", icon: li("card", 20) },
-      { key: "qr_payment", label: "QR Ngân hàng (VietQR)", icon: li("building", 20) },
-      { key: "voucher", label: "Voucher", icon: li("ticket", 20) },
-      { key: "bulk", label: "Bulk Shorten", icon: li("package", 20) },
-      { key: "api", label: "API", icon: li("plug", 20) },
-      { key: "analytics", label: "Analytics", icon: li("chart", 20) },
-      { key: "login", label: "Đăng nhập / Đăng ký", icon: li("lock", 20) },
-      { key: "shorten", label: "Tạo link rút gọn", icon: li("link", 20) },
-      { key: "password_link", label: "Link bảo mật (Password Link)", icon: li("key", 20) },
-      { key: "qr_code", label: "Tạo QR Code", icon: li("qr", 20) },
-      { key: "data_export", label: "Xuất dữ liệu (CSV/JSON)", icon: li("upload", 20) },
-      { key: "webhooks", label: "Webhooks", icon: "🪝" }
+      { key: "stripe", label: "Stripe (Thanh toán thẻ)", icon: li("card", 20), category: "Thanh toán" },
+      { key: "qr_payment", label: "QR Ngân hàng (VietQR)", icon: li("building", 20), category: "Thanh toán" },
+      { key: "voucher", label: "Voucher", icon: li("ticket", 20), category: "Thanh toán" },
+      { key: "bulk", label: "Bulk Shorten", icon: li("package", 20), category: "Tính năng" },
+      { key: "api", label: "API", icon: li("plug", 20), category: "Tính năng" },
+      { key: "analytics", label: "Analytics", icon: li("chart", 20), category: "Tính năng" },
+      { key: "password_link", label: "Link bảo mật (Password Link)", icon: li("key", 20), category: "Tính năng" },
+      { key: "qr_code", label: "Tạo QR Code", icon: li("qr", 20), category: "Tính năng" },
+      { key: "data_export", label: "Xuất dữ liệu (CSV/JSON)", icon: li("upload", 20), category: "Tính năng" },
+      { key: "webhooks", label: "Webhooks", icon: "🪝", category: "Tính năng" },
+      { key: "login", label: "Đăng nhập / Đăng ký", icon: li("lock", 20), category: "Hệ thống" },
+      { key: "shorten", label: "Tạo link rút gọn", icon: li("link", 20), category: "Hệ thống" }
     ];
     var html = '';
     var gChecked = globalMaint.active ? "checked" : "";
@@ -12014,8 +12540,13 @@ function loadAdminMaintenance(body){
     html += '<span style="position:absolute;top:3px;left:' + (globalMaint.active ? '25px' : '3px') + ';width:20px;height:20px;background:white;border-radius:50%;transition:0.3s;"></span></span></label></div>';
     html += '<input type="text" id="mtGlobalNote" value="' + esc(gNote) + '" placeholder="Thông báo bảo trì toàn hệ thống (hiện trên banner)" style="width:100%;padding:8px;margin-top:8px;border:1px solid var(--input-border);border-radius:6px;background:var(--input-bg);color:var(--text);font-size:13px;" /></div>';
     html += '<p class="hint" style="margin-bottom:16px;">Bật bảo trì từng tính năng. User sẽ thấy banner thông báo và không thể sử dụng tính năng đó.</p>';
+    var lastCategory = null;
     for (var i = 0; i < features.length; i++) {
       var f = features[i];
+      if (f.category !== lastCategory) {
+        lastCategory = f.category;
+        html += '<div style="font-weight:700;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin:' + (i === 0 ? '0' : '14px') + ' 0 6px;">' + esc(lastCategory) + '</div>';
+      }
       var item = m[f.key] || { active: false, note: "" };
       var checked = item.active ? "checked" : "";
       var noteVal = item.note || "";
@@ -12093,13 +12624,6 @@ function loadAdminSettings(body){
     var tierLabels = { guest: "Guest", free: "Free", plus: "Plus", pro: "Pro", super: "Super" };
     var html = '<h3 style="margin:0 0 12px;">Cài đặt hệ thống</h3>';
     html += '<div style="margin-bottom:16px;padding:12px;border:1px solid var(--border);border-radius:8px;">';
-    html += '<h4 style="margin:0 0 8px;">Cài đặt chung</h4>';
-    html += '<div style="display:flex;flex-direction:column;gap:8px;max-width:400px;">';
-    html += '<label>Tên site: <input id="setSiteName" class="input" value="' + esc(s.siteName || "") + '" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;width:100%;" /></label>';
-    html += '<label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="setSignup" ' + (s.signupEnabled !== false ? "checked" : "") + ' /> Cho phép đăng ký mới</label>';
-    html += '<label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="setMaintenance" ' + (s.maintenance ? "checked" : "") + ' /> Chế độ bảo trì</label>';
-    html += '</div></div>';
-    html += '<div style="margin-bottom:16px;padding:12px;border:1px solid var(--border);border-radius:8px;">';
     html += '<h4 style="margin:0 0 8px;">Giới hạn theo gói (override)</h4>';
     html += '<p class="hint" style="margin:0 0 8px;">Để trống để dùng mặc định. Nhập số để override.</p>';
     html += '<table style="width:100%;"><thead><tr><th>Goi</th><th>Links/ngày</th><th>Bulk batch</th><th>API limit/tháng</th></tr></thead><tbody>';
@@ -12138,10 +12662,7 @@ function loadAdminSettings(body){
         }
       }
       var payload = {
-        tierOverrides: tierOverrides,
-        siteName: document.getElementById("setSiteName").value,
-        signupEnabled: document.getElementById("setSignup").checked,
-        maintenance: document.getElementById("setMaintenance").checked
+        tierOverrides: tierOverrides
       };
       api("/api/admin/settings", "POST", payload).then(function(data2){
         alert(data2.message || "Da luu cai dat");
@@ -12563,6 +13084,9 @@ function li(icon, size) {
     shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="M12 8v4"/><path d="M12 16h.01"/>',
     building: '<path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/>',
     qr: '<rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M3 8h5"/><path d="M8 21v-5"/><path d="M16 3v5"/><path d="M16 8h5"/>',
+    scan: '<path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/>',
+    camera: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>',
+    refresh_cw: '<path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/>',
     webhook: '<path d="M18 16.98h-5.99c-1.1 0-1.95.94-2.48 1.9A4 4 0 0 1 2 17c.008-2.14 1.689-3.945 3.829-4.04a4 4 0 0 1 4.17 4.04"/><path d="M10.17 17a4 4 0 0 1 1.83-2.54c1.54-.88 2.07-2.8 1.49-4.26a4 4 0 1 1 5.59 5.51"/><circle cx="6" cy="17" r="2"/><circle cx="16" cy="17" r="2"/><circle cx="14.5" cy="6.5" r="2.18"/>',
     alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
     info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
@@ -13613,10 +14137,15 @@ async function handleCreateTeam(request, env, corsHeaders) {
     createdAt: new Date().toISOString()
   };
   await putTeam(env, team);
-  
-  authedUser.teamId = teamId;
-  await putUser(env, authedUser);
-  
+
+  // authedUser is the sanitized (no salt/hash) copy from getAuthenticatedUser() — persisting
+  // it directly would silently wipe the user's password. Fetch the full record to save instead.
+  const fullUser = await getUser(env, authedUser.username);
+  if (fullUser) {
+    fullUser.teamId = teamId;
+    await putUser(env, fullUser);
+  }
+
   return json({ success: true, team }, 201, corsHeaders);
 }
 
@@ -13904,7 +14433,7 @@ async function handleAdminSaveSettings(request, env, corsHeaders) {
   if (authedUser.role !== "admin") return requireAdminResponse(corsHeaders, request);
   let body;
   try { body = await request.json(); } catch (e) { body = {}; }
-  const { tierOverrides, maintenance, siteName, signupEnabled } = body || {};
+  const { tierOverrides } = body || {};
   const settings = {};
   if (tierOverrides && typeof tierOverrides === "object") {
     const validTiers = ["guest", "free", "plus", "pro", "super"];
@@ -13918,9 +14447,6 @@ async function handleAdminSaveSettings(request, env, corsHeaders) {
       }
     }
   }
-  if (typeof maintenance === "boolean") settings.maintenance = maintenance;
-  if (typeof siteName === "string") settings.siteName = siteName;
-  if (typeof signupEnabled === "boolean") settings.signupEnabled = signupEnabled;
   await env.LINKS_KV.put("sys:settings", JSON.stringify(settings));
   await addAuditLog(env, authedUser, "SAVE_SETTINGS", { settings }, request);
   return json({ ok: true, message: "Đã lưu cài đặt hệ thống", settings }, 200, corsHeaders);
