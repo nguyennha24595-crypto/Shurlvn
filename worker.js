@@ -2,131 +2,13 @@
 // SHURL — CLOUDFLARE WORKER FULL ENGINE (Nền tảng rút gọn link đa tầng)
 // ==============================================================================
 // ===================== CẤU HÌNH HẠN MỨC 5 TẦNG (khớp src/types.ts) ==========
-const TIER_CONFIG = {
-  guest: {
-    dailyLinks: 5, linkExpiryDays: null,
-    hasAdvancedManagement: false, hasDetailedAnalytics: false, hasAdvancedAnalytics: false,
-    hasCustomAlias: false, hasBulkShorten: false, maxBulkBatch: 0,
-    hasCustomQr: false, hasBulkQr: false, maxBulkQrBatch: 0, maxDynamicQrPerMonth: 0, hasApi: false, monthlyApiLimit: 0,
-    hasDataExport: false, hasCustomDomain: false,
-    hasPixel: false, maxPixelPerLink: 0, maxPixelLinks: 0,
-    hasABTest: false, maxABUrls: 0, maxABLinks: 0, hasCustomABPercent: false,
-    hasDeepLink: false, hasSmartFallback: false,
-    hasPasswordLink: false, hasPasswordBruteForce: false,
-    maxBioPages: 0
-  },
-  free: {
-    dailyLinks: 10, linkExpiryDays: null,
-    hasAdvancedManagement: false, hasDetailedAnalytics: false, hasAdvancedAnalytics: false,
-    hasCustomAlias: true, hasBulkShorten: false, maxBulkBatch: 0,
-    hasCustomQr: false, hasBulkQr: false, maxBulkQrBatch: 0, maxDynamicQrPerMonth: 0, hasApi: false, monthlyApiLimit: 0,
-    hasDataExport: false, hasCustomDomain: false,
-    hasPixel: false, maxPixelPerLink: 0, maxPixelLinks: 0,
-    hasABTest: false, maxABUrls: 0, maxABLinks: 0, hasCustomABPercent: false,
-    hasDeepLink: false, hasSmartFallback: false,
-    hasPasswordLink: false, hasPasswordBruteForce: false,
-    maxBioPages: 0
-  },
-  plus: {
-  dailyLinks: 150, linkExpiryDays: 7,
-  hasAdvancedManagement: false, hasDetailedAnalytics: false, hasAdvancedAnalytics: false,
-  hasCustomAlias: true, hasBulkShorten: true, maxBulkBatch: 150,
-  hasCustomQr: false, hasBulkQr: false, maxBulkQrBatch: 0, maxDynamicQrPerMonth: 20, hasApi: false, monthlyApiLimit: 0,
-  hasDataExport: false, hasCustomDomain: false,
-  hasPixel: false, maxPixelPerLink: 0, maxPixelLinks: 0,
-  hasABTest: false, maxABUrls: 0, maxABLinks: 0, hasCustomABPercent: false,
-  hasDeepLink: false, hasSmartFallback: false,
-  hasPasswordLink: false, hasPasswordBruteForce: false,
-  hasCampaignHistory: true,
-  maxBioPages: 1
-  },
-  pro: {
-    dailyLinks: 200, linkExpiryDays: null,
-    hasAdvancedManagement: true, hasDetailedAnalytics: true, hasAdvancedAnalytics: false,
-    hasCustomAlias: true, hasBulkShorten: true, maxBulkBatch: 300,
-    hasCustomQr: true, hasBulkQr: true, maxBulkQrBatch: 50, maxDynamicQrPerMonth: 100, hasApi: true, monthlyApiLimit: 5000,
-    hasDataExport: true, hasCustomDomain: false,
-    hasPixel: true, maxPixelPerLink: 1, maxPixelLinks: 50,
-    hasABTest: true, maxABUrls: 2, maxABLinks: 20, hasCustomABPercent: false,
-    hasDeepLink: true, hasSmartFallback: false,
-    hasPasswordLink: true, hasPasswordBruteForce: false,
-    hasCampaignHistory: true,
-    maxBioPages: 3
-  },
-  super: {
-    dailyLinks: 600, linkExpiryDays: null,
-    hasAdvancedManagement: true, hasDetailedAnalytics: true, hasAdvancedAnalytics: true,
-    hasCustomAlias: true, hasBulkShorten: true, maxBulkBatch: 600,
-    hasCustomQr: true, hasBulkQr: true, maxBulkQrBatch: 200, maxDynamicQrPerMonth: 500, hasApi: true, monthlyApiLimit: 10000,
-    hasDataExport: true, hasCustomDomain: true,
-    hasPixel: true, maxPixelPerLink: 2, maxPixelLinks: 999999,
-    hasABTest: true, maxABUrls: 3, maxABLinks: 999999, hasCustomABPercent: true,
-    hasDeepLink: true, hasSmartFallback: true,
-    hasPasswordLink: true, hasPasswordBruteForce: true,
-    hasTeam: true, maxTeamMembers: 10,
-    hasCampaignHistory: true,
-    maxBioPages: 10
-  },
-  admin: {
-    dailyLinks: 999999, linkExpiryDays: null,
-    hasAdvancedManagement: true, hasDetailedAnalytics: true, hasAdvancedAnalytics: true,
-    hasCustomAlias: true, hasBulkShorten: true, maxBulkBatch: 5000,
-    hasTeam: true, maxTeamMembers: 999999,
-    hasCustomQr: true, hasBulkQr: true, maxBulkQrBatch: 999999, maxDynamicQrPerMonth: 999999, hasApi: true, monthlyApiLimit: 999999,
-    hasDataExport: true, hasCustomDomain: true,
-    hasPixel: true, maxPixelPerLink: 3, maxPixelLinks: 999999,
-    hasABTest: true, maxABUrls: 5, maxABLinks: 999999, hasCustomABPercent: true,
-    hasDeepLink: true, hasSmartFallback: true,
-    hasPasswordLink: true, hasPasswordBruteForce: true,
-    hasCampaignHistory: true,
-    maxBioPages: 999999
-  }
-};
 
-const BASE_DOMAIN = "shurlvn.com";
-const FAVICON_PNG_BASE64 = "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";
+import { TIER_CONFIG, TIER_RANK, isProOrAboveRole } from "./src/config/tiers.js";
+import { BASE_DOMAIN, FAVICON_PNG_BASE64, normalizeCustomDomain, DEFAULT_KEYWORDS, DEFAULT_BLACKLIST_DOMAINS, SESSION_COOKIE, SESSION_TTL, LOGIN_MAX_ATTEMPTS, LOGIN_LOCKOUT_TTL, OAUTH_STATE_COOKIE, PW_RESET_TTL, MAX_BIO_SUBLINKS, VALID_QR_DOT_STYLES, PAYMENT_URL_PATTERNS, MAX_ATTEMPTS, LOCKOUT_SECONDS, PW_MAX_ATTEMPTS_FALLBACK, PW_LOCKOUT_TTL, AI_ASSISTANT_SYSTEM_PROMPT } from "./src/config/constants.js";
+import { getServerLang, st, SERVER_I18N } from "./src/i18n/server.js";
+import { EMAIL_LABELS, NOTIFICATION_TEMPLATES, fillTemplate, NOTIF_EMAIL_META, renderNotificationTemplate } from "./src/i18n/notifications.js";
 
-function isProOrAboveRole(role) {
-  return role === "pro" || role === "super" || role === "admin";
-}
-
-function normalizeCustomDomain(input) {
-  if (!input || !input.trim()) return undefined;
-  var d = input.trim().replace(/^https?:\/\//, '').replace(/\/$/, '');
-  if (d.indexOf('.') === -1) {
-    d = d + "." + BASE_DOMAIN;
-  }
-  return d;
-}
-
-const DEFAULT_KEYWORDS = [
-  "vietcombank", "vcb", "vietinbank", "bidv", "agribank", "techcombank", "acb",
-  "sacombank", "mbbank", "vpbank", "tpbank", "hdbank", "shb", "eximbank",
-  "shopee", "lazada", "tiki", "sendo", "tiktok", "momo", "zalopay", "viettelpay",
-  "vnpay", "fpt", "viettel", "mobifone", "vinaphone", "facebook", "zalo",
-  "google", "apple", "paypal", "binance", "napas"
-];
-
-const DEFAULT_BLACKLIST_DOMAINS = ["scam-site.net", "malicious-phishing.org", "fake-bank-login.xyz"];
-const SESSION_COOKIE = "shurl_session";
-const SESSION_TTL = 60 * 60 * 24 * 30; // 30 ngày
 // ===================== SERVER I18N =====================
-function getServerLang(request) {
-  const acceptLang = (request.headers.get("Accept-Language") || "vi").toLowerCase();
-  if (acceptLang.startsWith("en")) return "en";
-  if (acceptLang.startsWith("ko")) return "ko";
-  if (acceptLang.startsWith("zh")) return "zh";
-  if (acceptLang.startsWith("ja")) return "ja";
-  if (acceptLang.startsWith("fr")) return "fr";
-  if (acceptLang.startsWith("es")) return "es";
-  if (acceptLang.startsWith("hi")) return "hi";
-  return "vi";
-}
-
-function st(key, request) {
-  const lang = getServerLang(request);
-  return (SERVER_I18N[lang] && SERVER_I18N[lang][key]) || SERVER_I18N.vi[key] || key;
-}
 
 // ===================== ENTRYPOINT =====================
 function MAINTENANCE_HTML(note) {
@@ -173,8 +55,6 @@ export default {
     if (method === "OPTIONS") {
       return new Response(null, { headers: corsHeaders });
     }
-
-
 
     // Global maintenance check - block all non-admin requests
     if (path !== "" && !path.startsWith("api/admin") && !path.startsWith("api/maintenance-status")) {
@@ -292,7 +172,6 @@ export default {
       if (path === "api/admin/vouchers" && method === "POST") return handleCreateVoucher(request, env, corsHeaders);
       if (path.startsWith("api/admin/vouchers/") && method === "DELETE") return handleDeleteVoucher(request, env, decodeURIComponent(path.slice(19)), corsHeaders);
 
-
       // ===== 4c. STRIPE BILLING + VOUCHER + PAYMENT =====
       if (path === "api/billing/checkout" && method === "POST") { var mSt = await checkMaintenance(env, "stripe", corsHeaders, request); if (mSt) return mSt; return handleStripeCheckout(request, env, url, corsHeaders); }
       if (path === "api/billing/voucher-checkout" && method === "POST") { var mVc = await checkMaintenance(env, "voucher", corsHeaders, request); if (mVc) return mVc; return handleVoucherCheckout(request, env, url, corsHeaders); }
@@ -383,7 +262,6 @@ export default {
       
       // ===== 7b. PRICING — redirect to SPA route =====
       if (path === "pricing") return Response.redirect(url.origin + "/#/pricing", 302);
-
 
       // ===== 8. ROOT =====
       if (!path) {
@@ -765,7 +643,6 @@ async function seedIfNeeded(env) {
     salt: proSalt, hash: await hashPassword("pro123456", proSalt)
   };
 
-
     const superSalt = randomHex(16);
   const superUser = {
     id: "usr_super", username: "enterprise_corp", email: "super@enterprise.com", role: "super",
@@ -912,8 +789,6 @@ async function handleRegister(request, env, corsHeaders) {
   });
 }
 
-const LOGIN_MAX_ATTEMPTS = 10;
-const LOGIN_LOCKOUT_TTL = 900; // 15 phút
 
 async function handleLogin(request, env, corsHeaders) {
   let body;
@@ -986,8 +861,6 @@ async function handleLogout(request, env, corsHeaders) {
   }
   return json({ ok: true }, 200, corsHeaders, { "Set-Cookie": clearSessionCookieHeader() });
 }
-
-const OAUTH_STATE_COOKIE = "shurl_oauth_state";
 
 function clearOauthStateCookieHeader() {
   return `${OAUTH_STATE_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Secure; Max-Age=0`;
@@ -1196,33 +1069,6 @@ async function handleGenerateExtensionToken(request, env, corsHeaders) {
   return json({ ok: true, extToken: newToken }, 200, corsHeaders);
 }
 
-const AI_ASSISTANT_SYSTEM_PROMPT = `Bạn là "Hỏi AI" — trợ lý trò chuyện trực tiếp với người dùng thật trên shurlvn.com (SHURL, nền tảng rút gọn link đa tầng). Bạn đang CHAT, không phải viết tài liệu.
-
-QUY TẮC BẮT BUỘC (luôn tuân thủ):
-1. Trả lời NGẮN GỌN (2-5 câu là đủ; chỉ liệt kê gạch đầu dòng khi thật sự cần các bước thao tác). Giọng văn tự nhiên, lịch sự, gần gũi như nhân viên hỗ trợ, có lời chào nhẹ nhàng đầu câu trả lời đầu tiên (VD: "Dạ chào bạn,"), không cần lặp lại lời chào ở mỗi tin nhắn sau trong cùng cuộc trò chuyện.
-2. TUYỆT ĐỐI KHÔNG chép nguyên văn phần "Thông tin tham khảo" bên dưới. Đọc hiểu rồi tự diễn đạt lại bằng lời của riêng bạn, như đang giải thích miệng cho một người bạn.
-3. CHỈ trả lời đúng trọng tâm điều người dùng đang hỏi. Không kể lể, liệt kê hay giới thiệu thêm các tính năng khác mà họ không hỏi tới.
-4. Nếu câu hỏi nằm ngoài phạm vi shurlvn.com (không liên quan rút gọn link/QR/Link-in-bio/tài khoản/gói cước/thao tác trên web này), trả lời ĐÚNG NGUYÊN VĂN câu sau và không thêm gì khác: "Dạ phần này nằm ngoài chuyên môn của em rồi, em chỉ hỗ trợ thao tác trên shurlvn.com thôi ạ!"
-5. KHI HƯỚNG DẪN THAO TÁC, đừng chỉ ném ra đường dẫn (ví dụ "/bulkqr") như trả lời máy móc. Hãy chỉ đường như đang ngồi cạnh chỉ tay cho người dùng: nói họ vào mục nào ở THANH CÔNG CỤ BÊN TRÁI (ví dụ: "bạn mở thanh công cụ bên trái, bấm vào mục 'QR Codes'"), có thể nhắc thêm đường dẫn trong ngoặc nếu cần, rồi mới nói bước tiếp theo cần bấm gì. Việc này giúp người dùng cảm thấy như đang được người thật hướng dẫn.
-
-THÔNG TIN THAM KHẢO về SHURL (chỉ để bạn hiểu và diễn giải lại, không được copy nguyên văn) — tên mục đúng như trên thanh công cụ bên trái được ghi trong ngoặc kép:
-- Rút gọn link: tạo link ngắn tại trang chủ hoặc mục 'Bảng điều khiển' (/dashboard) trên thanh công cụ bên trái, có thể đặt tên tuỳ chỉnh (custom alias), đặt ngày hết hạn, gắn tag/chiến dịch.
-- QR Code: vào mục 'QR Codes' (/bulkqr) trên thanh công cụ bên trái để tạo mã QR tĩnh (mã hoá thẳng URL, không đổi được) hoặc QR động (mã hoá 1 short URL, đổi đích bất cứ lúc nào không cần in lại — từ gói Plus, hạn mức theo tháng: Plus 20, Pro 100, Super 500). Có thể gắn logo, chọn kiểu chấm QR, tạo QR hàng loạt (Bulk QR, cần Pro/Super).
-- Link-in-bio: vào mục 'Link-in-bio' (/linkinbio) trên thanh công cụ bên trái — trang mini gom nhiều liên kết (Facebook, Zalo, Shop...) vào 1 short URL, giống Linktree — từ gói Plus (1 trang), Pro (3 trang), Super (10 trang).
-- Scanner QR: vào mục 'Scanner QR' (/scanner) trên thanh công cụ bên trái để quét và kiểm tra an toàn 1 mã QR trước khi bấm vào.
-- Phân tích/Analytics: bấm vào 1 link cụ thể trong mục 'Bảng điều khiển' (/dashboard) để xem số lượt click, thiết bị, quốc gia, trình duyệt. Gói Pro/Super có thống kê nâng cao và tự động cập nhật real-time (không cần F5).
-- Bulk Shorten: vào mục 'Bulk' (/bulk) trên thanh công cụ bên trái để rút gọn nhiều link cùng lúc — cần Pro/Super.
-- Password Link: đặt mật khẩu bảo vệ cho 1 link — cần Pro trở lên.
-- Deep Link: tự động chuyển hướng khác nhau cho iOS/Android — cần Pro trở lên.
-- A/B Testing: chia traffic ngẫu nhiên giữa nhiều URL đích — cần Pro trở lên.
-- UTM Builder: tự gắn tham số UTM vào link để đo lường quảng cáo.
-- Webhooks: vào mục 'Webhooks' (/webhooks) trên thanh công cụ bên trái — cần Pro/Super.
-- Export CSV/JSON: vào mục 'Export' (/export) trên thanh công cụ bên trái — cần Pro/Super.
-- API: vào mục 'API' (/api) trên thanh công cụ bên trái, xem tại tab API trong Tài khoản — cần Pro/Super.
-- Tiện ích trình duyệt Chrome: vào mục 'API' (/api) trên thanh công cụ bên trái, chọn "Kết nối tiện ích trình duyệt" để lấy mã kết nối — miễn phí cho mọi gói, giúp xem link gần đây và rút gọn nhanh ngay trên popup.
-- Các gói: Free (miễn phí, 10 link/ngày), Plus, Pro, Super — vào mục 'Bảng giá' (/pricing) trên thanh công cụ bên trái để xem chi tiết và nâng cấp.
-Nếu không chắc chắn về 1 chi tiết cụ thể (ví dụ số liệu chính xác), đừng bịa — trả lời khái quát và gợi ý người dùng xem thêm tại /blog hoặc mục "Xem hướng dẫn" ngay trên từng trang.`;
-
 async function handleAskAi(request, env, corsHeaders) {
   const ip = getClientIp(request);
   const rateKey = "airate:" + ip + ":" + Math.floor(Date.now() / 3600000);
@@ -1308,21 +1154,10 @@ function renderForgotPassword(app){
   });
 }
 // ===================== QUÊN MẬT KHẨU (BACKEND) =====================
-const PW_RESET_TTL = 900; // 15 phút
 
 // Nhãn giao diện dùng chung cho khung email chuyên nghiệp (buildEmailShell) — brand tagline,
 // điều khoản/chính sách, và 2 nhãn "Tài khoản"/"Gói" dùng trong khung chi tiết của các email
 // thông báo tự động. Tách riêng khỏi nội dung từng email để không lặp lại ở mọi template.
-var EMAIL_LABELS = {
-  vi: { tagline:"Nền tảng rút gọn link đa tầng", terms:"Điều khoản sử dụng", privacy:"Chính sách bảo mật", account:"Tài khoản", plan:"Gói", reasonGeneric:"Bạn nhận được email này vì đây là thông báo liên quan tới tài khoản SHURL của bạn.", support:"Cần hỗ trợ? Liên hệ" },
-  en: { tagline:"The multi-tier link shortening platform", terms:"Terms of Service", privacy:"Privacy Policy", account:"Account", plan:"Plan", reasonGeneric:"You're receiving this email because it relates to your SHURL account.", support:"Need help? Contact" },
-  ko: { tagline:"다단계 링크 단축 플랫폼", terms:"이용약관", privacy:"개인정보 처리방침", account:"계정", plan:"플랜", reasonGeneric:"이 이메일은 회원님의 SHURL 계정과 관련된 알림이기 때문에 발송되었습니다.", support:"도움이 필요하신가요? 문의:" },
-  zh: { tagline:"多层级链接缩短平台", terms:"服务条款", privacy:"隐私政策", account:"账户", plan:"套餐", reasonGeneric:"您收到此邮件是因为它与您的 SHURL 账户相关。", support:"需要帮助？联系" },
-  hi: { tagline:"मल्टी-टियर लिंक शॉर्टनिंग प्लेटफ़ॉर्म", terms:"सेवा की शर्तें", privacy:"गोपनीयता नीति", account:"खाता", plan:"प्लान", reasonGeneric:"आपको यह ईमेल इसलिए मिला है क्योंकि यह आपके SHURL खाते से संबंधित है।", support:"मदद चाहिए? संपर्क करें" },
-  ja: { tagline:"マルチティア・リンク短縮プラットフォーム", terms:"利用規約", privacy:"プライバシーポリシー", account:"アカウント", plan:"プラン", reasonGeneric:"このメールはお客様のSHURLアカウントに関連する通知のため送信されています。", support:"サポートが必要ですか？連絡先:" },
-  fr: { tagline:"La plateforme de raccourcissement de liens multi-niveaux", terms:"Conditions d'utilisation", privacy:"Politique de confidentialité", account:"Compte", plan:"Forfait", reasonGeneric:"Vous recevez cet e-mail car il concerne votre compte SHURL.", support:"Besoin d'aide ? Contactez" },
-  es: { tagline:"La plataforma de acortamiento de enlaces multinivel", terms:"Términos de servicio", privacy:"Política de privacidad", account:"Cuenta", plan:"Plan", reasonGeneric:"Recibes este correo porque está relacionado con tu cuenta de SHURL.", support:"¿Necesitas ayuda? Contacta" }
-};
 
 // Khung email chuyên nghiệp dùng chung cho MỌI email hệ thống (reset password, voucher, chào
 // mừng, thanh toán, cảnh báo bảo mật, admin broadcast) — nền kem ngoài, card trắng, khung chi
@@ -1515,7 +1350,6 @@ async function handleForgotPassword(request, env, corsHeaders) {
     return json({ error: "Lỗi hệ thống: " + e.message }, 500, corsHeaders);
   }
 }
-
 
 async function handleResetPassword(request, env, corsHeaders) {
   let body;
@@ -1925,8 +1759,6 @@ async function createLinkInternal(env, { url: targetUrl, owner, role, customCode
   return newLink;
 }
 
-const MAX_BIO_SUBLINKS = 20;
-
 // Link-in-bio pages reuse the "link:<code>" KV record (type:"bio" instead of a
 // redirect target) so all existing cross-cutting infra — reports, blacklist,
 // recordClick page-view counting, QR generation off the shortUrl — works for
@@ -2014,7 +1846,6 @@ async function handleListLinks(request, env, url, corsHeaders) {
   return json({ links: withShortUrl }, 200, corsHeaders);
 }
 
-
 async function handleCreateLink(request, env, url, corsHeaders) {
   let body;
   try { body = await request.json(); } catch (e) { body = {}; }
@@ -2064,7 +1895,6 @@ async function handleCreateLink(request, env, url, corsHeaders) {
     return json({ error: err.message, errorCode: err.code || null, errorData: err.codeData || null }, 400, corsHeaders);
   }
 }
-
 
 async function handleBulkCreateLinks(request, env, url, corsHeaders) {
   const authedUser = await getAuthenticatedUser(request, env);
@@ -2158,7 +1988,6 @@ async function handleBulkCreateLinks(request, env, url, corsHeaders) {
     errors: errors
   }, status, corsHeaders);
 }
-
 
 async function handleUpdateLink(request, env, url, code, corsHeaders) {
   const authedUser = await getAuthenticatedUser(request, env);
@@ -2358,7 +2187,6 @@ async function handleForceDeleteLink(request, env, code, corsHeaders) {
   await deleteLinkKV(env, code);
   return json({ ok: true, message: "Đã xóa vĩnh viễn." }, 200, corsHeaders);
 }
-
 
 // ===================== HANDLERS: CLICK TRACKING & ANALYTICS =====================
 function parseUserAgent(userAgent) {
@@ -2695,7 +2523,6 @@ async function handleCreateQr(request, env, corsHeaders) {
 }
 
 // ===================== HANDLERS: DYNAMIC QR (QR động — QR Studio) =====================
-const VALID_QR_DOT_STYLES = ["square", "rounded", "dots"];
 
 // Anti bait-and-switch: a QR động's whole point is that its destination can change
 // after the code is printed/shared — the exact opposite of what a payment link needs.
@@ -2705,15 +2532,7 @@ const VALID_QR_DOT_STYLES = ["square", "rounded", "dots"];
 // tĩnh (destination baked in, can never change) is the correct choice for those.
 // This is a domain heuristic, not a guarantee: it catches common providers, not every
 // possible payment page.
-const PAYMENT_URL_PATTERNS = [
-  /vietqr\.(io|net|vn)/i, /napas\.com\.vn/i, /payoo\.vn/i, /onepay\.vn/i,
-  /momo\.vn/i, /zalopay\.vn/i, /vnpay\.vn/i, /shopeepay\.vn/i, /viettelpay\.vn/i,
-  /paypal\.com/i, /checkout\.stripe\.com/i, /pay\.google\.com/i, /cash\.app/i, /venmo\.com/i,
-  /vietcombank\.com\.vn/i, /techcombank\.com\.vn/i, /bidv\.com\.vn/i, /acb\.com\.vn/i,
-  /mbbank\.com\.vn/i, /agribank\.com\.vn/i, /vpbank\.com\.vn/i, /sacombank\.com\.vn/i,
-  /tpb\.vn/i, /vib\.com\.vn/i, /hdbank\.com\.vn/i, /msb\.com\.vn/i, /ocb\.com\.vn/i,
-  /\/\/[^\/]*\bpay(ment)?\b/i
-];
+
 function looksLikePaymentUrl(u) {
   if (!u) return false;
   return PAYMENT_URL_PATTERNS.some(re => re.test(u));
@@ -2996,8 +2815,6 @@ async function handleCreateReport(request, env, corsHeaders) {
   return json({ ok: true, report }, 200, corsHeaders);
 }
 // ===================== RATE LIMIT MAT KHAU =====================
-const MAX_ATTEMPTS = 5;
-const LOCKOUT_SECONDS = 900;
 
 // ===================== HANDLERS: ADMIN =====================
 async function handleAdminListUsers(request, env, corsHeaders) {
@@ -3127,7 +2944,6 @@ async function handleAdminDeleteFeedback(request, env, corsHeaders) {
   return json({ ok: true }, 200, corsHeaders);
 }
 
-
 async function handleAdminTranslateFeedback(request, env, corsHeaders) {
   const authedUser = await getAuthenticatedUser(request, env);
   if (!authedUser) return requireAuthResponse(corsHeaders, request);
@@ -3247,7 +3063,6 @@ async function handleAdminListAuditLogs(request, env, corsHeaders) {
   return json({ logs }, 200, corsHeaders);
 }
 
-
 // ===================== HANDLERS: ADMIN =====================
 async function handleExportWorker(request, env, corsHeaders) {
   // 1. Bắt buộc đăng nhập
@@ -3264,7 +3079,6 @@ async function handleExportWorker(request, env, corsHeaders) {
   // 3. Giữ nguyên logic export cũ của bạn ở đây
   return json({ code: "..." }, 200, corsHeaders);
 }
-
 
 // ===================== BLOG (server-rendered, indexable by Google) =====================
 // One-time seed data only — after the first request, posts live in KV (blog:<slug>) and are
@@ -3984,7 +3798,6 @@ function renderBlogPostPage(post, env) {
   return renderBlogLayout(post.title, post.description, "/blog/" + post.slug, body, env);
 }
 
-
 // ===================== REDIRECT & SAFETY WARNING =====================
 async function handleRedirect(request, env, url, path, ctx) {
   const raw = await env.LINKS_KV.get("link:" + path);
@@ -4058,7 +3871,6 @@ function pickABUrl(urls, percentages) {
   var idx = Math.floor(rand * urls.length);
   return urls[idx];
 }
-
 
 function renderPasswordPage(code, origin, request) {
   var pwTitle = escHtml(st("pw_page_title", request));
@@ -4172,8 +3984,6 @@ function renderPixelPage(destUrl, pixels) {
   );
 }
 
-const PW_MAX_ATTEMPTS_FALLBACK = 20;
-const PW_LOCKOUT_TTL = 900; // 15 phút
 
 async function handleVerifyPassword(request, env, code, corsHeaders) {
   let body;
@@ -4224,7 +4034,6 @@ async function handleVerifyPassword(request, env, code, corsHeaders) {
     "Set-Cookie": "shurl_pw_" + code + "=ok; Path=/; HttpOnly; Secure; Max-Age=86400; SameSite=Lax"
   });
 }
-
 
 // ===================== HTML RENDERING =====================
 function renderSafetyWarningHtml(code, targetUrl) {
@@ -4296,7 +4105,7 @@ function renderSafetyWarningHtml(code, targetUrl) {
 // HTML/CSS/JS thuần (vanilla), điều hướng phía client qua hash (#/...), gọi thẳng
 // các API /api/** ở trên cùng origin. Không cần package.json/npm/React/Vite/dist.
 // ===================== UPGRADE USER ROLE (helper) =====================
-const TIER_RANK = { guest: 0, free: 1, plus: 2, pro: 3, super: 4, admin: 99 };
+
 async function upgradeUserRole(env, username, newTier, expiryDays) {
   const userKey = "user:" + username.toLowerCase();
   const raw = await env.LINKS_KV.get(userKey);
@@ -4804,123 +4613,15 @@ async function handleRevokeQrPayment(request, env, corsHeaders) {
 }
 
 // ===================== SEND VOUCHER EMAIL (MailChannels) =====================
-var SERVER_I18N = {
-  vi: { 
-    brand:"SHURL", subject:"Voucher SHURL — Mã kích hoạt gói", thanks_1:"Cảm ơn bạn đã sử dụng gói", thanks_2:"của", instruction:"Hãy copy voucher này và dán vào ô nhập voucher ở phần tài khoản để kích hoạt:", activate_note:"Gói voucher", activate_note_2:"được kích hoạt ngay sau khi nhập mã.", warning:"Vui lòng không share mã voucher ra ngoài tránh trường hợp mất.", closing:"Xin cảm ơn bạn đã đóng góp cho nền tảng này phát triển.", signature:"Trân trọng,",
-    require_auth:"Vui lòng đăng nhập để thực hiện thao tác này.", require_admin:"Yêu cầu quyền Quản trị viên (Admin).", enter_user_pass:"Vui lòng nhập tên đăng nhập và mật khẩu.", username_length:"Tên đăng nhập phải từ 8-25 ký tự.", password_policy:"Mật khẩu tối thiểu 9 ký tự và có ít nhất 1 chữ viết hoa.", username_exists:"Tên đăng nhập đã tồn tại trong hệ thống.", enter_user_pass_full:"Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.", wrong_credentials:"Sai tên đăng nhập hoặc mật khẩu.", not_logged_in:"Chưa đăng nhập.", user_not_found:"Không tìm thấy tài khoản.", api_pro_only:"Tính năng API chỉ mở cho gói PRO hoặc SUPER.",
-    maintenance_global:"Hệ thống đang bảo trì. Vui lòng quay lại sau.", maintenance_feature_prefix:"Tính năng đang bảo trì",
-    account_locked:"Tài khoản đã bị khóa. Vui lòng liên hệ admin.", totp_wrong:"Mã TOTP không đúng.", login_too_many_attempts:"Quá nhiều lần đăng nhập sai. Vui lòng thử lại sau 15 phút.", google_not_configured:"Đăng nhập Google chưa được cấu hình.",
-    url_required:"URL không được để trống.",
-    pw_page_title:"Link được bảo vệ", pw_page_prompt:"Nhập mật khẩu để tiếp tục", pw_page_placeholder:"Mật khẩu", pw_page_btn:"Vào link →", pw_page_wrong:"Mật khẩu không đúng",
-    link_expired_title:"Link hết hạn", link_expired_desc:"Link này đã hết hạn sử dụng.",
-    link_disabled_title:"Link đã tắt", link_disabled_desc:"Link này đã bị vô hiệu hoá.",
-    team_requires_super:"Team yêu cầu gói Super", team_not_found:"Team không tồn tại", team_only_owner_delete:"Chỉ owner mới xóa được team", team_only_owner_edit:"Chỉ owner mới sửa được team", team_only_owner_add_member:"Chỉ owner mới thêm thành viên", team_only_owner_remove_member:"Chỉ owner mới xóa thành viên", team_deleted:"Team đã xóa", team_name_required:"Tên team là bắt buộc", team_missing_id_or_username:"Thiếu teamId hoặc username", team_max_members:"Tối đa {count} thành viên", team_user_not_found:"User không tồn tại", team_user_in_other_team:"User đã ở trong team khác", team_already_member:"Đã là thành viên", team_member_not_found:"Thành viên không tồn tại", team_cannot_remove_owner:"Không thể xóa owner",
-    pricing_downgrade_blocked:"Bạn đang ở gói {tier}, không thể mua gói thấp hơn", invalid_tier:"Gói không hợp lệ", invalid_period:"Thời gian không hợp lệ",
-  },
-  en: { brand:"SHURL", subject:"SHURL Voucher — Plan activation code", thanks_1:"Thank you for using the", thanks_2:"plan of", instruction:"Copy this voucher and paste it into the voucher field in your account to activate:", activate_note:"Voucher plan", activate_note_2:"is activated immediately after entering the code.", warning:"Please do not share this voucher code to avoid losing it.", closing:"Thank you for supporting the growth of this platform.", signature:"Best regards,",
-    require_auth:"Please log in to perform this action.", require_admin:"Administrator access required.", enter_user_pass:"Please enter your username and password.", username_length:"Username must be 8-25 characters.", password_policy:"Password must be at least 9 characters with at least 1 uppercase letter.", username_exists:"This username already exists.", enter_user_pass_full:"Please enter both username and password.", wrong_credentials:"Wrong username or password.", not_logged_in:"Not logged in.", user_not_found:"Account not found.", api_pro_only:"API access is only available on the PRO or SUPER plan.",
-    maintenance_global:"The system is under maintenance. Please check back later.", maintenance_feature_prefix:"This feature is under maintenance",
-    account_locked:"This account has been locked. Please contact an admin.", totp_wrong:"Incorrect TOTP code.", login_too_many_attempts:"Too many failed login attempts. Please try again in 15 minutes.", google_not_configured:"Google sign-in isn't configured yet.",
-    url_required:"URL is required.",
-    pw_page_title:"Protected link", pw_page_prompt:"Enter the password to continue", pw_page_placeholder:"Password", pw_page_btn:"Continue →", pw_page_wrong:"Incorrect password",
-    link_expired_title:"Link expired", link_expired_desc:"This link has expired.",
-    link_disabled_title:"Link disabled", link_disabled_desc:"This link has been disabled.",
-    team_requires_super:"Team requires the Super plan", team_not_found:"Team not found", team_only_owner_delete:"Only the owner can delete the team", team_only_owner_edit:"Only the owner can edit the team", team_only_owner_add_member:"Only the owner can add members", team_only_owner_remove_member:"Only the owner can remove members", team_deleted:"Team deleted", team_name_required:"Team name is required", team_missing_id_or_username:"Missing teamId or username", team_max_members:"Maximum {count} members", team_user_not_found:"User not found", team_user_in_other_team:"User is already in another team", team_already_member:"Already a member", team_member_not_found:"Member not found", team_cannot_remove_owner:"Cannot remove the owner",
-    pricing_downgrade_blocked:"You're currently on the {tier} plan and can't switch to a lower one", invalid_tier:"Invalid plan", invalid_period:"Invalid period",
-  },
-  ko: { brand:"SHURL", subject:"SHURL 바우처 — 플랜 활성화 코드", thanks_1:"사용해 주셔서 감사합니다", thanks_2:"플랜", instruction:"이 바우처를 복사하여 계정의 바우처 입력란에 붙여넣어 활성화하세요:", activate_note:"바우처 플랜", activate_note_2:"은 코드 입력 즉시 활성화됩니다.", warning:"바우처 코드를 외부에 공유하지 마세요.", closing:"플랫폼 성장을 위해 기여해 주셔서 감사합니다.", signature:"감사합니다," },
-  zh: { brand:"SHURL", subject:"SHURL 优惠券 — 套餐激活码", thanks_1:"感谢您使用", thanks_2:"的", instruction:"请复制此优惠券并粘贴到账户中的优惠券输入框以激活：", activate_note:"优惠券套餐", activate_note_2:"在输入代码后立即激活。", warning:"请勿将优惠券代码分享给他人，以免丢失。", closing:"感谢您为平台发展做出贡献。", signature:"此致，" },
-  hi: { brand:"SHURL", subject:"SHURL वाउचर — प्लान सक्रियण कोड", thanks_1:"का उपयोग करने के लिए धन्यवाद", thanks_2:"प्लान", instruction:"इस वाउचर को कॉपी करें और अपने खाते के वाउचर फ़ील्ड में पेस्ट करें:", activate_note:"वाउचर प्लान", activate_note_2:"कोड दर्ज करने के तुरंत बाद सक्रिय हो जाता है।", warning:"वाउचर कोड किसी के साथ शेयर न करें।", closing:"इस प्लेटफॉर्म के विकास में योगदान के लिए धन्यवाद।", signature:"सादर," },
-  ja: { brand:"SHURL", subject:"SHURL バウチャー — プラン有効化コード", thanks_1:"をご利用いただきありがとうございます", thanks_2:"プラン", instruction:"このバウチャーをコピーしてアカウントのバウチャー入力欄に貼り付けて有効化してください：", activate_note:"バウチャープラン", activate_note_2:"はコード入力後すぐに有効化されます。", warning:"バウチャーコードを外部に共有しないでください。", closing:"このプラットフォームの成長にご貢献いただきありがとうございます。", signature:"敬具、" },
-  fr: { brand:"SHURL", subject:"Bon SHURL — Code d'activation du plan", thanks_1:"Merci d'utiliser le plan", thanks_2:"de", instruction:"Copiez ce bon et collez-le dans le champ bon de votre compte pour activer :", activate_note:"Le plan du bon", activate_note_2:"est activé immédiatement après la saisie du code.", warning:"Veuillez ne pas partager ce code de bon pour éviter de le perdre.", closing:"Merci de contribuer à la croissance de cette plateforme.", signature:"Cordialement," },
-  es: { brand:"SHURL", subject:"Cupón SHURL — Código de activación del plan", thanks_1:"Gracias por usar el plan", thanks_2:"de", instruction:"Copia este cupón y pégalo en el campo de cupón de tu cuenta para activar:", activate_note:"El plan del cupón", activate_note_2:"se activa inmediatamente después de ingresar el código.", warning:"Por favor no compartas el código del cupón para evitar perderlo.", closing:"Gracias por contribuir al crecimiento de esta plataforma.", signature:"Atentamente," }
-};
 
 // Mẫu thông báo tự động đa ngôn ngữ (in-app + email) — dùng cho notifyUser() ở các điểm auto-trigger
 // (đăng ký, thanh toán) và cho admin chọn nhanh khi gửi broadcast. Cùng pattern với SERVER_I18N ở trên.
-var NOTIFICATION_TEMPLATES = {
-  welcome: {
-    vi: { title:"Chào mừng đến với SHURL!", message:"Cảm ơn bạn đã tạo tài khoản {username}. Bắt đầu rút gọn link, tạo QR và khám phá các tính năng ngay nhé!", emailSubject:"Chào mừng đến với SHURL!", emailIntro:"Cảm ơn bạn đã tạo tài khoản trên SHURL — nền tảng rút gọn link đa tầng. Tài khoản <b>{username}</b> của bạn đã sẵn sàng sử dụng.", emailCta:"Bắt đầu ngay tại" },
-    en: { title:"Welcome to SHURL!", message:"Thanks for creating your account, {username}. Start shortening links, generating QR codes and exploring the platform!", emailSubject:"Welcome to SHURL!", emailIntro:"Thanks for creating an account on SHURL — the multi-tier link shortening platform. Your account <b>{username}</b> is ready to go.", emailCta:"Get started at" },
-    ko: { title:"SHURL에 오신 것을 환영합니다!", message:"{username} 계정을 만들어 주셔서 감사합니다. 링크 단축, QR 코드 생성 등 다양한 기능을 지금 바로 이용해 보세요!", emailSubject:"SHURL에 오신 것을 환영합니다!", emailIntro:"SHURL — 다단계 링크 단축 플랫폼에 가입해 주셔서 감사합니다. <b>{username}</b> 계정이 준비되었습니다.", emailCta:"지금 시작하기" },
-    zh: { title:"欢迎使用 SHURL！", message:"感谢您创建账户 {username}。立即开始缩短链接、生成二维码，探索更多功能吧！", emailSubject:"欢迎使用 SHURL！", emailIntro:"感谢您在 SHURL（多层级链接缩短平台）注册账户。您的账户 <b>{username}</b> 已准备就绪。", emailCta:"立即开始" },
-    hi: { title:"SHURL में आपका स्वागत है!", message:"{username} खाता बनाने के लिए धन्यवाद। अभी लिंक छोटा करना, QR कोड बनाना और सभी सुविधाएं देखना शुरू करें!", emailSubject:"SHURL में आपका स्वागत है!", emailIntro:"SHURL — मल्टी-टियर लिंक शॉर्टनिंग प्लेटफ़ॉर्म पर खाता बनाने के लिए धन्यवाद। आपका खाता <b>{username}</b> तैयार है।", emailCta:"अभी शुरू करें" },
-    ja: { title:"SHURLへようこそ！", message:"{username} アカウントを作成いただきありがとうございます。今すぐリンクの短縮やQRコードの作成をお試しください！", emailSubject:"SHURLへようこそ！", emailIntro:"SHURL（マルチティア・リンク短縮プラットフォーム）にご登録いただきありがとうございます。アカウント <b>{username}</b> の準備が整いました。", emailCta:"今すぐ始める" },
-    fr: { title:"Bienvenue sur SHURL !", message:"Merci d'avoir créé votre compte {username}. Commencez dès maintenant à raccourcir des liens, générer des QR codes et explorer la plateforme !", emailSubject:"Bienvenue sur SHURL !", emailIntro:"Merci d'avoir créé un compte sur SHURL — la plateforme de raccourcissement de liens multi-niveaux. Votre compte <b>{username}</b> est prêt.", emailCta:"Commencer sur" },
-    es: { title:"¡Bienvenido a SHURL!", message:"Gracias por crear tu cuenta {username}. ¡Empieza ya a acortar enlaces, generar códigos QR y explorar la plataforma!", emailSubject:"¡Bienvenido a SHURL!", emailIntro:"Gracias por crear una cuenta en SHURL, la plataforma de acortamiento de enlaces multinivel. Tu cuenta <b>{username}</b> ya está lista.", emailCta:"Empezar en" }
-  },
-  payment_success: {
-    vi: { title:"Thanh toán thành công!", message:"Bạn đã nâng cấp lên gói {tier} thành công. Cảm ơn bạn đã đồng hành cùng SHURL!", emailSubject:"Thanh toán thành công — Gói {tier}", emailIntro:"Thanh toán của bạn đã được xử lý thành công. Tài khoản <b>{username}</b> đã được nâng cấp lên gói <b>{tier}</b>.", emailCta:"Xem tài khoản tại" },
-    en: { title:"Payment successful!", message:"You've successfully upgraded to the {tier} plan. Thanks for supporting SHURL!", emailSubject:"Payment successful — {tier} plan", emailIntro:"Your payment was processed successfully. Your account <b>{username}</b> has been upgraded to the <b>{tier}</b> plan.", emailCta:"View your account at" },
-    ko: { title:"결제가 완료되었습니다!", message:"{tier} 플랜으로 업그레이드가 완료되었습니다. SHURL을 이용해 주셔서 감사합니다!", emailSubject:"결제 완료 — {tier} 플랜", emailIntro:"결제가 성공적으로 처리되었습니다. <b>{username}</b> 계정이 <b>{tier}</b> 플랜으로 업그레이드되었습니다.", emailCta:"계정 확인하기" },
-    zh: { title:"支付成功！", message:"您已成功升级到 {tier} 套餐。感谢您使用 SHURL！", emailSubject:"支付成功 — {tier} 套餐", emailIntro:"您的付款已成功处理。您的账户 <b>{username}</b> 已升级至 <b>{tier}</b> 套餐。", emailCta:"查看账户" },
-    hi: { title:"भुगतान सफल!", message:"आप {tier} प्लान में सफलतापूर्वक अपग्रेड हो गए हैं। SHURL का साथ देने के लिए धन्यवाद!", emailSubject:"भुगतान सफल — {tier} प्लान", emailIntro:"आपका भुगतान सफलतापूर्वक प्रोसेस हो गया है। आपका खाता <b>{username}</b> <b>{tier}</b> प्लान में अपग्रेड कर दिया गया है।", emailCta:"अपना खाता देखें" },
-    ja: { title:"お支払いが完了しました！", message:"{tier} プランへのアップグレードが完了しました。SHURLをご利用いただきありがとうございます！", emailSubject:"お支払い完了 — {tier} プラン", emailIntro:"お支払いが正常に処理されました。アカウント <b>{username}</b> は <b>{tier}</b> プランにアップグレードされました。", emailCta:"アカウントを確認する" },
-    fr: { title:"Paiement réussi !", message:"Vous avez été mis à niveau vers le forfait {tier} avec succès. Merci de soutenir SHURL !", emailSubject:"Paiement réussi — Forfait {tier}", emailIntro:"Votre paiement a été traité avec succès. Votre compte <b>{username}</b> a été mis à niveau vers le forfait <b>{tier}</b>.", emailCta:"Voir votre compte sur" },
-    es: { title:"¡Pago exitoso!", message:"Has actualizado correctamente al plan {tier}. ¡Gracias por apoyar a SHURL!", emailSubject:"Pago exitoso — Plan {tier}", emailIntro:"Tu pago se procesó correctamente. Tu cuenta <b>{username}</b> se actualizó al plan <b>{tier}</b>.", emailCta:"Ver tu cuenta en" }
-  },
-  security_alert: {
-    vi: { title:"Cảnh báo bảo mật", message:"Có hoạt động bất thường trên tài khoản của bạn. Nếu không phải bạn, vui lòng đổi mật khẩu ngay.", emailSubject:"Cảnh báo bảo mật tài khoản SHURL", emailIntro:"Chúng tôi phát hiện hoạt động bất thường trên tài khoản <b>{username}</b>. Nếu không phải bạn thực hiện, vui lòng đổi mật khẩu ngay lập tức.", emailCta:"Đổi mật khẩu tại" },
-    en: { title:"Security alert", message:"We noticed unusual activity on your account. If this wasn't you, please change your password right away.", emailSubject:"SHURL account security alert", emailIntro:"We detected unusual activity on your account <b>{username}</b>. If this wasn't you, please change your password immediately.", emailCta:"Change your password at" },
-    ko: { title:"보안 경고", message:"계정에서 비정상적인 활동이 감지되었습니다. 본인이 아니라면 즉시 비밀번호를 변경하세요.", emailSubject:"SHURL 계정 보안 경고", emailIntro:"계정 <b>{username}</b>에서 비정상적인 활동이 감지되었습니다. 본인이 아니라면 즉시 비밀번호를 변경해 주세요.", emailCta:"비밀번호 변경하기" },
-    zh: { title:"安全警报", message:"我们检测到您的账户存在异常活动。如果不是您本人操作，请立即修改密码。", emailSubject:"SHURL 账户安全警报", emailIntro:"我们检测到账户 <b>{username}</b> 存在异常活动。如果不是您本人操作，请立即修改密码。", emailCta:"修改密码" },
-    hi: { title:"सुरक्षा चेतावनी", message:"आपके खाते में असामान्य गतिविधि देखी गई है। यदि यह आप नहीं थे, तो कृपया तुरंत पासवर्ड बदलें।", emailSubject:"SHURL खाता सुरक्षा चेतावनी", emailIntro:"हमने खाता <b>{username}</b> में असामान्य गतिविधि का पता लगाया है। यदि यह आपने नहीं किया, तो कृपया तुरंत पासवर्ड बदलें।", emailCta:"पासवर्ड बदलें" },
-    ja: { title:"セキュリティ警告", message:"アカウントで異常なアクティビティが検出されました。心当たりがない場合は、すぐにパスワードを変更してください。", emailSubject:"SHURLアカウントのセキュリティ警告", emailIntro:"アカウント <b>{username}</b> で異常なアクティビティが検出されました。心当たりがない場合は、すぐにパスワードを変更してください。", emailCta:"パスワードを変更する" },
-    fr: { title:"Alerte de sécurité", message:"Nous avons détecté une activité inhabituelle sur votre compte. Si ce n'était pas vous, veuillez changer votre mot de passe immédiatement.", emailSubject:"Alerte de sécurité — Compte SHURL", emailIntro:"Nous avons détecté une activité inhabituelle sur votre compte <b>{username}</b>. Si ce n'était pas vous, veuillez changer votre mot de passe immédiatement.", emailCta:"Changer votre mot de passe sur" },
-    es: { title:"Alerta de seguridad", message:"Detectamos actividad inusual en tu cuenta. Si no fuiste tú, cambia tu contraseña de inmediato.", emailSubject:"Alerta de seguridad de tu cuenta SHURL", emailIntro:"Detectamos actividad inusual en tu cuenta <b>{username}</b>. Si no fuiste tú, cambia tu contraseña de inmediato.", emailCta:"Cambiar tu contraseña en" }
-  },
-  payment_revoked: {
-    vi: { title:"Giao dịch đã được thu hồi", message:"Đã xảy ra lỗi trong quá trình kiểm tra giao dịch {orderId}. Chúng tôi thành thật xin lỗi vì sự bất tiện này. Nếu bạn đã chuyển khoản, vui lòng liên hệ hỗ trợ để được xử lý ngay.", emailSubject:"Giao dịch {orderId} đã được thu hồi", emailIntro:"Đã xảy ra lỗi trong quá trình kiểm tra giao dịch <b>{orderId}</b> của bạn. Chúng tôi thành thật xin lỗi vì sự bất tiện này. Nếu bạn đã thực hiện chuyển khoản, vui lòng liên hệ với chúng tôi để được hỗ trợ xử lý ngay.", emailCta:"Xem tài khoản tại" },
-    en: { title:"Transaction reversed", message:"An error occurred while verifying transaction {orderId}. We sincerely apologize for the inconvenience. If you already made the bank transfer, please contact support so we can resolve this right away.", emailSubject:"Transaction {orderId} was reversed", emailIntro:"An error occurred while verifying your transaction <b>{orderId}</b>. We sincerely apologize for the inconvenience. If you already made the bank transfer, please contact us so we can resolve this right away.", emailCta:"View your account at" },
-    ko: { title:"거래가 취소되었습니다", message:"거래 {orderId} 확인 과정에서 오류가 발생했습니다. 불편을 드려 진심으로 사과드립니다. 이미 계좌이체를 하셨다면 즉시 처리해 드릴 수 있도록 고객지원에 문의해 주세요.", emailSubject:"거래 {orderId}가 취소되었습니다", emailIntro:"거래 <b>{orderId}</b> 확인 과정에서 오류가 발생했습니다. 불편을 드려 진심으로 사과드립니다. 이미 계좌이체를 하셨다면 즉시 처리해 드릴 수 있도록 문의해 주세요.", emailCta:"계정 확인하기" },
-    zh: { title:"交易已被撤销", message:"在核实交易 {orderId} 时发生了错误，对由此带来的不便我们深表歉意。如果您已完成转账，请联系客服以便我们立即为您处理。", emailSubject:"交易 {orderId} 已被撤销", emailIntro:"在核实您的交易 <b>{orderId}</b> 时发生了错误，对由此带来的不便我们深表歉意。如果您已完成转账，请联系我们以便立即处理。", emailCta:"查看账户" },
-    hi: { title:"लेन-देन वापस ले लिया गया", message:"लेन-देन {orderId} की जांच के दौरान एक त्रुटि हुई। असुविधा के लिए हमें खेद है। यदि आपने पहले ही बैंक ट्रांसफर कर दिया है, तो कृपया तुरंत सहायता के लिए संपर्क करें।", emailSubject:"लेन-देन {orderId} वापस ले लिया गया", emailIntro:"आपके लेन-देन <b>{orderId}</b> की जांच के दौरान एक त्रुटि हुई। असुविधा के लिए हमें खेद है। यदि आपने पहले ही बैंक ट्रांसफर कर दिया है, तो कृपया तुरंत सहायता के लिए हमसे संपर्क करें।", emailCta:"अपना खाता देखें" },
-    ja: { title:"取引が取り消されました", message:"取引 {orderId} の確認中にエラーが発生しました。ご不便をおかけし誠に申し訳ございません。すでにお振込みが完了している場合は、すぐに対応いたしますのでサポートまでご連絡ください。", emailSubject:"取引 {orderId} が取り消されました", emailIntro:"お客様の取引 <b>{orderId}</b> の確認中にエラーが発生しました。ご不便をおかけし誠に申し訳ございません。すでにお振込みが完了している場合は、すぐに対応いたしますのでご連絡ください。", emailCta:"アカウントを確認する" },
-    fr: { title:"Transaction annulée", message:"Une erreur s'est produite lors de la vérification de la transaction {orderId}. Nous sommes sincèrement désolés pour ce désagrément. Si vous avez déjà effectué le virement, veuillez contacter le support pour une résolution immédiate.", emailSubject:"La transaction {orderId} a été annulée", emailIntro:"Une erreur s'est produite lors de la vérification de votre transaction <b>{orderId}</b>. Nous sommes sincèrement désolés pour ce désagrément. Si vous avez déjà effectué le virement, veuillez nous contacter pour une résolution immédiate.", emailCta:"Voir votre compte sur" },
-    es: { title:"Transacción revertida", message:"Ocurrió un error al verificar la transacción {orderId}. Lamentamos sinceramente las molestias. Si ya realizaste la transferencia, contacta a soporte para resolverlo de inmediato.", emailSubject:"La transacción {orderId} fue revertida", emailIntro:"Ocurrió un error al verificar tu transacción <b>{orderId}</b>. Lamentamos sinceramente las molestias. Si ya realizaste la transferencia, contáctanos para resolverlo de inmediato.", emailCta:"Ver tu cuenta en" }
-  }
-};
 
-function fillTemplate(s, params) {
-  return String(s || "").replace(/\{(\w+)\}/g, function(_, k) { return (params && params[k] != null) ? params[k] : ""; });
-}
 // Minh hoạ (illustration key) + lý do nhận email (vi/en, fallback EMAIL_LABELS.reasonGeneric cho
 // các ngôn ngữ khác) cho từng loại thông báo tự động, hiển thị ở đầu email (buildEmailShell).
-var NOTIF_EMAIL_META = {
-  welcome: { illustration: "welcome", reason: { vi: "Bạn nhận được email này vì vừa tạo tài khoản mới tại SHURL.", en: "You're receiving this email because you just created a SHURL account." } },
-  payment_success: { illustration: "payment", reason: { vi: "Bạn nhận được email này vì vừa hoàn tất thanh toán nâng cấp gói trên SHURL.", en: "You're receiving this email because you just completed a plan upgrade payment on SHURL." } },
-  security_alert: { illustration: "security", reason: { vi: "Bạn nhận được email này vì có cảnh báo bảo mật liên quan tới tài khoản SHURL của bạn.", en: "You're receiving this email because of a security alert on your SHURL account." } },
-  payment_revoked: { illustration: "security", reason: { vi: "Bạn nhận được email này vì một giao dịch của bạn vừa được admin thu hồi do lỗi kiểm tra.", en: "You're receiving this email because one of your transactions was just reversed by an admin due to a verification error." } }
-};
 
 // Trả về {title, message, emailSubject, emailHtml} đã điền {username}/{tier}... sẵn sàng đưa
 // thẳng vào notifyUser(). Email dùng khung chuyên nghiệp dùng chung buildEmailShell() ở trên.
-function renderNotificationTemplate(key, lang, params) {
-  var byLang = NOTIFICATION_TEMPLATES[key];
-  if (!byLang) return null;
-  var tpl = byLang[lang] || byLang.vi;
-  var L = EMAIL_LABELS[lang] || EMAIL_LABELS.vi;
-  var meta = NOTIF_EMAIL_META[key] || { reason: {} };
-  var detailRows = [];
-  if (params && params.username) detailRows.push({ label: L.account, value: params.username });
-  if (key === "payment_success" && params && params.tier) detailRows.push({ label: L.plan, value: params.tier });
-  var ctaUrl = key === "welcome" ? "https://shurlvn.com" : "https://shurlvn.com/#/account";
-  var emailHtml = buildEmailShell({
-    lang: lang, illustration: meta.illustration,
-    title: fillTemplate(tpl.emailSubject, params),
-    introHtml: "<p>" + fillTemplate(tpl.emailIntro, params) + "</p>",
-    detailRows: detailRows,
-    ctaText: fillTemplate(tpl.emailCta, params),
-    ctaUrl: ctaUrl,
-    footerReason: meta.reason[lang] || meta.reason.en
-  });
-  return {
-    title: fillTemplate(tpl.title, params),
-    message: fillTemplate(tpl.message, params),
-    emailSubject: fillTemplate(tpl.emailSubject, params),
-    emailHtml: emailHtml
-  };
-}
 
 async function sendVoucherEmail(env, toEmail, voucherCode, tier, origin, lang) {
   var L = SERVER_I18N[lang] || SERVER_I18N.vi;
@@ -5369,7 +5070,6 @@ function renderAppHtml(env) {
 @keyframes qrPop{from{transform:scale(0.9);opacity:0;}to{transform:scale(1);opacity:1;}}
 .lang-dropdown .lang-item{transition:background 0.15s ease;}
 
-
 /* === Feedback Modal === */
 .feedback-modal{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:10001;}
 .feedback-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:0;max-width:480px;width:90%;max-height:85vh;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);}
@@ -5635,7 +5335,6 @@ footer a{display:inline-flex;align-items:center;justify-content:center;min-heigh
 .navlinks a,.navlinks button,.navlinks span{white-space:nowrap;}
 }
 
-
 /* === PHASE 2 UI === */
 .page-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;}
 .page-head h1{margin:0;font-size:22px;}
@@ -5836,7 +5535,6 @@ var LANG_LABELS = {vi:"Tiếng Việt",en:"English",ko:"한국어",zh:"中文",h
 var currentLang = "vi";
 var langDropdownOpen = false;
 var langSubmenuOpen = false;
-
 
 try { currentLang = localStorage.getItem("shurl_lang") || "vi"; } catch(e) {}
 
@@ -7283,7 +6981,6 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     feedback_title:"反馈与支持", feedback_btn:"反馈", feedback_type_bug:"报告问题", feedback_type_feature:"功能请求", feedback_type_question:"提问", feedback_type_other:"其他", feedback_label_message:"内容", feedback_placeholder:"描述您的问题、建议或疑问...", feedback_label_email:"邮箱（可选）", feedback_email_placeholder:"email@example.com", feedback_cancel:"取消", feedback_submit:"发送", feedback_success_title:"已发送！", feedback_success_desc:"感谢您的反馈！我们会尽快查看并回复。", feedback_close:"关闭", feedback_error:"出错了，请重试。", admin_feedback_tab:"反馈", admin_no_feedback:"暂无反馈。", acct_overview:"账户概览", acct_total_clicks:"总点击量", acct_profile_title:"账户资料", acct_username:"用户名", acct_joined:"加入日期", acct_plan_title:"当前套餐", acct_plan_active:"使用中", acct_plan_running:"运行中 ✓", acct_plan_expired:"已过期", acct_free:"免费", acct_joined_label:"加入", acct_expiry_label:"到期", acct_start_label:"开始", acct_upgrade_plan:"升级套餐", acct_manage_plan:"管理套餐", acct_pay_plan:"套餐", acct_pay_method:"支付方式", acct_pay_amount:"金额", acct_voucher_title:"使用优惠券激活", acct_voucher_hint:"输入优惠券代码以激活优惠或服务套餐。", acct_voucher_placeholder:"输入优惠券代码", acct_voucher_btn:"激活", acct_security_title:"安全", acct_2fa_enabled:"已启用 ✓", acct_2fa_disabled:"未启用", acct_session:"会话", acct_current_device:"当前设备", acct_browser:"浏览器", acct_bank_qr:"银行QR", acct_pay_method_stripe:"Stripe", adm_notif_sys:"系统通知", adm_notif_empty:"没有新通知", adm_notif_read:"已读", adm_notif_unread:"未读", adm_notif_delete:"删除", adm_notif_delete_confirm:"删除此通知？", adm_notif_deleted:"通知已删除", adm_notif_not_found:"未找到通知", adm_notif_missing_id:"缺少通知ID", adm_notif_from:"来自", adm_notif_to:"发送至", adm_notif_all_users:"所有用户", adm_notif_close:"关闭", fb_detail_title:"反馈详情", fb_detail_type:"类型", fb_detail_sender:"发送者", fb_detail_anonymous:"匿名", fb_detail_page:"页面", fb_detail_time:"时间", fb_detail_status:"状态", fb_status_new:"新", fb_status_replied:"已回复", fb_status_closed:"已关闭", fb_type_bug:"错误报告", fb_type_feature:"功能请求", fb_type_question:"问答", fb_type_other:"其他", notif_mark_all_read:"全部标记为已读", notif_marked_all:"已全部标记为已读",
   },
 
-
   hi: {
     ai_assistant_title:"AI से पूछें", ai_assistant_placeholder:"अपना सवाल लिखें...", ai_assistant_send:"भेजें",
     ai_assistant_greeting:"नमस्ते! मैं SHURL का AI सहायक हूं, आपको किस चीज़ में मदद चाहिए?",
@@ -8697,7 +8394,6 @@ function renderSidebarLeft(){
     '</div>';
 }
 
-
 function renderSidebarRight(){
   var el = document.getElementById("sidebarRight");
   if (!el) return;
@@ -8723,7 +8419,6 @@ function renderSidebarRight(){
       '</div>';
     return;
   }
-
 
   var role = state.user.role;
   if (role === "free"){
@@ -8763,7 +8458,6 @@ function renderSidebarRight(){
   }
 
 }
-
 
 var state = { user: null, limits: null, links: [] };
 var refreshLinkList = null;
@@ -8990,7 +8684,6 @@ if (hasPromo){
   html += '<button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="buyVoucherPage()">' + t("pricing_voucher_pay") + '</button>';
   html += '<div id="vBuyMsg" style="margin-top:12px;"></div>';
   html += '</div>';
-
 
   // Support / payment issue contact (Đa ngôn ngữ)
   var supportEmail = "nguyennha24595@gmail.com";
@@ -9691,7 +9384,6 @@ function renderHome(app){
     '<button class="btn btn-ghost" onclick="navigate(&#39;bulkqr&#39;)">' + t("home_qr_promo_btn") + '</button>' +
     '</div>';
 
-
   document.getElementById("shortenForm").addEventListener("submit", function(e){
     e.preventDefault();
     var url = document.getElementById("f_url").value.trim();
@@ -9791,7 +9483,6 @@ function applyUtmParams(rawUrl, campaign){
     return rawUrl;
   }
 }
-
 
 function copyText(text, btnEl){
   var done = function(){ if (btnEl){ var old = btnEl.textContent; btnEl.textContent = t("copied"); setTimeout(function(){ btnEl.textContent = old; }, 1500); } };
@@ -9958,8 +9649,6 @@ function forceDeleteLink(code){
   });
 }
 
-
-
 function bindRowActions(){
   var rows = document.querySelectorAll("#linksBody tr");
   rows.forEach(function(tr){
@@ -9999,8 +9688,6 @@ function updatePreview(){
   }
   previewUrl.textContent = alias ? (base + alias) : (base + "...");
 }
-
-
 
 document.addEventListener("input", function(e){
   if (e.target && (e.target.id === "c_url" || e.target.id === "c_code" || e.target.id === "c_domain")) {
@@ -10515,8 +10202,6 @@ function renderDashboard(app){
     app.innerHTML = '<div class="card"><div class="msg msg-error">' + esc(err.message) + '</div></div>';
   });
 }
-
-
 
 function exportCsv(links){
   var rows = [["code","short_url","url","title","campaign","total_clicks","is_enabled","created_at","expiry_date"]];
@@ -12187,7 +11872,6 @@ function renderApiTab(app){
   document.getElementById("urlToolCopyBtn").onclick = function(){ copyText(urlToolOutput.value, this); };
 }
 
-
 // ---------- WEBHOOKS TAB (Pro/Super) ----------
 function renderWebhookTab(app){
   var limits = state.limits || {};
@@ -12354,8 +12038,6 @@ function renderExportTab(app){
     };
   }
 }
-
-
 
 // ---------- CAMPAIGNS TAB (Plus+) ----------
 function renderCampaignsTab(app){
@@ -12681,7 +12363,6 @@ function showVoucherCancelModal(){
   document.getElementById("voucherCancelBtn").onclick = function(){ modal.remove(); };
   modal.addEventListener("click", function(e){ if (e.target === modal) document.getElementById("voucherCancelBtn").click(); });
 }
-
 
 function openChangePasswordModal(){
   var overlay = document.getElementById('pwdChangeOverlay');
@@ -13933,7 +13614,6 @@ function loadAdminPromo(body){
   });
 }
 
-
 function loadAdminVouchers(body, newVoucher){
   body.innerHTML =
     '<div style="margin-bottom:16px;"><button class="btn btn-primary" onclick="createVoucher()">' + t("admin_create_voucher") + '</button></div>' +
@@ -14658,7 +14338,6 @@ function submitFeedback() {
   });
 }
 
-
 async function redeemVoucher() {
   const code = prompt(t("account_enter_voucher"));
   if (!code) return;
@@ -15093,7 +14772,6 @@ async function handleExportJson(request, env, url, corsHeaders) {
   });
 }
 
-
 // ===================== TEAM HANDLERS (Super/Admin) =====================
 async function getTeam(env, teamId) {
   if (!teamId) return null;
@@ -15264,7 +14942,6 @@ async function handleRemoveTeamMember(request, env, corsHeaders) {
   
   return json({ success: true, message: "Đã xóa thành viên" }, 200, corsHeaders);
 }
-
 
 // ===================== CAMPAIGN HANDLERS (Plus+) =====================
 async function handleListCampaigns(request, env, corsHeaders) {
