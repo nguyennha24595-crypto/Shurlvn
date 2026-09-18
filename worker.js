@@ -12,7 +12,8 @@ const TIER_CONFIG = {
     hasPixel: false, maxPixelPerLink: 0, maxPixelLinks: 0,
     hasABTest: false, maxABUrls: 0, maxABLinks: 0, hasCustomABPercent: false,
     hasDeepLink: false, hasSmartFallback: false,
-    hasPasswordLink: false, hasPasswordBruteForce: false
+    hasPasswordLink: false, hasPasswordBruteForce: false,
+    maxBioPages: 0
   },
   free: {
     dailyLinks: 10, linkExpiryDays: null,
@@ -23,7 +24,8 @@ const TIER_CONFIG = {
     hasPixel: false, maxPixelPerLink: 0, maxPixelLinks: 0,
     hasABTest: false, maxABUrls: 0, maxABLinks: 0, hasCustomABPercent: false,
     hasDeepLink: false, hasSmartFallback: false,
-    hasPasswordLink: false, hasPasswordBruteForce: false
+    hasPasswordLink: false, hasPasswordBruteForce: false,
+    maxBioPages: 0
   },
   plus: {
   dailyLinks: 150, linkExpiryDays: 7,
@@ -35,7 +37,8 @@ const TIER_CONFIG = {
   hasABTest: false, maxABUrls: 0, maxABLinks: 0, hasCustomABPercent: false,
   hasDeepLink: false, hasSmartFallback: false,
   hasPasswordLink: false, hasPasswordBruteForce: false,
-  hasCampaignHistory: true
+  hasCampaignHistory: true,
+  maxBioPages: 1
   },
   pro: {
     dailyLinks: 200, linkExpiryDays: null,
@@ -47,7 +50,8 @@ const TIER_CONFIG = {
     hasABTest: true, maxABUrls: 2, maxABLinks: 20, hasCustomABPercent: false,
     hasDeepLink: true, hasSmartFallback: false,
     hasPasswordLink: true, hasPasswordBruteForce: false,
-    hasCampaignHistory: true
+    hasCampaignHistory: true,
+    maxBioPages: 3
   },
   super: {
     dailyLinks: 600, linkExpiryDays: null,
@@ -60,7 +64,8 @@ const TIER_CONFIG = {
     hasDeepLink: true, hasSmartFallback: true,
     hasPasswordLink: true, hasPasswordBruteForce: true,
     hasTeam: true, maxTeamMembers: 10,
-    hasCampaignHistory: true
+    hasCampaignHistory: true,
+    maxBioPages: 10
   },
   admin: {
     dailyLinks: 999999, linkExpiryDays: null,
@@ -73,12 +78,13 @@ const TIER_CONFIG = {
     hasABTest: true, maxABUrls: 5, maxABLinks: 999999, hasCustomABPercent: true,
     hasDeepLink: true, hasSmartFallback: true,
     hasPasswordLink: true, hasPasswordBruteForce: true,
-    hasCampaignHistory: true
+    hasCampaignHistory: true,
+    maxBioPages: 999999
   }
 };
 
 const BASE_DOMAIN = "shurlvn.com";
-const FAVICON_PNG_BASE64 = "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";
+const FAVICON_PNG_BASE64 = "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";
 
 function isProOrAboveRole(role) {
   return role === "pro" || role === "super" || role === "admin";
@@ -181,7 +187,7 @@ export default {
           if (path.startsWith("api/")) {
             return json({ error: st("maintenance_global", request), maintenance: true, note: globalMaint.note || "" }, 503, corsHeaders);
           }
-          return new Response(MAINTENANCE_HTML(globalMaint.note || ""), { headers: { "Content-Type": "text/html; charset=utf-8" } });
+          return html(MAINTENANCE_HTML(globalMaint.note || ""));
         }
       }
     }
@@ -191,11 +197,16 @@ export default {
       var featureMap = {
         "api/auth/login": "login", "api/auth/register": "login",
         "api/shorten": "shorten", "api/bulk": "bulk",
+        // More specific prefixes must come before "api/links" below — the loop
+        // breaks on the first match, so order matters here.
+        "api/links/bio": "link_in_bio",
         "api/links": "shorten", "api/stripe": "stripe",
         "api/qr-payment": "qr_payment", "api/voucher": "voucher",
         "api/redeem-voucher": "voucher", "api/export": "data_export",
         "api/webhooks": "webhooks", "api/analytics": "analytics",
-        "api/password-link": "password_link", "api/qr": "qr_code"
+        "api/password-link": "password_link", "api/qr": "qr_code",
+        "api/extension": "extension",
+        "api/ask-ai": "ai_assistant"
       };
       for (var routePrefix in featureMap) {
         if (path.startsWith(routePrefix)) {
@@ -223,6 +234,8 @@ export default {
       if (path === "api/auth/logout" && method === "POST") return handleLogout(request, env, corsHeaders);
       if (path === "api/auth/me" && method === "GET") return handleMe(request, env, corsHeaders);
       if (path === "api/auth/token" && method === "POST") return handleGenerateToken(request, env, corsHeaders);
+      if (path === "api/extension/token" && method === "POST") return handleGenerateExtensionToken(request, env, corsHeaders);
+      if (path === "api/ask-ai" && method === "POST") return handleAskAi(request, env, corsHeaders);
       if (path === "api/auth/forgot" && method === "POST") return handleForgotPassword(request, env, corsHeaders);
       if (path === "api/auth/reset" && method === "POST") return handleResetPassword(request, env, corsHeaders);
       if (path === "api/auth/2fa/setup" && method === "POST") return handleSetup2fa(request, env, corsHeaders);
@@ -234,6 +247,9 @@ export default {
       // ===== 2. CORE LINK MANAGEMENT (dùng bởi giao diện web, qua cookie) =====
       if (path === "api/links" && method === "GET") return handleListLinks(request, env, url, corsHeaders);
       if (path === "api/links" && method === "POST") return handleCreateLink(request, env, url, corsHeaders);
+      if (path === "api/links/bio" && method === "POST") return handleCreateBioPage(request, env, url, corsHeaders);
+      if (path.startsWith("api/links/bio/") && path.endsWith("/click") && method === "POST") return handleBioLinkClick(request, env, decodeURIComponent(path.slice("api/links/bio/".length, -"/click".length)), corsHeaders);
+      if (path.startsWith("api/links/bio/") && method === "PUT") return handleUpdateBioPage(request, env, url, decodeURIComponent(path.slice("api/links/bio/".length)), corsHeaders);
       if (path === "api/links/bulk" && method === "POST") return handleBulkCreateLinks(request, env, url, corsHeaders);
       if (path.startsWith("api/links/") && method === "PATCH") return handleUpdateLink(request, env, url, decodeURIComponent(path.slice(10)), corsHeaders);
       if (path.startsWith("api/links/") && path.endsWith("/restore") && method === "POST") return handleRestoreLink(request, env, decodeURIComponent(path.slice(10, -8)), corsHeaders);
@@ -286,6 +302,7 @@ export default {
       if (path === "api/billing/qr-status" && method === "GET") return handleQrStatus(request, env, corsHeaders);
       if (path === "api/admin/qr-approve" && method === "POST") return handleApproveQrPayment(request, env, corsHeaders);
       if (path === "api/admin/qr-reject" && method === "POST") return handleRejectQrPayment(request, env, corsHeaders);
+      if (path === "api/admin/qr-revoke" && method === "POST") return handleRevokeQrPayment(request, env, corsHeaders);
       if (path === "api/billing/qr-status-ack" && method === "POST") return handleQrStatusAck(request, env, corsHeaders);
       if (path === "api/payment-history" && method === "GET") return handlePaymentHistory(request, env, corsHeaders);
       if (path === "api/admin/promo-settings" && method === "GET") return handleGetPromoSettings(request, env, corsHeaders);
@@ -372,13 +389,28 @@ export default {
       if (!path) {
         return new Response(renderAppHtml(env), { headers: {
           "Content-Type": "text/html; charset=utf-8",
-          "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com https://www.googletagmanager.com https://googleads.g.doubleclick.net https://static.cloudflareinsights.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' data: blob: https://api.resend.com https://api.stripe.com https://www.googletagmanager.com https://www.google-analytics.com https://googleads.g.doubleclick.net https://www.google.com https://www.google.com.vn https://www.googleadservices.com https://ad.doubleclick.net https://static.cloudflareinsights.com https://cloudflareinsights.com; frame-src https://pagead2.googlesyndication.com; worker-src 'self' blob:;"
+          "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com https://www.googletagmanager.com https://googleads.g.doubleclick.net https://static.cloudflareinsights.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' data: blob: https://api.resend.com https://api.stripe.com https://www.googletagmanager.com https://www.google-analytics.com https://googleads.g.doubleclick.net https://www.google.com https://www.google.com.vn https://www.googleadservices.com https://ad.doubleclick.net https://static.cloudflareinsights.com https://cloudflareinsights.com; frame-src https://pagead2.googlesyndication.com; worker-src 'self' blob:;",
+          "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+          "Cross-Origin-Opener-Policy": "same-origin",
+          "X-Frame-Options": "DENY",
+          "X-Content-Type-Options": "nosniff"
         } });
       }
       // ===== 8b. FAVICON =====
       if (path === "favicon.ico") {
         const bytes = Uint8Array.from(atob(FAVICON_PNG_BASE64), c => c.charCodeAt(0));
-        return new Response(bytes, { headers: { "Content-Type": "image/png", "Cache-Control": "public, max-age=604800" } });
+        return new Response(bytes, { headers: { "Content-Type": "image/png", "Cache-Control": "public, max-age=31536000" } });
+      }
+      // Ảnh minh hoạ unDraw (đã đổi màu thương hiệu, chuyển sang PNG) dùng trong email hệ thống —
+      // Gmail/Outlook không render SVG dưới bất kỳ hình thức nào nên phải host PNG thật ở đây,
+      // tham chiếu qua <img src="https://shurlvn.com/email-assets/<name>.png"> trong buildEmailShell.
+      // Lưu base64 trong KV (wrangler --path bị crash khi ghi thẳng binary trên Windows).
+      if (path.startsWith("email-assets/") && path.endsWith(".png")) {
+        const imgKey = path.slice("email-assets/".length, -".png".length);
+        const b64 = await env.LINKS_KV.get("emailimg_b64:" + imgKey);
+        if (!b64) return new Response("Not found", { status: 404 });
+        const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+        return new Response(bytes, { headers: { "Content-Type": "image/png", "Cache-Control": "public, max-age=31536000, immutable" } });
       }
       // ===== 8c. QR-SCANNER LIBRARY (same-origin proxy — the UMD build's worker file
       // uses a relative dynamic import() that fails to resolve when loaded cross-origin
@@ -386,7 +418,7 @@ export default {
       if (path === "assets/qr-scanner.umd.min.js" || path === "assets/qr-scanner-worker.min.js") {
         const upstream = await fetch("https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/" + path.slice("assets/".length));
         if (!upstream.ok) return new Response("Not found", { status: 404 });
-        return new Response(upstream.body, { headers: { "Content-Type": "application/javascript; charset=utf-8", "Cache-Control": "public, max-age=604800, immutable" } });
+        return new Response(upstream.body, { headers: { "Content-Type": "application/javascript; charset=utf-8", "Cache-Control": "public, max-age=31536000, immutable" } });
       }
       if (path === "robots.txt") {
         const robots = "User-agent: *\nAllow: /\nSitemap: https://shurlvn.com/sitemap.xml\n";
@@ -458,7 +490,14 @@ function json(body, status, corsHeaders, extraHeaders) {
 function html(body, status, extraHeaders) {
   return new Response(body, {
     status: status || 200,
-    headers: { "Content-Type": "text/html; charset=utf-8", ...(extraHeaders || {}) }
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+      "Cross-Origin-Opener-Policy": "same-origin",
+      "X-Frame-Options": "DENY",
+      "X-Content-Type-Options": "nosniff",
+      ...(extraHeaders || {})
+    }
   });
 }
 
@@ -613,6 +652,11 @@ async function putLink(env, link) {
 async function deleteLinkKV(env, code) {
   await env.LINKS_KV.delete("link:" + code);
   await env.LINKS_KV.delete("clicks:" + code);
+  // A Dynamic QR (see "KV: DYNAMIC QR" below) only stores a reference to this link's code and
+  // resolves everything else live via getLink — without this, purging the link leaves an
+  // orphaned "qr:" record that can never resolve (shows as a broken row forever).
+  const orphanedQr = (await listAllQrRecords(env)).filter(q => q.code === code);
+  await Promise.all(orphanedQr.map(q => deleteQrRecord(env, q.id)));
 }
 
 // ===================== KV: DYNAMIC QR (QR động) =====================
@@ -850,6 +894,16 @@ async function handleRegister(request, env, corsHeaders) {
   };
   await putUser(env, user);
 
+  const welcomeLang = (body.lang || "vi").toLowerCase();
+  const welcomeTpl = renderNotificationTemplate("welcome", welcomeLang, { username: user.username });
+  if (welcomeTpl) {
+    await notifyUser(env, {
+      username: user.username, type: "welcome", from: "system",
+      title: welcomeTpl.title, message: welcomeTpl.message,
+      sendEmailToo: !!user.email, emailSubject: welcomeTpl.emailSubject, emailHtml: welcomeTpl.emailHtml
+    });
+  }
+
   const sessionToken = randomHex(32);
   await env.LINKS_KV.put("session:" + sessionToken, cleanUser, { expirationTtl: SESSION_TTL });
 
@@ -1050,6 +1104,15 @@ async function handleGoogleAuthCallback(request, env, corsHeaders) {
     };
     await putUser(env, user);
     await env.LINKS_KV.put("googleid:" + googleSub, user.username.toLowerCase());
+
+    const welcomeTpl = renderNotificationTemplate("welcome", "vi", { username: user.username });
+    if (welcomeTpl) {
+      await notifyUser(env, {
+        username: user.username, type: "welcome", from: "system",
+        title: welcomeTpl.title, message: welcomeTpl.message,
+        sendEmailToo: true, emailSubject: welcomeTpl.emailSubject, emailHtml: welcomeTpl.emailHtml
+      });
+    }
   }
 
   if (user.banned) return redirectToLogin("account_banned");
@@ -1109,6 +1172,91 @@ async function handleGenerateToken(request, env, corsHeaders) {
 
   return json({ ok: true, apiToken: newToken }, 200, corsHeaders);
 }
+
+// Separate from handleGenerateToken: this one is open to every tier (not just Pro/Super).
+// It powers the browser extension's Link Manager (read links + quick-shorten), which
+// doesn't touch the paid API quota, so it's kept as its own token field (user.extToken)
+// rather than reusing user.apiToken. Both are looked up the same way by
+// getAuthenticatedUser() via the shared "apitoken:<token>" -> username KV prefix.
+async function handleGenerateExtensionToken(request, env, corsHeaders) {
+  const authedUser = await getAuthenticatedUser(request, env);
+  if (!authedUser) return requireAuthResponse(corsHeaders, request);
+
+  const user = await getUser(env, authedUser.username);
+  if (!user) return json({ error: st("user_not_found", request) }, 400, corsHeaders);
+
+  if (user.extToken) {
+    await env.LINKS_KV.delete("apitoken:" + user.extToken);
+  }
+  const newToken = `shurlext_${randomHex(18)}`;
+  user.extToken = newToken;
+  await putUser(env, user);
+  await env.LINKS_KV.put("apitoken:" + newToken, user.username.toLowerCase());
+
+  return json({ ok: true, extToken: newToken }, 200, corsHeaders);
+}
+
+const AI_ASSISTANT_SYSTEM_PROMPT = `Bạn là "Hỏi AI" — trợ lý trò chuyện trực tiếp với người dùng thật trên shurlvn.com (SHURL, nền tảng rút gọn link đa tầng). Bạn đang CHAT, không phải viết tài liệu.
+
+QUY TẮC BẮT BUỘC (luôn tuân thủ):
+1. Trả lời NGẮN GỌN (2-5 câu là đủ; chỉ liệt kê gạch đầu dòng khi thật sự cần các bước thao tác). Giọng văn tự nhiên, lịch sự, gần gũi như nhân viên hỗ trợ, có lời chào nhẹ nhàng đầu câu trả lời đầu tiên (VD: "Dạ chào bạn,"), không cần lặp lại lời chào ở mỗi tin nhắn sau trong cùng cuộc trò chuyện.
+2. TUYỆT ĐỐI KHÔNG chép nguyên văn phần "Thông tin tham khảo" bên dưới. Đọc hiểu rồi tự diễn đạt lại bằng lời của riêng bạn, như đang giải thích miệng cho một người bạn.
+3. CHỈ trả lời đúng trọng tâm điều người dùng đang hỏi. Không kể lể, liệt kê hay giới thiệu thêm các tính năng khác mà họ không hỏi tới.
+4. Nếu câu hỏi nằm ngoài phạm vi shurlvn.com (không liên quan rút gọn link/QR/Link-in-bio/tài khoản/gói cước/thao tác trên web này), trả lời ĐÚNG NGUYÊN VĂN câu sau và không thêm gì khác: "Dạ phần này nằm ngoài chuyên môn của em rồi, em chỉ hỗ trợ thao tác trên shurlvn.com thôi ạ!"
+5. KHI HƯỚNG DẪN THAO TÁC, đừng chỉ ném ra đường dẫn (ví dụ "/bulkqr") như trả lời máy móc. Hãy chỉ đường như đang ngồi cạnh chỉ tay cho người dùng: nói họ vào mục nào ở THANH CÔNG CỤ BÊN TRÁI (ví dụ: "bạn mở thanh công cụ bên trái, bấm vào mục 'QR Codes'"), có thể nhắc thêm đường dẫn trong ngoặc nếu cần, rồi mới nói bước tiếp theo cần bấm gì. Việc này giúp người dùng cảm thấy như đang được người thật hướng dẫn.
+
+THÔNG TIN THAM KHẢO về SHURL (chỉ để bạn hiểu và diễn giải lại, không được copy nguyên văn) — tên mục đúng như trên thanh công cụ bên trái được ghi trong ngoặc kép:
+- Rút gọn link: tạo link ngắn tại trang chủ hoặc mục 'Bảng điều khiển' (/dashboard) trên thanh công cụ bên trái, có thể đặt tên tuỳ chỉnh (custom alias), đặt ngày hết hạn, gắn tag/chiến dịch.
+- QR Code: vào mục 'QR Codes' (/bulkqr) trên thanh công cụ bên trái để tạo mã QR tĩnh (mã hoá thẳng URL, không đổi được) hoặc QR động (mã hoá 1 short URL, đổi đích bất cứ lúc nào không cần in lại — từ gói Plus, hạn mức theo tháng: Plus 20, Pro 100, Super 500). Có thể gắn logo, chọn kiểu chấm QR, tạo QR hàng loạt (Bulk QR, cần Pro/Super).
+- Link-in-bio: vào mục 'Link-in-bio' (/linkinbio) trên thanh công cụ bên trái — trang mini gom nhiều liên kết (Facebook, Zalo, Shop...) vào 1 short URL, giống Linktree — từ gói Plus (1 trang), Pro (3 trang), Super (10 trang).
+- Scanner QR: vào mục 'Scanner QR' (/scanner) trên thanh công cụ bên trái để quét và kiểm tra an toàn 1 mã QR trước khi bấm vào.
+- Phân tích/Analytics: bấm vào 1 link cụ thể trong mục 'Bảng điều khiển' (/dashboard) để xem số lượt click, thiết bị, quốc gia, trình duyệt. Gói Pro/Super có thống kê nâng cao và tự động cập nhật real-time (không cần F5).
+- Bulk Shorten: vào mục 'Bulk' (/bulk) trên thanh công cụ bên trái để rút gọn nhiều link cùng lúc — cần Pro/Super.
+- Password Link: đặt mật khẩu bảo vệ cho 1 link — cần Pro trở lên.
+- Deep Link: tự động chuyển hướng khác nhau cho iOS/Android — cần Pro trở lên.
+- A/B Testing: chia traffic ngẫu nhiên giữa nhiều URL đích — cần Pro trở lên.
+- UTM Builder: tự gắn tham số UTM vào link để đo lường quảng cáo.
+- Webhooks: vào mục 'Webhooks' (/webhooks) trên thanh công cụ bên trái — cần Pro/Super.
+- Export CSV/JSON: vào mục 'Export' (/export) trên thanh công cụ bên trái — cần Pro/Super.
+- API: vào mục 'API' (/api) trên thanh công cụ bên trái, xem tại tab API trong Tài khoản — cần Pro/Super.
+- Tiện ích trình duyệt Chrome: vào mục 'API' (/api) trên thanh công cụ bên trái, chọn "Kết nối tiện ích trình duyệt" để lấy mã kết nối — miễn phí cho mọi gói, giúp xem link gần đây và rút gọn nhanh ngay trên popup.
+- Các gói: Free (miễn phí, 10 link/ngày), Plus, Pro, Super — vào mục 'Bảng giá' (/pricing) trên thanh công cụ bên trái để xem chi tiết và nâng cấp.
+Nếu không chắc chắn về 1 chi tiết cụ thể (ví dụ số liệu chính xác), đừng bịa — trả lời khái quát và gợi ý người dùng xem thêm tại /blog hoặc mục "Xem hướng dẫn" ngay trên từng trang.`;
+
+async function handleAskAi(request, env, corsHeaders) {
+  const ip = getClientIp(request);
+  const rateKey = "airate:" + ip + ":" + Math.floor(Date.now() / 3600000);
+  const rateCount = parseInt(await env.LINKS_KV.get(rateKey) || "0");
+  if (rateCount >= 20) {
+    return json({ reply: "Bạn hỏi hơi nhanh — vui lòng đợi một lát rồi thử lại, hoặc xem hướng dẫn tại /blog." }, 200, corsHeaders);
+  }
+  await env.LINKS_KV.put(rateKey, String(rateCount + 1), { expirationTtl: 3600 });
+
+  let body;
+  try { body = await request.json(); } catch (e) { body = {}; }
+  const message = (body && body.message || "").trim().slice(0, 500);
+  const history = Array.isArray(body && body.history) ? body.history.slice(-6) : [];
+  if (!message) return json({ error: "Thiếu nội dung câu hỏi." }, 400, corsHeaders);
+
+  const messages = [{ role: "system", content: AI_ASSISTANT_SYSTEM_PROMPT }];
+  for (const h of history) {
+    if (h && (h.role === "user" || h.role === "assistant") && typeof h.content === "string") {
+      messages.push({ role: h.role, content: h.content.slice(0, 500) });
+    }
+  }
+  messages.push({ role: "user", content: message });
+
+  try {
+    const aiResult = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", { messages, max_tokens: 500 });
+    const reply = (aiResult && aiResult.response) ? aiResult.response.trim() : "";
+    if (!reply) throw new Error("empty response");
+    return json({ reply }, 200, corsHeaders);
+  } catch (err) {
+    console.error("ask-ai failed:", err);
+    return json({ reply: "Xin lỗi, trợ lý AI đang gặp sự cố tạm thời. Vui lòng thử lại sau ít phút, hoặc xem hướng dẫn tại /blog.", degraded: true }, 200, corsHeaders);
+  }
+}
+
 function renderForgotPassword(app){
   app.innerHTML =
     '<div class="card" style="max-width:420px;margin:0 auto;">' +
@@ -1162,51 +1310,120 @@ function renderForgotPassword(app){
 // ===================== QUÊN MẬT KHẨU (BACKEND) =====================
 const PW_RESET_TTL = 900; // 15 phút
 
+// Nhãn giao diện dùng chung cho khung email chuyên nghiệp (buildEmailShell) — brand tagline,
+// điều khoản/chính sách, và 2 nhãn "Tài khoản"/"Gói" dùng trong khung chi tiết của các email
+// thông báo tự động. Tách riêng khỏi nội dung từng email để không lặp lại ở mọi template.
+var EMAIL_LABELS = {
+  vi: { tagline:"Nền tảng rút gọn link đa tầng", terms:"Điều khoản sử dụng", privacy:"Chính sách bảo mật", account:"Tài khoản", plan:"Gói", reasonGeneric:"Bạn nhận được email này vì đây là thông báo liên quan tới tài khoản SHURL của bạn.", support:"Cần hỗ trợ? Liên hệ" },
+  en: { tagline:"The multi-tier link shortening platform", terms:"Terms of Service", privacy:"Privacy Policy", account:"Account", plan:"Plan", reasonGeneric:"You're receiving this email because it relates to your SHURL account.", support:"Need help? Contact" },
+  ko: { tagline:"다단계 링크 단축 플랫폼", terms:"이용약관", privacy:"개인정보 처리방침", account:"계정", plan:"플랜", reasonGeneric:"이 이메일은 회원님의 SHURL 계정과 관련된 알림이기 때문에 발송되었습니다.", support:"도움이 필요하신가요? 문의:" },
+  zh: { tagline:"多层级链接缩短平台", terms:"服务条款", privacy:"隐私政策", account:"账户", plan:"套餐", reasonGeneric:"您收到此邮件是因为它与您的 SHURL 账户相关。", support:"需要帮助？联系" },
+  hi: { tagline:"मल्टी-टियर लिंक शॉर्टनिंग प्लेटफ़ॉर्म", terms:"सेवा की शर्तें", privacy:"गोपनीयता नीति", account:"खाता", plan:"प्लान", reasonGeneric:"आपको यह ईमेल इसलिए मिला है क्योंकि यह आपके SHURL खाते से संबंधित है।", support:"मदद चाहिए? संपर्क करें" },
+  ja: { tagline:"マルチティア・リンク短縮プラットフォーム", terms:"利用規約", privacy:"プライバシーポリシー", account:"アカウント", plan:"プラン", reasonGeneric:"このメールはお客様のSHURLアカウントに関連する通知のため送信されています。", support:"サポートが必要ですか？連絡先:" },
+  fr: { tagline:"La plateforme de raccourcissement de liens multi-niveaux", terms:"Conditions d'utilisation", privacy:"Politique de confidentialité", account:"Compte", plan:"Forfait", reasonGeneric:"Vous recevez cet e-mail car il concerne votre compte SHURL.", support:"Besoin d'aide ? Contactez" },
+  es: { tagline:"La plataforma de acortamiento de enlaces multinivel", terms:"Términos de servicio", privacy:"Política de privacidad", account:"Cuenta", plan:"Plan", reasonGeneric:"Recibes este correo porque está relacionado con tu cuenta de SHURL.", support:"¿Necesitas ayuda? Contacta" }
+};
+
+// Khung email chuyên nghiệp dùng chung cho MỌI email hệ thống (reset password, voucher, chào
+// mừng, thanh toán, cảnh báo bảo mật, admin broadcast) — nền kem ngoài, card trắng, khung chi
+// tiết, nút CTA, footer có lý do nhận email + link hỗ trợ/điều khoản. Chỉ dùng inline style +
+// <table> phẳng (không lồng bảng sâu — Gmail tự thu gọn thành "..." nếu lồng quá nhiều lớp) để
+// tương thích rộng với Gmail/Outlook. Không dùng SVG cho phần trang trí — Gmail/Outlook không
+// render SVG dưới bất kỳ hình thức nào (đã xác nhận qua email thật), chỉ dùng màu nền + chữ.
+function buildEmailShell(opts) {
+  var L = EMAIL_LABELS[opts.lang] || EMAIL_LABELS.vi;
+  var FONT = "Arial,Helvetica,'Segoe UI',sans-serif";
+  var codeBoxHtml = opts.code ? (
+    '<div style="text-align:center;margin:24px 0;">' +
+    '<span style="display:inline-block;background:#eef2ff;border:2px solid #6366f1;border-radius:12px;padding:16px 32px;font-size:26px;font-weight:800;letter-spacing:4px;color:#4338ca;font-family:' + FONT + ';">' + opts.code + '</span>' +
+    '</div>'
+  ) : "";
+  var detailBoxHtml = "";
+  if (opts.detailRows && opts.detailRows.length) {
+    detailBoxHtml = '<div style="background:#faf9f7;border:1px solid #e5e5e5;border-radius:12px;margin:24px 0;padding:14px 20px;">' +
+      opts.detailRows.map(function(r, i){
+        var top = i > 0 ? "border-top:1px solid #e5e5e5;padding-top:10px;margin-top:10px;" : "";
+        return '<div style="' + top + '">' +
+          '<div style="font-size:12px;color:#767676;font-family:' + FONT + ';">' + r.label + '</div>' +
+          '<div style="font-size:14px;color:#1a1a1a;font-weight:700;font-family:' + FONT + ';margin-top:2px;">' + r.value + '</div>' +
+          '</div>';
+      }).join("") +
+      '</div>';
+  }
+  var logoBadge =
+    '<span style="display:inline-block;width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#6366f1,#8b5cf6);vertical-align:middle;"></span>' +
+    '<span style="display:inline-block;width:8px;"></span>' +
+    '<span style="display:inline-block;vertical-align:middle;font-size:20px;font-weight:700;letter-spacing:-0.3px;color:#1a1a1a;font-family:' + FONT + ';">SHURL</span>';
+  var footerReason = opts.footerReason || L.reasonGeneric;
+  // Ảnh unDraw thật host tại /email-assets/<key>.png (route trong fetch handler) — dùng <img>
+  // thường (không phải SVG) vì Gmail/Outlook không render SVG dưới bất kỳ hình thức nào.
+  var illustrationHtml = opts.illustration ? (
+    '<div style="text-align:center;margin:16px 0 4px;">' +
+    '<img src="https://shurlvn.com/email-assets/' + opts.illustration + '.png" width="200" alt="" style="width:200px;max-width:100%;height:auto;display:block;margin:0 auto;border:0;">' +
+    '</div>'
+  ) : "";
+  var cardBody =
+    '<div style="text-align:center;">' + logoBadge + '</div>' +
+    illustrationHtml +
+    '<h1 style="text-align:center;font-size:20px;color:#1a1a1a;margin:8px 0 16px;font-family:' + FONT + ';">' + opts.title + '</h1>' +
+    '<div style="font-size:14px;line-height:1.7;color:#4b4b4b;font-family:' + FONT + ';text-align:center;">' + opts.introHtml + '</div>' +
+    codeBoxHtml +
+    detailBoxHtml +
+    (opts.afterHtml ? '<div style="font-size:13px;line-height:1.6;color:#767676;margin-top:16px;font-family:' + FONT + ';text-align:center;">' + opts.afterHtml + '</div>' : "") +
+    (opts.ctaText ? '<div style="text-align:center;margin:28px 0 4px;"><a href="' + opts.ctaUrl + '" style="display:inline-block;background:#6366f1;color:#ffffff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;font-family:' + FONT + ';">' + opts.ctaText + '</a></div>' : "") +
+    (opts.warningHtml ? '<p style="font-size:12px;color:#ef4444;margin-top:20px;font-family:' + FONT + ';text-align:center;">' + opts.warningHtml + '</p>' : "") +
+    '<div style="border-top:1px solid #e5e5e5;margin-top:32px;padding-top:20px;text-align:center;">' +
+    '<div style="font-size:12px;color:#888888;line-height:1.7;font-family:' + FONT + ';">' +
+    footerReason + '<br>' +
+    L.support + ' <a href="mailto:nguyennha24595@gmail.com" style="color:#888888;text-decoration:underline;">nguyennha24595@gmail.com</a><br>' +
+    '<a href="https://shurlvn.com/#/terms" style="color:#888888;text-decoration:underline;">' + L.terms + '</a>' +
+    '<span> &middot; </span>' +
+    '<a href="https://shurlvn.com/#/privacy" style="color:#888888;text-decoration:underline;">' + L.privacy + '</a>' +
+    '</div>' +
+    '</div>';
+  return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fbf9f5;">' +
+    '<tr><td align="center" style="padding:40px 16px;">' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;background:#ffffff;border:1px solid #e5e5e5;border-radius:12px;">' +
+    '<tr><td style="padding:40px;">' + cardBody + '</td></tr>' +
+    '</table>' +
+    '</td></tr>' +
+    '</table>';
+}
+
 function buildResetEmail(lang, code, domain) {
   var T = {
     vi: {
-      subject: "[" + domain + "] Mã khôi phục mật khẩu: " + code,
+      subject: "[SHURL] Mã khôi phục mật khẩu: " + code,
       title: "Khôi phục mật khẩu",
-      hello: "Xin chào,",
-      body1: "Bạn vừa yêu cầu khôi phục mật khẩu cho tài khoản của mình tại <b>" + domain + "</b>.",
-      body2: "Mã xác minh của bạn là:",
-      body3: "Nếu bạn không yêu cầu mã này, có thể ai đó đang cố truy cập tài khoản <b>" + domain + "</b> của bạn. Không chuyển tiếp hoặc cung cấp mã này cho bất kỳ ai.",
-      body4: "Bạn nhận được email này vì địa chỉ này được liên kết khôi phục mật khẩu cho tài khoản <b>" + domain + "</b>. Nếu thông tin chính xác, vui lòng nhập mã xác minh tại trang <b>" + domain + "#/forgot-password</b> để đổi mật khẩu.",
-      regards: "Trân trọng,"
+      intro: "Bạn vừa yêu cầu khôi phục mật khẩu cho tài khoản tại <b>" + domain + "</b>. Nhập mã bên dưới tại trang đặt lại mật khẩu để tiếp tục:",
+      cta: "Đặt lại mật khẩu",
+      warning: "Nếu bạn không yêu cầu mã này, có thể ai đó đang cố truy cập tài khoản của bạn. Không chia sẻ mã này với bất kỳ ai.",
+      reason: "Bạn nhận được email này vì có yêu cầu khôi phục mật khẩu cho tài khoản SHURL của bạn."
     },
     en: {
-      subject: "[" + domain + "] Your password reset code: " + code,
+      subject: "[SHURL] Your password reset code: " + code,
       title: "Password Recovery",
-      hello: "Hello,",
-      body1: "You recently requested to reset your password at <b>" + domain + "</b>.",
-      body2: "Your verification code is:",
-      body3: "If you did not request this code, someone may be trying to access your <b>" + domain + "</b> account. Do not forward or share this code with anyone.",
-      body4: "You received this email because this address is linked to password recovery for your <b>" + domain + "</b> account. If this is correct, please enter the verification code at <b>" + domain + "#/forgot-password</b> to change your password.",
-      regards: "Best regards,"
+      intro: "You recently requested to reset your password at <b>" + domain + "</b>. Enter the code below on the reset page to continue:",
+      cta: "Reset password",
+      warning: "If you didn't request this code, someone may be trying to access your account. Don't share this code with anyone.",
+      reason: "You're receiving this email because of a password reset request for your SHURL account."
     }
   };
   var m = T[lang] || T.en;
-  var html =
-    '<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px;border:1px solid #e5e7eb;border-radius:12px;">' +
-    '<h2 style="color:#111827;margin-top:0;">' + m.title + '</h2>' +
-    '<p style="color:#374151;">' + m.hello + '</p>' +
-    '<p style="color:#374151;">' + m.body1 + '</p>' +
-    '<p style="color:#374151;">' + m.body2 + '</p>' +
-    '<div style="text-align:center;margin:24px 0;">' +
-    '<span style="display:inline-block;font-size:32px;letter-spacing:8px;font-weight:bold;color:#2563eb;background:#eff6ff;padding:12px 24px;border-radius:8px;">' + code + '</span>' +
-    '</div>' +
-    '<p style="color:#6b7280;font-size:13px;">' + m.body3 + '</p>' +
-    '<hr style="border:none;border-top:1px solid #e5e7eb;">' +
-    '<p style="color:#9ca3af;font-size:12px;">' + m.body4 + '</p>' +
-    '<p style="color:#374151;">' + m.regards + '</p>' +
-    '</div>';
+  var html = buildEmailShell({
+    lang: lang, illustration: "reset",
+    title: m.title, introHtml: "<p>" + m.intro + "</p>", code: code,
+    ctaText: m.cta, ctaUrl: "https://" + domain + "/#/forgot-password",
+    warningHtml: m.warning, footerReason: m.reason
+  });
   return { subject: m.subject, html: html };
 }
 
-async function sendResetEmail(env, toEmail, lang, code) {
+// Nhà cung cấp email duy nhất cho toàn bộ hệ thống — dùng chung cho reset password, voucher,
+// và các thông báo tự động (đăng ký/thanh toán) qua notifyUser(). shurlvn.com đã verify trong
+// Resend nên gửi được tới bất kỳ user nào, không giới hạn như sandbox onboarding@resend.dev.
+async function sendEmail(env, opts) {
   try {
-    var domain = "shorturl.nguyennha24595.workers.dev";
-    var mail = buildResetEmail(lang, code, domain);
     var res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -1214,10 +1431,10 @@ async function sendResetEmail(env, toEmail, lang, code) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        from: "onboarding@resend.dev",
-        to: [toEmail],
-        subject: mail.subject,
-        html: mail.html
+        from: "SHURL <noreply@shurlvn.com>",
+        to: [opts.to],
+        subject: opts.subject,
+        html: opts.html
       })
     });
     if (!res.ok) {
@@ -1226,8 +1443,48 @@ async function sendResetEmail(env, toEmail, lang, code) {
     }
     return res.ok;
   } catch (e) {
-    console.log("sendResetEmail exception:", e.message);
+    console.log("sendEmail exception:", e.message);
     return false;
+  }
+}
+
+async function sendResetEmail(env, toEmail, lang, code) {
+  var domain = "shurlvn.com";
+  var mail = buildResetEmail(lang, code, domain);
+  return sendEmail(env, { to: toEmail, subject: mail.subject, html: mail.html });
+}
+
+// Điểm gọi thông báo dùng chung — ghi in-app notification (đúng shape đang dùng ở khắp nơi:
+// notif:user:<username>:<id>) và, nếu truyền sendEmailToo + emailSubject/emailHtml, gửi thêm
+// email qua sendEmail(). Không đổi hành vi các nơi gọi cũ (chỉ gộp code), chỉ những chỗ mới
+// (đăng ký, thanh toán, admin broadcast) mới cần bật sendEmailToo.
+async function notifyUser(env, opts) {
+  const notifId = "notif_" + Date.now() + "_" + randomHex(4);
+  const notif = {
+    id: notifId,
+    title: opts.title,
+    message: opts.message,
+    type: opts.type || "info",
+    from: opts.from || "system",
+    createdAt: new Date().toISOString(),
+    read: false
+  };
+  await env.LINKS_KV.put("notif:user:" + opts.username.toLowerCase() + ":" + notifId, JSON.stringify(notif));
+  if (opts.sendEmailToo && opts.emailSubject && opts.emailHtml) {
+    const user = await getUser(env, opts.username);
+    if (user && user.email) await sendEmail(env, { to: user.email, subject: opts.emailSubject, html: opts.emailHtml });
+  }
+  return notifId;
+}
+
+// Gộp pattern "báo cho mọi admin" lặp lại ở nhiều nơi (báo cáo vi phạm, góp ý mới, thanh toán
+// chờ duyệt...) — mỗi admin nhận 1 notif riêng (id riêng) qua notifyUser().
+async function notifyAllAdmins(env, opts) {
+  const allUsers = await listAllUsers(env);
+  for (const u of allUsers) {
+    if (u.role === "admin") {
+      await notifyUser(env, { username: u.username, type: opts.type, title: opts.title, message: opts.message, from: opts.from || "system" });
+    }
   }
 }
 
@@ -1668,6 +1925,62 @@ async function createLinkInternal(env, { url: targetUrl, owner, role, customCode
   return newLink;
 }
 
+const MAX_BIO_SUBLINKS = 20;
+
+// Link-in-bio pages reuse the "link:<code>" KV record (type:"bio" instead of a
+// redirect target) so all existing cross-cutting infra — reports, blacklist,
+// recordClick page-view counting, QR generation off the shortUrl — works for
+// free. createLinkInternal isn't reusable directly since it's built around a
+// single targetUrl rather than a list of sub-links.
+async function createBioPageInternal(env, { owner, role, displayName, bio, links, customCode }) {
+  const rawLinks = Array.isArray(links) ? links : [];
+  const cleanLinks = [];
+  for (const l of rawLinks.slice(0, MAX_BIO_SUBLINKS)) {
+    const subUrl = (l && l.url || "").trim();
+    const subTitle = (l && l.title || "").trim();
+    if (!subUrl || !subUrl.startsWith("http") || !subTitle) continue;
+    if (await isDomainBlacklisted(env, subUrl)) continue;
+    cleanLinks.push({ id: "sl_" + randomHex(4), title: subTitle.slice(0, 80), url: subUrl, clicks: 0 });
+  }
+  if (cleanLinks.length === 0) {
+    const e = new Error("BIO_LINKS_REQUIRED"); e.code = "BIO_LINKS_REQUIRED"; throw e;
+  }
+
+  let code = customCode ? customCode.trim().replace(/[^a-zA-Z0-9_-]/g, "") : "";
+  if (code) {
+    if (await isKeywordBlacklisted(env, code, role)) {
+      const e = new Error("KEYWORD_BLOCKED"); e.code = "KEYWORD_BLOCKED"; e.codeData = { code }; throw e;
+    }
+    if (await getLink(env, code)) {
+      const e = new Error("CODE_TAKEN"); e.code = "CODE_TAKEN"; e.codeData = { code }; throw e;
+    }
+  } else {
+    let attempts = 0;
+    do {
+      code = generateCode(attempts > 5 ? 7 : 6);
+      attempts++;
+    } while (await getLink(env, code));
+  }
+
+  const newLink = {
+    code,
+    url: "",
+    owner,
+    role,
+    type: "bio",
+    createdAt: new Date().toISOString(),
+    title: (displayName || "").trim().slice(0, 60) || owner,
+    isEnabled: true,
+    expiryDate: null,
+    totalClicks: 0,
+    destinationHistory: [],
+    campaignHistory: [],
+    bioProfile: { displayName: (displayName || "").trim().slice(0, 60), bio: (bio || "").trim().slice(0, 200) },
+    bioLinks: cleanLinks
+  };
+  await putLink(env, newLink);
+  return newLink;
+}
 
 function shortUrlFor(url, code, customDomain) {
   var d = normalizeCustomDomain(customDomain);
@@ -1903,6 +2216,101 @@ async function handleUpdateLink(request, env, url, code, corsHeaders) {
   return json({ ok: true, link: { ...link, shortUrl: shortUrlFor(url, link.code, link.customDomain) } }, 200, corsHeaders);
 }
 
+// ===================== HANDLERS: LINK-IN-BIO =====================
+async function handleCreateBioPage(request, env, url, corsHeaders) {
+  const authedUser = await getAuthenticatedUser(request, env);
+  if (!authedUser) return requireAuthResponse(corsHeaders, request);
+
+  const role = authedUser.role;
+  const owner = authedUser.username;
+  const limit = (await getEffectiveTierConfig(env, role)).maxBioPages || 0;
+  if (!limit) {
+    return json({ error: "Trang Link-in-bio chỉ dành cho gói Plus trở lên.", code: "BIO_NOT_AVAILABLE", upgradeUrl: "#/pricing" }, 403, corsHeaders);
+  }
+  if (limit < 999999) {
+    const allLinks = await listAllLinks(env);
+    const existing = allLinks.filter(l => l.owner === owner && l.type === "bio" && !l.isDeleted).length;
+    if (existing >= limit) {
+      return json({ error: `Bạn đã đạt giới hạn ${limit} trang Link-in-bio của gói hiện tại.`, code: "BIO_LIMIT_REACHED" }, 403, corsHeaders);
+    }
+  }
+
+  let body;
+  try { body = await request.json(); } catch (e) { body = {}; }
+  const { displayName, bio, links, customCode } = body || {};
+
+  let bioPage;
+  try {
+    bioPage = await createBioPageInternal(env, { owner, role, displayName, bio, links, customCode });
+  } catch (err) {
+    if (err.code === "BIO_LINKS_REQUIRED") return json({ error: "Cần ít nhất 1 link hợp lệ (có tiêu đề và URL) cho trang Link-in-bio." }, 400, corsHeaders);
+    if (err.code === "CODE_TAKEN") return json({ error: "Mã đã được sử dụng. Vui lòng chọn mã khác." }, 400, corsHeaders);
+    if (err.code === "KEYWORD_BLOCKED") return json({ error: "Mã tùy chỉnh chứa từ khóa không được phép." }, 400, corsHeaders);
+    return json({ error: err.message || "Không thể tạo trang." }, 400, corsHeaders);
+  }
+
+  return json({ ok: true, bioPage: { ...bioPage, shortUrl: shortUrlFor(url, bioPage.code, null) } }, 200, corsHeaders);
+}
+
+async function handleUpdateBioPage(request, env, url, code, corsHeaders) {
+  const authedUser = await getAuthenticatedUser(request, env);
+  if (!authedUser) return requireAuthResponse(corsHeaders, request);
+
+  const link = await getLink(env, code);
+  if (!link || link.type !== "bio") return json({ error: "Trang Link-in-bio không tồn tại." }, 404, corsHeaders);
+  if (link.owner !== authedUser.username && authedUser.role !== "admin") {
+    return json({ error: "Không có quyền" }, 403, corsHeaders);
+  }
+
+  let body;
+  try { body = await request.json(); } catch (e) { body = {}; }
+  const { displayName, bio, links, isEnabled } = body || {};
+
+  if (displayName !== undefined || bio !== undefined) {
+    link.bioProfile = {
+      displayName: (displayName !== undefined ? displayName : link.bioProfile.displayName || "").trim().slice(0, 60),
+      bio: (bio !== undefined ? bio : link.bioProfile.bio || "").trim().slice(0, 200)
+    };
+    link.title = link.bioProfile.displayName || link.title;
+  }
+  if (Array.isArray(links)) {
+    const cleanLinks = [];
+    for (const l of links.slice(0, MAX_BIO_SUBLINKS)) {
+      const subUrl = (l && l.url || "").trim();
+      const subTitle = (l && l.title || "").trim();
+      if (!subUrl || !subUrl.startsWith("http") || !subTitle) continue;
+      if (await isDomainBlacklisted(env, subUrl)) continue;
+      // Preserve the existing click counter when a sub-link's id matches one already on the page.
+      const existing = l.id && link.bioLinks.find(x => x.id === l.id);
+      cleanLinks.push({ id: (existing && existing.id) || "sl_" + randomHex(4), title: subTitle.slice(0, 80), url: subUrl, clicks: (existing && existing.clicks) || 0 });
+    }
+    if (cleanLinks.length === 0) return json({ error: "Cần ít nhất 1 link hợp lệ." }, 400, corsHeaders);
+    link.bioLinks = cleanLinks;
+  }
+  if (isEnabled !== undefined) link.isEnabled = isEnabled;
+  link.updatedAt = new Date().toISOString();
+
+  await putLink(env, link);
+  return json({ ok: true, bioPage: { ...link, shortUrl: shortUrlFor(url, link.code, null) } }, 200, corsHeaders);
+}
+
+async function handleBioLinkClick(request, env, code, corsHeaders) {
+  let body;
+  try { body = await request.json(); } catch (e) { body = {}; }
+  const { subLinkId } = body || {};
+  if (!subLinkId) return json({ error: "Thiếu subLinkId" }, 400, corsHeaders);
+
+  const link = await getLink(env, code);
+  if (!link || link.type !== "bio") return json({ error: "Không tìm thấy" }, 404, corsHeaders);
+
+  const sub = link.bioLinks.find(l => l.id === subLinkId);
+  if (!sub) return json({ error: "Không tìm thấy link" }, 404, corsHeaders);
+  sub.clicks = (sub.clicks || 0) + 1;
+  await putLink(env, link);
+
+  return json({ ok: true }, 200, corsHeaders);
+}
+
 async function handleDeleteLink(request, env, code, corsHeaders) {
   const user = await getAuthenticatedUser(request, env);
   if (!user) return json({ error: st("not_logged_in", request) }, 401, corsHeaders);
@@ -1947,9 +2355,7 @@ async function handleForceDeleteLink(request, env, code, corsHeaders) {
     const inTeam = user.teamId ? await isUserInSameTeam(env, user.username, link.owner) : false;
     if (!inTeam) return json({ error: "Không có quyền" }, 403, corsHeaders);
   }
-  await env.LINKS_KV.delete("link:" + code);
-  // Xoá click data
-  await env.LINKS_KV.delete("clicks:" + code);
+  await deleteLinkKV(env, code);
   return json({ ok: true, message: "Đã xóa vĩnh viễn." }, 200, corsHeaders);
 }
 
@@ -2173,14 +2579,11 @@ async function handleFeedback(request, env, corsHeaders) {
     await env.LINKS_KV.put("feedback:" + feedbackId, JSON.stringify(feedback));
     // Send notification to all admin users
     try {
-      var allUsers = await listAllUsers(env);
-      var fbNotifId = "notif_" + Date.now() + "_" + randomHex(4);
-      var fbNotif = { id: fbNotifId, title: "Gop y moi tu " + (feedback.username || (feedback.email || "an danh")), message: feedback.message.substring(0, 200), type: "feedback", from: "system", createdAt: new Date().toISOString(), read: false, feedbackId: feedbackId };
-      for (var ui = 0; ui < allUsers.length; ui++) {
-        if (allUsers[ui].role === "admin") {
-          await env.LINKS_KV.put("notif:user:" + allUsers[ui].username.toLowerCase() + ":" + fbNotifId, JSON.stringify(fbNotif));
-        }
-      }
+      await notifyAllAdmins(env, {
+        type: "feedback",
+        title: "Gop y moi tu " + (feedback.username || (feedback.email || "an danh")),
+        message: feedback.message.substring(0, 200)
+      });
     } catch(e) {}
     return json({ success: true, feedbackId: feedbackId }, 200, corsHeaders);
   } catch (e) {
@@ -2444,10 +2847,13 @@ async function handleListDynamicQr(request, env, url, corsHeaders) {
   const mine = authedUser.role === "admin" ? allQr : allQr.filter(q => q.owner === authedUser.username);
   mine.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
-  const results = await Promise.all(mine.map(async (qr) => {
-    const link = await getLink(env, qr.code);
-    return qrRecordToResponse(qr, link, url, authedUser.role);
-  }));
+  const withLinks = await Promise.all(mine.map(async (qr) => ({ qr, link: await getLink(env, qr.code) })));
+  // A qr record with no link at all (not even a soft-deleted one) means its underlying link was
+  // purged before the deleteLinkKV cascade existed — self-heal by dropping the orphan here
+  // instead of showing a permanently-broken row (see deleteLinkKV above for the normal path).
+  const orphaned = withLinks.filter(r => !r.link);
+  if (orphaned.length) await Promise.all(orphaned.map(r => deleteQrRecord(env, r.qr.id)));
+  const results = withLinks.filter(r => r.link).map(r => qrRecordToResponse(r.qr, r.link, url, authedUser.role));
 
   const role = authedUser.role;
   const userRecord = await getUser(env, authedUser.username);
@@ -2581,14 +2987,11 @@ async function handleCreateReport(request, env, corsHeaders) {
   };
   await putReport(env, report);
   try {
-    var allAdminsR = await listAllUsers(env);
-    var repNotifId = "notif_" + Date.now() + "_" + randomHex(4);
-    var repNotif = { id: repNotifId, title: "Bao cao vi pham moi", message: "Link " + code + " bi bao cao: " + (reason || "Vi pham an toan"), type: "warning", from: "system", createdAt: new Date().toISOString(), read: false };
-    for (var ri = 0; ri < allAdminsR.length; ri++) {
-      if (allAdminsR[ri].role === "admin") {
-        await env.LINKS_KV.put("notif:user:" + allAdminsR[ri].username.toLowerCase() + ":" + repNotifId, JSON.stringify(repNotif));
-      }
-    }
+    await notifyAllAdmins(env, {
+      type: "warning",
+      title: "Bao cao vi pham moi",
+      message: "Link " + code + " bi bao cao: " + (reason || "Vi pham an toan")
+    });
   } catch(e) {}
   return json({ ok: true, report }, 200, corsHeaders);
 }
@@ -2688,9 +3091,7 @@ async function handleAdminReplyFeedback(request, env, corsHeaders) {
   feedback.repliedBy = authedUser.username;
   await env.LINKS_KV.put("feedback:" + id, JSON.stringify(feedback));
   if (feedback.username) {
-    const notifId = "notif_" + Date.now() + "_" + randomHex(4);
-    const notif = { id: notifId, title: "Phan hoi gop y", message: reply.substring(0, 200), type: "feedback_reply", from: authedUser.username, createdAt: new Date().toISOString(), read: false };
-    await env.LINKS_KV.put("notif:user:" + feedback.username.toLowerCase() + ":" + notifId, JSON.stringify(notif));
+    await notifyUser(env, { username: feedback.username, type: "feedback_reply", from: authedUser.username, title: "Phan hoi gop y", message: reply.substring(0, 200) });
   }
   await addAuditLog(env, authedUser, "REPLY_FEEDBACK", { feedbackId: id }, request);
   return json({ ok: true }, 200, corsHeaders);
@@ -3559,7 +3960,7 @@ footer a{color:#64748b;}
 </head>
 <body>
 <div class="wrap">
-<header><a href="/"><img src="data:image/png;base64,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" alt="SHURL" style="height:24px;vertical-align:middle;margin:0 6px 0 0;border:none;box-shadow:none;"> SHORT URL</a></header>
+<header><a href="/"><img src="data:image/png;base64,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" width="24" height="24" alt="SHURL" style="width:24px;height:24px;aspect-ratio:1/1;vertical-align:middle;margin:0 6px 0 0;border:none;box-shadow:none;"> SHORT URL</a></header>
 ${bodyHtml}
 <footer><a href="/">← Về trang chủ SHURL</a> · <a href="/blog">Xem tất cả bài viết</a></footer>
 </div>
@@ -3598,6 +3999,11 @@ async function handleRedirect(request, env, url, path, ctx) {
 
   if (link.expiryDate && new Date(link.expiryDate) < new Date()) {
     return html('<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + escHtml(st("link_expired_title", request)) + '</title></head><body style="font-family:system-ui;text-align:center;padding:60px;"><h1>' + escHtml(st("link_expired_title", request)) + '</h1><p>' + escHtml(st("link_expired_desc", request)) + '</p></body></html>', 410);
+  }
+
+  if (link.type === "bio") {
+    ctx.waitUntil(recordClick(request, env, path, link));
+    return renderBioPageHtml(link, url);
   }
 
   if (link.password) {
@@ -3688,6 +4094,44 @@ function renderPasswordPage(code, origin, request) {
     '  if(d.success){location.reload();}' +
     '  else{document.getElementById("err").style.display="block";}' +
     '}' +
+    '</script></body></html>',
+    200
+  );
+}
+
+function renderBioPageHtml(link, url) {
+  var profile = link.bioProfile || {};
+  var displayName = escHtml(profile.displayName || link.title || link.code);
+  var bioText = escHtml(profile.bio || "");
+  var linksHtml = (link.bioLinks || []).map(function (l) {
+    // l.id is always server-generated ("sl_" + randomHex(4)), never user input — safe to inline directly.
+    return '<a class="bio-link" href="' + escHtml(l.url) + '" target="_blank" rel="noopener" onclick="trackBioClick(\'' + l.id + '\')">' + escHtml(l.title) + '</a>';
+  }).join("");
+  return html(
+    '<!DOCTYPE html><html><head><meta charset="utf-8">' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<title>' + displayName + ' · SHURL</title>' +
+    '<style>' +
+    '*{box-sizing:border-box;}' +
+    'body{font-family:system-ui,-apple-system,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;margin:0;display:flex;justify-content:center;padding:48px 16px;}' +
+    '.wrap{max-width:420px;width:100%;text-align:center;}' +
+    '.avatar{width:72px;height:72px;border-radius:50%;background:#6366f1;color:#fff;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;margin:0 auto 16px;}' +
+    'h1{font-size:20px;margin:0 0 6px;}' +
+    '.bio{color:#94a3b8;font-size:14px;margin:0 0 28px;white-space:pre-wrap;}' +
+    '.bio-link{display:block;background:#1e293b;color:#e2e8f0;text-decoration:none;padding:14px 18px;border-radius:12px;margin-bottom:12px;font-size:15px;font-weight:600;border:1px solid #334155;transition:background 0.15s;}' +
+    '.bio-link:hover{background:#334155;}' +
+    'footer{margin-top:32px;font-size:12px;color:#64748b;}' +
+    'footer a{color:#818cf8;text-decoration:none;}' +
+    '</style></head><body>' +
+    '<div class="wrap">' +
+    '<div class="avatar">' + escHtml((profile.displayName || "?").trim().charAt(0).toUpperCase()) + '</div>' +
+    '<h1>' + displayName + '</h1>' +
+    (bioText ? '<p class="bio">' + bioText + '</p>' : '') +
+    linksHtml +
+    '<footer>Tạo bởi <a href="https://shurlvn.com" target="_blank">SHURL</a></footer>' +
+    '</div>' +
+    '<script>' +
+    'function trackBioClick(id){try{navigator.sendBeacon("/api/links/bio/' + link.code + '/click", new Blob([JSON.stringify({subLinkId:id})],{type:"application/json"}));}catch(e){}}' +
     '</script></body></html>',
     200
   );
@@ -4021,14 +4465,11 @@ async function handleStripeCheckout(request, env, url, corsHeaders) {
   var session = await sresp.json();
   if (!sresp.ok) return json({ error: (session.error && session.error.message) || st("stripe_error_generic", request) }, 400, corsHeaders);
   try {
-    var allAdminsS = await listAllUsers(env);
-    var stripeNotifId = "notif_" + Date.now() + "_" + randomHex(4);
-    var stripeNotif = { id: stripeNotifId, title: "Thanh toan Stripe moi", message: "User " + user.username + " vua bat dau thanh toan Stripe cho goi " + tier.toUpperCase(), type: "info", from: "system", createdAt: new Date().toISOString(), read: false };
-    for (var si = 0; si < allAdminsS.length; si++) {
-      if (allAdminsS[si].role === "admin") {
-        await env.LINKS_KV.put("notif:user:" + allAdminsS[si].username.toLowerCase() + ":" + stripeNotifId, JSON.stringify(stripeNotif));
-      }
-    }
+    await notifyAllAdmins(env, {
+      type: "info",
+      title: "Thanh toan Stripe moi",
+      message: "User " + user.username + " vua bat dau thanh toan Stripe cho goi " + tier.toUpperCase()
+    });
   } catch(e) {}
   return json({ url: session.url }, 200, corsHeaders);
 }
@@ -4111,14 +4552,11 @@ async function handleQrCheckout(request, env, corsHeaders) {
   };
   await env.LINKS_KV.put("qrpay:" + orderId, JSON.stringify(payment));
   try {
-    var allAdmins = await listAllUsers(env);
-    var payNotifId = "notif_" + Date.now() + "_" + randomHex(4);
-    var payNotif = { id: payNotifId, title: "Thanh toan QR moi cho duyet", message: "User " + user.username + " vua tao thanh toan QR cho goi " + tier.toUpperCase() + " (" + vndPrice.toLocaleString() + "d) - Ma: " + orderId, type: "warning", from: "system", createdAt: new Date().toISOString(), read: false };
-    for (var ai = 0; ai < allAdmins.length; ai++) {
-      if (allAdmins[ai].role === "admin") {
-        await env.LINKS_KV.put("notif:user:" + allAdmins[ai].username.toLowerCase() + ":" + payNotifId, JSON.stringify(payNotif));
-      }
-    }
+    await notifyAllAdmins(env, {
+      type: "warning",
+      title: "Thanh toan QR moi cho duyet",
+      message: "User " + user.username + " vua tao thanh toan QR cho goi " + tier.toUpperCase() + " (" + vndPrice.toLocaleString() + "d) - Ma: " + orderId
+    });
   } catch(e) {}
   return json({ success: true, orderId: orderId, vndPrice: vndPrice }, 200, corsHeaders);
 }
@@ -4146,7 +4584,7 @@ async function isMaintenance(env, feature) {
 async function handleGetMaintenance(request, env, corsHeaders) {
   const user = await getAuthenticatedUser(request, env);
   if (!user || (user.role !== "admin" && user.role !== "super")) return json({ error: "Chỉ admin" }, 403, corsHeaders);
-  var features = ["global", "stripe", "qr_payment", "bulk", "api", "analytics", "voucher", "login", "shorten", "password_link", "qr_code", "data_export", "webhooks"];
+  var features = ["global", "stripe", "qr_payment", "bulk", "api", "analytics", "voucher", "login", "shorten", "password_link", "qr_code", "data_export", "webhooks", "link_in_bio", "extension", "ai_assistant"];
   var result = {};
   for (var i = 0; i < features.length; i++) { result[features[i]] = (await isMaintenance(env, features[i])) || { active: false, note: "" }; }
   return json({ maintenance: result }, 200, corsHeaders);
@@ -4210,6 +4648,11 @@ async function handleApproveQrPayment(request, env, corsHeaders) {
   const userRaw = await env.LINKS_KV.get(userKey);
   if (userRaw) {
     const userObj = JSON.parse(userRaw);
+    // Snapshot trạng thái NGAY TRƯỚC khi nâng cấp — cho phép handleRevokeQrPayment khôi phục
+    // chính xác nếu admin lỡ duyệt nhầm, thay vì phải đoán lại từ periodDays. Role phải lấy từ
+    // payUserObj (đọc TRƯỚC upgradeUserRole ở trên) vì userObj vừa bị upgradeUserRole ghi đè
+    // role rồi — tierExpiresAt/tierActivatedAt thì upgradeUserRole không đụng tới nên vẫn đúng.
+    payment.beforeSnapshot = { role: (payUserObj && payUserObj.role) || "free", tierExpiresAt: userObj.tierExpiresAt || null, tierActivatedAt: userObj.tierActivatedAt || null };
     var baseTime = Date.now();
     if (userObj.tierExpiresAt) {
       var existingExpiry = new Date(userObj.tierExpiresAt).getTime();
@@ -4252,7 +4695,7 @@ async function handleQrStatus(request, env, corsHeaders) {
     const val = await env.LINKS_KV.get(key.name);
     if (val) {
       const p = JSON.parse(val);
-      if (p.username === user.username && (p.status === "approved" || p.status === "rejected")) {
+      if (p.username === user.username && (p.status === "approved" || p.status === "rejected" || p.status === "revoked")) {
         if (!p.notified) { myPayments.push(p); }
       }
     }
@@ -4293,6 +4736,73 @@ async function handleRejectQrPayment(request, env, corsHeaders) {
   return json({ success: true, payment }, 200, corsHeaders);
 }
 
+// Thu hồi 1 giao dịch QR đã duyệt NHẦM (vd: khách gửi 2 lệnh, 1 đã chuyển khoản 1 đã huỷ, admin
+// đối chiếu nhầm duyệt cả 2). Khôi phục đúng role/tierExpiresAt từ beforeSnapshot đã lưu lúc
+// duyệt (xem handleApproveQrPayment) — không đoán lại — và chỉ cho phép khi đây là lệnh duyệt
+// GẦN NHẤT của user đó, để không vô tình xoá mất 1 giao dịch hợp lệ khác duyệt sau nó.
+async function handleRevokeQrPayment(request, env, corsHeaders) {
+  const user = await getAuthenticatedUser(request, env);
+  if (!user || user.role !== "admin") return json({ error: "Chỉ admin" }, 403, corsHeaders);
+  let body; try { body = await request.json(); } catch (e) { body = {}; }
+  const { orderId, reason } = body || {};
+  if (!orderId) return json({ error: "Thiếu orderId" }, 400, corsHeaders);
+  const raw = await env.LINKS_KV.get("qrpay:" + orderId);
+  if (!raw) return json({ error: "Không tìm thấy giao dịch" }, 404, corsHeaders);
+  const payment = JSON.parse(raw);
+  if (payment.status !== "approved") return json({ error: "Chỉ có thể thu hồi giao dịch đã duyệt" }, 400, corsHeaders);
+  if (!payment.beforeSnapshot) return json({ error: "Giao dịch này được duyệt trước khi có tính năng thu hồi, không có dữ liệu để khôi phục — vui lòng điều chỉnh thủ công cho user." }, 400, corsHeaders);
+
+  const list = await env.LINKS_KV.list({ prefix: "qrpay:" });
+  const raws = await Promise.all(list.keys.map(k => env.LINKS_KV.get(k.name)));
+  const laterApproved = raws.filter(Boolean).map(r => JSON.parse(r)).some(p =>
+    p.orderId !== orderId && p.username === payment.username && p.status === "approved" &&
+    p.approvedAt && payment.approvedAt && new Date(p.approvedAt).getTime() > new Date(payment.approvedAt).getTime()
+  );
+  if (laterApproved) {
+    return json({ error: "Đã có giao dịch khác được duyệt SAU giao dịch này cho cùng user — không thể tự động thu hồi vì có thể xoá nhầm giao dịch hợp lệ. Vui lòng điều chỉnh thủ công." }, 400, corsHeaders);
+  }
+
+  const userKey = "user:" + payment.username.toLowerCase();
+  const userRaw = await env.LINKS_KV.get(userKey);
+  if (userRaw) {
+    const userObj = JSON.parse(userRaw);
+    userObj.role = payment.beforeSnapshot.role;
+    userObj.tierExpiresAt = payment.beforeSnapshot.tierExpiresAt;
+    userObj.tierActivatedAt = payment.beforeSnapshot.tierActivatedAt;
+    await env.LINKS_KV.put(userKey, JSON.stringify(userObj));
+  }
+
+  payment.status = "revoked";
+  payment.revokeReason = reason || "Lỗi trong quá trình kiểm tra giao dịch";
+  payment.revokedAt = new Date().toISOString();
+  payment.revokedBy = user.username;
+  payment.notified = false; // đã bị "notified:true" từ lúc duyệt — reset để modal toàn màn hình hiện lại cho lần thu hồi này
+  await env.LINKS_KV.put("qrpay:" + orderId, JSON.stringify(payment));
+
+  // Đánh dấu lại dòng lịch sử thanh toán tương ứng — giữ lại (không xoá) nhưng không còn hiện
+  // nhầm như 1 giao dịch thành công bình thường nữa.
+  const qrHistKey = "payhist:" + payment.username;
+  const qrHistRaw = await env.LINKS_KV.get(qrHistKey);
+  if (qrHistRaw) {
+    const qrHist = JSON.parse(qrHistRaw);
+    const entry = qrHist.find(h => h.orderId === orderId);
+    if (entry) entry.reversed = true;
+    await env.LINKS_KV.put(qrHistKey, JSON.stringify(qrHist));
+  }
+
+  const payUserRaw = await env.LINKS_KV.get(userKey);
+  const payUserLang = payUserRaw ? (JSON.parse(payUserRaw).lang || "vi") : "vi";
+  const langTpl = renderNotificationTemplate("payment_revoked", payUserLang, { username: payment.username, orderId: orderId });
+  await notifyUser(env, {
+    username: payment.username, type: "payment_revoked", from: "system",
+    title: langTpl.title, message: langTpl.message,
+    sendEmailToo: true, emailSubject: langTpl.emailSubject, emailHtml: langTpl.emailHtml
+  });
+
+  await addAuditLog(env, user, "REVOKE_QR_PAYMENT", { orderId, username: payment.username, reason: payment.revokeReason }, request);
+  return json({ success: true, payment }, 200, corsHeaders);
+}
+
 // ===================== SEND VOUCHER EMAIL (MailChannels) =====================
 var SERVER_I18N = {
   vi: { 
@@ -4326,42 +4836,108 @@ var SERVER_I18N = {
   es: { brand:"SHURL", subject:"Cupón SHURL — Código de activación del plan", thanks_1:"Gracias por usar el plan", thanks_2:"de", instruction:"Copia este cupón y pégalo en el campo de cupón de tu cuenta para activar:", activate_note:"El plan del cupón", activate_note_2:"se activa inmediatamente después de ingresar el código.", warning:"Por favor no compartas el código del cupón para evitar perderlo.", closing:"Gracias por contribuir al crecimiento de esta plataforma.", signature:"Atentamente," }
 };
 
-async function sendVoucherEmail(toEmail, voucherCode, tier, origin, lang) {
+// Mẫu thông báo tự động đa ngôn ngữ (in-app + email) — dùng cho notifyUser() ở các điểm auto-trigger
+// (đăng ký, thanh toán) và cho admin chọn nhanh khi gửi broadcast. Cùng pattern với SERVER_I18N ở trên.
+var NOTIFICATION_TEMPLATES = {
+  welcome: {
+    vi: { title:"Chào mừng đến với SHURL!", message:"Cảm ơn bạn đã tạo tài khoản {username}. Bắt đầu rút gọn link, tạo QR và khám phá các tính năng ngay nhé!", emailSubject:"Chào mừng đến với SHURL!", emailIntro:"Cảm ơn bạn đã tạo tài khoản trên SHURL — nền tảng rút gọn link đa tầng. Tài khoản <b>{username}</b> của bạn đã sẵn sàng sử dụng.", emailCta:"Bắt đầu ngay tại" },
+    en: { title:"Welcome to SHURL!", message:"Thanks for creating your account, {username}. Start shortening links, generating QR codes and exploring the platform!", emailSubject:"Welcome to SHURL!", emailIntro:"Thanks for creating an account on SHURL — the multi-tier link shortening platform. Your account <b>{username}</b> is ready to go.", emailCta:"Get started at" },
+    ko: { title:"SHURL에 오신 것을 환영합니다!", message:"{username} 계정을 만들어 주셔서 감사합니다. 링크 단축, QR 코드 생성 등 다양한 기능을 지금 바로 이용해 보세요!", emailSubject:"SHURL에 오신 것을 환영합니다!", emailIntro:"SHURL — 다단계 링크 단축 플랫폼에 가입해 주셔서 감사합니다. <b>{username}</b> 계정이 준비되었습니다.", emailCta:"지금 시작하기" },
+    zh: { title:"欢迎使用 SHURL！", message:"感谢您创建账户 {username}。立即开始缩短链接、生成二维码，探索更多功能吧！", emailSubject:"欢迎使用 SHURL！", emailIntro:"感谢您在 SHURL（多层级链接缩短平台）注册账户。您的账户 <b>{username}</b> 已准备就绪。", emailCta:"立即开始" },
+    hi: { title:"SHURL में आपका स्वागत है!", message:"{username} खाता बनाने के लिए धन्यवाद। अभी लिंक छोटा करना, QR कोड बनाना और सभी सुविधाएं देखना शुरू करें!", emailSubject:"SHURL में आपका स्वागत है!", emailIntro:"SHURL — मल्टी-टियर लिंक शॉर्टनिंग प्लेटफ़ॉर्म पर खाता बनाने के लिए धन्यवाद। आपका खाता <b>{username}</b> तैयार है।", emailCta:"अभी शुरू करें" },
+    ja: { title:"SHURLへようこそ！", message:"{username} アカウントを作成いただきありがとうございます。今すぐリンクの短縮やQRコードの作成をお試しください！", emailSubject:"SHURLへようこそ！", emailIntro:"SHURL（マルチティア・リンク短縮プラットフォーム）にご登録いただきありがとうございます。アカウント <b>{username}</b> の準備が整いました。", emailCta:"今すぐ始める" },
+    fr: { title:"Bienvenue sur SHURL !", message:"Merci d'avoir créé votre compte {username}. Commencez dès maintenant à raccourcir des liens, générer des QR codes et explorer la plateforme !", emailSubject:"Bienvenue sur SHURL !", emailIntro:"Merci d'avoir créé un compte sur SHURL — la plateforme de raccourcissement de liens multi-niveaux. Votre compte <b>{username}</b> est prêt.", emailCta:"Commencer sur" },
+    es: { title:"¡Bienvenido a SHURL!", message:"Gracias por crear tu cuenta {username}. ¡Empieza ya a acortar enlaces, generar códigos QR y explorar la plataforma!", emailSubject:"¡Bienvenido a SHURL!", emailIntro:"Gracias por crear una cuenta en SHURL, la plataforma de acortamiento de enlaces multinivel. Tu cuenta <b>{username}</b> ya está lista.", emailCta:"Empezar en" }
+  },
+  payment_success: {
+    vi: { title:"Thanh toán thành công!", message:"Bạn đã nâng cấp lên gói {tier} thành công. Cảm ơn bạn đã đồng hành cùng SHURL!", emailSubject:"Thanh toán thành công — Gói {tier}", emailIntro:"Thanh toán của bạn đã được xử lý thành công. Tài khoản <b>{username}</b> đã được nâng cấp lên gói <b>{tier}</b>.", emailCta:"Xem tài khoản tại" },
+    en: { title:"Payment successful!", message:"You've successfully upgraded to the {tier} plan. Thanks for supporting SHURL!", emailSubject:"Payment successful — {tier} plan", emailIntro:"Your payment was processed successfully. Your account <b>{username}</b> has been upgraded to the <b>{tier}</b> plan.", emailCta:"View your account at" },
+    ko: { title:"결제가 완료되었습니다!", message:"{tier} 플랜으로 업그레이드가 완료되었습니다. SHURL을 이용해 주셔서 감사합니다!", emailSubject:"결제 완료 — {tier} 플랜", emailIntro:"결제가 성공적으로 처리되었습니다. <b>{username}</b> 계정이 <b>{tier}</b> 플랜으로 업그레이드되었습니다.", emailCta:"계정 확인하기" },
+    zh: { title:"支付成功！", message:"您已成功升级到 {tier} 套餐。感谢您使用 SHURL！", emailSubject:"支付成功 — {tier} 套餐", emailIntro:"您的付款已成功处理。您的账户 <b>{username}</b> 已升级至 <b>{tier}</b> 套餐。", emailCta:"查看账户" },
+    hi: { title:"भुगतान सफल!", message:"आप {tier} प्लान में सफलतापूर्वक अपग्रेड हो गए हैं। SHURL का साथ देने के लिए धन्यवाद!", emailSubject:"भुगतान सफल — {tier} प्लान", emailIntro:"आपका भुगतान सफलतापूर्वक प्रोसेस हो गया है। आपका खाता <b>{username}</b> <b>{tier}</b> प्लान में अपग्रेड कर दिया गया है।", emailCta:"अपना खाता देखें" },
+    ja: { title:"お支払いが完了しました！", message:"{tier} プランへのアップグレードが完了しました。SHURLをご利用いただきありがとうございます！", emailSubject:"お支払い完了 — {tier} プラン", emailIntro:"お支払いが正常に処理されました。アカウント <b>{username}</b> は <b>{tier}</b> プランにアップグレードされました。", emailCta:"アカウントを確認する" },
+    fr: { title:"Paiement réussi !", message:"Vous avez été mis à niveau vers le forfait {tier} avec succès. Merci de soutenir SHURL !", emailSubject:"Paiement réussi — Forfait {tier}", emailIntro:"Votre paiement a été traité avec succès. Votre compte <b>{username}</b> a été mis à niveau vers le forfait <b>{tier}</b>.", emailCta:"Voir votre compte sur" },
+    es: { title:"¡Pago exitoso!", message:"Has actualizado correctamente al plan {tier}. ¡Gracias por apoyar a SHURL!", emailSubject:"Pago exitoso — Plan {tier}", emailIntro:"Tu pago se procesó correctamente. Tu cuenta <b>{username}</b> se actualizó al plan <b>{tier}</b>.", emailCta:"Ver tu cuenta en" }
+  },
+  security_alert: {
+    vi: { title:"Cảnh báo bảo mật", message:"Có hoạt động bất thường trên tài khoản của bạn. Nếu không phải bạn, vui lòng đổi mật khẩu ngay.", emailSubject:"Cảnh báo bảo mật tài khoản SHURL", emailIntro:"Chúng tôi phát hiện hoạt động bất thường trên tài khoản <b>{username}</b>. Nếu không phải bạn thực hiện, vui lòng đổi mật khẩu ngay lập tức.", emailCta:"Đổi mật khẩu tại" },
+    en: { title:"Security alert", message:"We noticed unusual activity on your account. If this wasn't you, please change your password right away.", emailSubject:"SHURL account security alert", emailIntro:"We detected unusual activity on your account <b>{username}</b>. If this wasn't you, please change your password immediately.", emailCta:"Change your password at" },
+    ko: { title:"보안 경고", message:"계정에서 비정상적인 활동이 감지되었습니다. 본인이 아니라면 즉시 비밀번호를 변경하세요.", emailSubject:"SHURL 계정 보안 경고", emailIntro:"계정 <b>{username}</b>에서 비정상적인 활동이 감지되었습니다. 본인이 아니라면 즉시 비밀번호를 변경해 주세요.", emailCta:"비밀번호 변경하기" },
+    zh: { title:"安全警报", message:"我们检测到您的账户存在异常活动。如果不是您本人操作，请立即修改密码。", emailSubject:"SHURL 账户安全警报", emailIntro:"我们检测到账户 <b>{username}</b> 存在异常活动。如果不是您本人操作，请立即修改密码。", emailCta:"修改密码" },
+    hi: { title:"सुरक्षा चेतावनी", message:"आपके खाते में असामान्य गतिविधि देखी गई है। यदि यह आप नहीं थे, तो कृपया तुरंत पासवर्ड बदलें।", emailSubject:"SHURL खाता सुरक्षा चेतावनी", emailIntro:"हमने खाता <b>{username}</b> में असामान्य गतिविधि का पता लगाया है। यदि यह आपने नहीं किया, तो कृपया तुरंत पासवर्ड बदलें।", emailCta:"पासवर्ड बदलें" },
+    ja: { title:"セキュリティ警告", message:"アカウントで異常なアクティビティが検出されました。心当たりがない場合は、すぐにパスワードを変更してください。", emailSubject:"SHURLアカウントのセキュリティ警告", emailIntro:"アカウント <b>{username}</b> で異常なアクティビティが検出されました。心当たりがない場合は、すぐにパスワードを変更してください。", emailCta:"パスワードを変更する" },
+    fr: { title:"Alerte de sécurité", message:"Nous avons détecté une activité inhabituelle sur votre compte. Si ce n'était pas vous, veuillez changer votre mot de passe immédiatement.", emailSubject:"Alerte de sécurité — Compte SHURL", emailIntro:"Nous avons détecté une activité inhabituelle sur votre compte <b>{username}</b>. Si ce n'était pas vous, veuillez changer votre mot de passe immédiatement.", emailCta:"Changer votre mot de passe sur" },
+    es: { title:"Alerta de seguridad", message:"Detectamos actividad inusual en tu cuenta. Si no fuiste tú, cambia tu contraseña de inmediato.", emailSubject:"Alerta de seguridad de tu cuenta SHURL", emailIntro:"Detectamos actividad inusual en tu cuenta <b>{username}</b>. Si no fuiste tú, cambia tu contraseña de inmediato.", emailCta:"Cambiar tu contraseña en" }
+  },
+  payment_revoked: {
+    vi: { title:"Giao dịch đã được thu hồi", message:"Đã xảy ra lỗi trong quá trình kiểm tra giao dịch {orderId}. Chúng tôi thành thật xin lỗi vì sự bất tiện này. Nếu bạn đã chuyển khoản, vui lòng liên hệ hỗ trợ để được xử lý ngay.", emailSubject:"Giao dịch {orderId} đã được thu hồi", emailIntro:"Đã xảy ra lỗi trong quá trình kiểm tra giao dịch <b>{orderId}</b> của bạn. Chúng tôi thành thật xin lỗi vì sự bất tiện này. Nếu bạn đã thực hiện chuyển khoản, vui lòng liên hệ với chúng tôi để được hỗ trợ xử lý ngay.", emailCta:"Xem tài khoản tại" },
+    en: { title:"Transaction reversed", message:"An error occurred while verifying transaction {orderId}. We sincerely apologize for the inconvenience. If you already made the bank transfer, please contact support so we can resolve this right away.", emailSubject:"Transaction {orderId} was reversed", emailIntro:"An error occurred while verifying your transaction <b>{orderId}</b>. We sincerely apologize for the inconvenience. If you already made the bank transfer, please contact us so we can resolve this right away.", emailCta:"View your account at" },
+    ko: { title:"거래가 취소되었습니다", message:"거래 {orderId} 확인 과정에서 오류가 발생했습니다. 불편을 드려 진심으로 사과드립니다. 이미 계좌이체를 하셨다면 즉시 처리해 드릴 수 있도록 고객지원에 문의해 주세요.", emailSubject:"거래 {orderId}가 취소되었습니다", emailIntro:"거래 <b>{orderId}</b> 확인 과정에서 오류가 발생했습니다. 불편을 드려 진심으로 사과드립니다. 이미 계좌이체를 하셨다면 즉시 처리해 드릴 수 있도록 문의해 주세요.", emailCta:"계정 확인하기" },
+    zh: { title:"交易已被撤销", message:"在核实交易 {orderId} 时发生了错误，对由此带来的不便我们深表歉意。如果您已完成转账，请联系客服以便我们立即为您处理。", emailSubject:"交易 {orderId} 已被撤销", emailIntro:"在核实您的交易 <b>{orderId}</b> 时发生了错误，对由此带来的不便我们深表歉意。如果您已完成转账，请联系我们以便立即处理。", emailCta:"查看账户" },
+    hi: { title:"लेन-देन वापस ले लिया गया", message:"लेन-देन {orderId} की जांच के दौरान एक त्रुटि हुई। असुविधा के लिए हमें खेद है। यदि आपने पहले ही बैंक ट्रांसफर कर दिया है, तो कृपया तुरंत सहायता के लिए संपर्क करें।", emailSubject:"लेन-देन {orderId} वापस ले लिया गया", emailIntro:"आपके लेन-देन <b>{orderId}</b> की जांच के दौरान एक त्रुटि हुई। असुविधा के लिए हमें खेद है। यदि आपने पहले ही बैंक ट्रांसफर कर दिया है, तो कृपया तुरंत सहायता के लिए हमसे संपर्क करें।", emailCta:"अपना खाता देखें" },
+    ja: { title:"取引が取り消されました", message:"取引 {orderId} の確認中にエラーが発生しました。ご不便をおかけし誠に申し訳ございません。すでにお振込みが完了している場合は、すぐに対応いたしますのでサポートまでご連絡ください。", emailSubject:"取引 {orderId} が取り消されました", emailIntro:"お客様の取引 <b>{orderId}</b> の確認中にエラーが発生しました。ご不便をおかけし誠に申し訳ございません。すでにお振込みが完了している場合は、すぐに対応いたしますのでご連絡ください。", emailCta:"アカウントを確認する" },
+    fr: { title:"Transaction annulée", message:"Une erreur s'est produite lors de la vérification de la transaction {orderId}. Nous sommes sincèrement désolés pour ce désagrément. Si vous avez déjà effectué le virement, veuillez contacter le support pour une résolution immédiate.", emailSubject:"La transaction {orderId} a été annulée", emailIntro:"Une erreur s'est produite lors de la vérification de votre transaction <b>{orderId}</b>. Nous sommes sincèrement désolés pour ce désagrément. Si vous avez déjà effectué le virement, veuillez nous contacter pour une résolution immédiate.", emailCta:"Voir votre compte sur" },
+    es: { title:"Transacción revertida", message:"Ocurrió un error al verificar la transacción {orderId}. Lamentamos sinceramente las molestias. Si ya realizaste la transferencia, contacta a soporte para resolverlo de inmediato.", emailSubject:"La transacción {orderId} fue revertida", emailIntro:"Ocurrió un error al verificar tu transacción <b>{orderId}</b>. Lamentamos sinceramente las molestias. Si ya realizaste la transferencia, contáctanos para resolverlo de inmediato.", emailCta:"Ver tu cuenta en" }
+  }
+};
+
+function fillTemplate(s, params) {
+  return String(s || "").replace(/\{(\w+)\}/g, function(_, k) { return (params && params[k] != null) ? params[k] : ""; });
+}
+// Minh hoạ (illustration key) + lý do nhận email (vi/en, fallback EMAIL_LABELS.reasonGeneric cho
+// các ngôn ngữ khác) cho từng loại thông báo tự động, hiển thị ở đầu email (buildEmailShell).
+var NOTIF_EMAIL_META = {
+  welcome: { illustration: "welcome", reason: { vi: "Bạn nhận được email này vì vừa tạo tài khoản mới tại SHURL.", en: "You're receiving this email because you just created a SHURL account." } },
+  payment_success: { illustration: "payment", reason: { vi: "Bạn nhận được email này vì vừa hoàn tất thanh toán nâng cấp gói trên SHURL.", en: "You're receiving this email because you just completed a plan upgrade payment on SHURL." } },
+  security_alert: { illustration: "security", reason: { vi: "Bạn nhận được email này vì có cảnh báo bảo mật liên quan tới tài khoản SHURL của bạn.", en: "You're receiving this email because of a security alert on your SHURL account." } },
+  payment_revoked: { illustration: "security", reason: { vi: "Bạn nhận được email này vì một giao dịch của bạn vừa được admin thu hồi do lỗi kiểm tra.", en: "You're receiving this email because one of your transactions was just reversed by an admin due to a verification error." } }
+};
+
+// Trả về {title, message, emailSubject, emailHtml} đã điền {username}/{tier}... sẵn sàng đưa
+// thẳng vào notifyUser(). Email dùng khung chuyên nghiệp dùng chung buildEmailShell() ở trên.
+function renderNotificationTemplate(key, lang, params) {
+  var byLang = NOTIFICATION_TEMPLATES[key];
+  if (!byLang) return null;
+  var tpl = byLang[lang] || byLang.vi;
+  var L = EMAIL_LABELS[lang] || EMAIL_LABELS.vi;
+  var meta = NOTIF_EMAIL_META[key] || { reason: {} };
+  var detailRows = [];
+  if (params && params.username) detailRows.push({ label: L.account, value: params.username });
+  if (key === "payment_success" && params && params.tier) detailRows.push({ label: L.plan, value: params.tier });
+  var ctaUrl = key === "welcome" ? "https://shurlvn.com" : "https://shurlvn.com/#/account";
+  var emailHtml = buildEmailShell({
+    lang: lang, illustration: meta.illustration,
+    title: fillTemplate(tpl.emailSubject, params),
+    introHtml: "<p>" + fillTemplate(tpl.emailIntro, params) + "</p>",
+    detailRows: detailRows,
+    ctaText: fillTemplate(tpl.emailCta, params),
+    ctaUrl: ctaUrl,
+    footerReason: meta.reason[lang] || meta.reason.en
+  });
+  return {
+    title: fillTemplate(tpl.title, params),
+    message: fillTemplate(tpl.message, params),
+    emailSubject: fillTemplate(tpl.emailSubject, params),
+    emailHtml: emailHtml
+  };
+}
+
+async function sendVoucherEmail(env, toEmail, voucherCode, tier, origin, lang) {
   var L = SERVER_I18N[lang] || SERVER_I18N.vi;
+  var voucherLang = SERVER_I18N[lang] ? lang : "vi";
   var tierName = tier.charAt(0).toUpperCase() + tier.slice(1);
   var subject = L.subject + " " + tierName;
-  var htmlBody =
-    '<div style="font-family:system-ui,sans-serif;max-width:500px;margin:0 auto;background:#0f172a;color:#e2e8f0;padding:32px;border-radius:16px;">' +
-    '<h2 style="color:#818cf8;margin-bottom:16px;">' + L.brand + ' — ' + origin + '</h2>' +
-    '<p>' + L.thanks_1 + ' <b>"' + tierName + '"</b> ' + L.thanks_2 + ' ' + L.brand + ' — ' + origin + '</p>' +
-    '<p>' + L.instruction + '</p>' +
-    '<div style="background:#1e293b;border:2px solid #818cf8;border-radius:12px;padding:20px;text-align:center;margin:20px 0;">' +
-    '<span style="font-size:22px;font-weight:800;color:#fff;letter-spacing:2px;">' + voucherCode + '</span>' +
-    '</div>' +
-    '<p>' + L.activate_note + ' <b>"' + tierName + '"</b> ' + L.activate_note_2 + '</p>' +
-    '<p style="color:#f87171;">' + li('alert', 14) + ' ' + L.warning + '</p>' +
-    '<p style="color:#94a3b8;margin-top:24px;">' + L.closing + '</p>' +
-    '<p style="margin-top:16px;">' + L.signature + '<br>' + L.brand + '</p>' +
-    '</div>';
-
-  var emailBody = JSON.stringify({
-    personalizations: [{ to: [{ email: toEmail }] }],
-
-    from: { email: "noreply@" + new URL(origin).hostname, name: "SHURL" },
-    subject: subject,
-    content: [{ type: "text/html", value: htmlBody }]
+  var introHtml = "<p>" + L.thanks_1 + ' <b>"' + tierName + '"</b> ' + L.thanks_2 + " " + L.brand + "</p><p>" + L.instruction + "</p>";
+  var afterHtml = "<p>" + L.activate_note + ' <b>"' + tierName + '"</b> ' + L.activate_note_2 + "</p><p>" + L.closing + "</p>";
+  var voucherReason = voucherLang === "vi" ? "Bạn nhận được email này vì vừa nhận hoặc mua một voucher SHURL." : "You're receiving this email because you just received or purchased a SHURL voucher.";
+  var htmlBody = buildEmailShell({
+    lang: voucherLang, illustration: "voucher",
+    title: L.subject, introHtml: introHtml, code: voucherCode, afterHtml: afterHtml,
+    ctaText: null, ctaUrl: null,
+    warningHtml: L.warning, footerReason: voucherReason
   });
 
-  try {
-    await fetch("https://api.mailchannels.net/tx/v1/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: emailBody
-    });
-    return true;
-  } catch (e) {
-    return false;
-  }
+  return sendEmail(env, { to: toEmail, subject: subject, html: htmlBody });
 }
 
 async function handleStripeWebhook(request, env, corsHeaders) {
@@ -4417,7 +4993,7 @@ async function handleStripeWebhook(request, env, corsHeaders) {
           var userObj = JSON.parse(userRaw);
           if (userObj.email) {
             var lang = userObj.lang || "vi";
-            await sendVoucherEmail(userObj.email, code, tier, "https://" + new URL(request.url).hostname, lang);
+            await sendVoucherEmail(env, userObj.email, code, tier, "https://" + new URL(request.url).hostname, lang);
           }
         }
       } else {
@@ -4435,6 +5011,16 @@ async function handleStripeWebhook(request, env, corsHeaders) {
           upUserObj.tierExpiresAt = new Date(stripeBaseTime + 30 * 86400000).toISOString();
           if (!upUserObj.tierActivatedAt) upUserObj.tierActivatedAt = new Date().toISOString();
           await env.LINKS_KV.put("user:" + username.toLowerCase(), JSON.stringify(upUserObj));
+
+          var payTierName = tier.charAt(0).toUpperCase() + tier.slice(1);
+          var payTpl = renderNotificationTemplate("payment_success", upUserObj.lang || "vi", { username: upUserObj.username, tier: payTierName });
+          if (payTpl) {
+            await notifyUser(env, {
+              username: upUserObj.username, type: "payment_success", from: "system",
+              title: payTpl.title, message: payTpl.message,
+              sendEmailToo: !!upUserObj.email, emailSubject: payTpl.emailSubject, emailHtml: payTpl.emailHtml
+            });
+          }
         }
       }
     }
@@ -4723,7 +5309,10 @@ function googleAdsGtagHead(env) {
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-  gtag('config', '${id}');
+  // Trì hoãn 'config' (kích hoạt GTM tải/khởi tạo nặng, ~149 KiB) tới khi rảnh main thread,
+  // để không chặn FCP/LCP của lần vẽ đầu tiên.
+  if ('requestIdleCallback' in window) { requestIdleCallback(function(){ gtag('config', '${id}'); }, { timeout: 2500 }); }
+  else { setTimeout(function(){ gtag('config', '${id}'); }, 2500); }
   var GOOGLE_ADS_CONVERSION_SEND_TO = ${JSON.stringify(label ? (id + '/' + label) : '')};
 </script>`;
 }
@@ -4765,13 +5354,17 @@ function renderAppHtml(env) {
 .brand:hover{filter:brightness(1.2);}
 .btn{transition:all 0.2s ease;}
 .btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(79,70,229,0.5);}
-.card{transition:border-color 0.3s ease,box-shadow 0.3s ease;}
+.card{transition:border-color 0.3s ease,box-shadow 0.3s ease;will-change:transform,opacity;}
 .card:hover{border-color:rgba(99,102,241,0.4);}
 .navlinks a,.navlinks button{transition:all 0.15s ease;}
-.upsell-card{transition:transform 0.3s ease,box-shadow 0.3s ease;}
+.upsell-card{transition:transform 0.3s ease,box-shadow 0.3s ease;will-change:transform,opacity;}
 .upsell-card:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(99,102,241,0.2);}
 .stat{transition:transform 0.2s ease;}
 .stat:hover{transform:scale(1.02);}
+@keyframes analyticsFlash{0%{color:var(--green,#22c55e);}100%{color:inherit;}}
+.analytics-flash{animation:analyticsFlash 1s ease-out;}
+.analytics-live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green,#22c55e);animation:analyticsPulse 1.5s ease-in-out infinite;vertical-align:middle;}
+@keyframes analyticsPulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
 .lang-pill,.theme-toggle{transition:all 0.2s ease;}
 @keyframes qrPop{from{transform:scale(0.9);opacity:0;}to{transform:scale(1);opacity:1;}}
 .lang-dropdown .lang-item{transition:background 0.15s ease;}
@@ -4834,13 +5427,19 @@ function renderAppHtml(env) {
 .sb-toggle{display:none;}
 .sb-nav{flex:1;padding:4px 8px;display:flex;flex-direction:column;gap:2px;}
 .sb-section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted2);padding:14px 10px 6px;cursor:default;}
-.sb-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;color:var(--muted);font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;transition:all 0.15s ease;white-space:nowrap;}
-.sb-item:hover{color:var(--text);background:rgba(99,102,241,0.1);}
+.sb-item{position:relative;overflow:visible;display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;color:var(--muted);font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;transition:all 0.15s ease;white-space:nowrap;}
+.sb-item:hover{color:var(--indigo);background:rgba(99,102,241,0.12);}
 .sb-item.active{color:var(--text);background:rgba(99,102,241,0.18);font-weight:700;}
 .sb-item.active svg{color:var(--indigo);}
-.sb-item svg{flex-shrink:0;color:var(--muted);}
-.sb-item:hover svg{color:var(--text);}
+.sb-item svg{flex-shrink:0;color:var(--muted);transition:color 0.2s ease,filter 0.2s ease,transform 0.2s ease;}
+.sb-item:hover svg{color:var(--indigo);filter:drop-shadow(0 0 6px rgba(99,102,241,0.55));transform:scale(1.08);}
 .sb-item.active svg{color:var(--indigo);}
+@keyframes bubbleUp1{0%{transform:translateY(0) scale(0);opacity:0;}25%{opacity:0.85;}100%{transform:translateY(-22px) scale(1);opacity:0;}}
+@keyframes bubbleUp2{0%{transform:translateY(0) scale(0);opacity:0;}35%{opacity:0.65;}100%{transform:translateY(-28px) translateX(5px) scale(1);opacity:0;}}
+.sb-item::before,.sb-icon-btn::before{content:"";position:absolute;left:18px;bottom:6px;width:5px;height:5px;border-radius:50%;background:var(--indigo);opacity:0;pointer-events:none;}
+.sb-item::after,.sb-icon-btn::after{content:"";position:absolute;left:26px;bottom:5px;width:4px;height:4px;border-radius:50%;background:#a78bfa;opacity:0;pointer-events:none;}
+.sb-item:hover::before,.sb-icon-btn:hover::before{animation:bubbleUp1 1.2s ease-in-out infinite;}
+.sb-item:hover::after,.sb-icon-btn:hover::after{animation:bubbleUp2 1.5s ease-in-out infinite 0.3s;}
 .sb-label{overflow:hidden;}
 .sb-footer{padding:12px 8px;flex-shrink:0;}
 .sb-main{flex:1;display:flex;flex-direction:column;min-width:0;}
@@ -4853,8 +5452,10 @@ function renderAppHtml(env) {
 .sb-search input{background:transparent;border:none;outline:none;color:var(--text);font-size:14px;font-family:inherit;flex:1;width:100%;}
 .sb-search input::placeholder{color:var(--muted2);}
 .sb-header-right{display:flex;align-items:center;gap:8px;}
-.sb-icon-btn{position:relative;background:transparent;border:1px solid var(--border);border-radius:10px;padding:8px;color:var(--muted);cursor:pointer;display:flex;align-items:center;transition:all 0.15s ease;}
-.sb-icon-btn:hover{color:var(--text);background:rgba(99,102,241,0.1);}
+.sb-icon-btn{position:relative;overflow:visible;background:transparent;border:1px solid var(--border);border-radius:10px;padding:8px;color:var(--muted);cursor:pointer;display:flex;align-items:center;transition:all 0.15s ease;}
+.sb-icon-btn:hover{color:var(--indigo);background:rgba(99,102,241,0.12);border-color:rgba(99,102,241,0.4);box-shadow:0 0 12px rgba(99,102,241,0.25);}
+.sb-icon-btn svg{transition:color 0.2s ease,filter 0.2s ease,transform 0.2s ease;}
+.sb-icon-btn:hover svg{color:var(--indigo);filter:drop-shadow(0 0 6px rgba(99,102,241,0.55));transform:scale(1.08);}
 .sb-notif-dot{position:absolute;top:-2px;right:-2px;background:#ef4444;color:#fff;font-size:9px;min-width:16px;height:16px;border-radius:50%;display:none;align-items:center;justify-content:center;font-weight:700;padding:0 3px;}
 .sb-user{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:10px;border:1px solid var(--border);cursor:pointer;transition:all 0.15s ease;background:transparent;color:var(--text);font-family:inherit;}
 .sb-user:hover{background:rgba(99,102,241,0.1);}
@@ -4872,7 +5473,7 @@ function renderAppHtml(env) {
 .sb-content #app{transition:opacity 0.18s ease, transform 0.18s ease;}
 .sb-overlay{display:none;position:fixed;inset:0;background:var(--overlay-bg);backdrop-filter:blur(4px);z-index:25;}
 .sb-overlay.show{display:block;}
-.upsell-card{background:var(--upsell-bg);border:1px solid var(--upsell-border);border-radius:16px;padding:20px;overflow:visible;position:relative;}
+.upsell-card{background:var(--upsell-bg);border:1px solid var(--upsell-border);border-radius:16px;padding:20px;overflow:visible;position:relative;min-height:180px;}
 .upsell-card::before{overflow:hidden;}
 .upsell-card::before{content:"";position:absolute;top:-40px;right:-40px;width:100px;height:100px;background:radial-gradient(circle,rgba(99,102,241,0.2),transparent);border-radius:50%;}
 .upsell-card h3{font-size:17px;margin-bottom:8px;color:var(--upsell-h3);}
@@ -4912,8 +5513,8 @@ function renderAppHtml(env) {
 }
 [data-theme="light"]{
   --bg:#faf9f5; --card:#ffffff; --card-solid:#ffffff; --border:#e2e8f0;
-  --text:#1e293b; --muted:#64748b; --muted2:#94a3b8;
-  --bg-rgb:255,255,255; --muted-rgb:100,116,139;
+  --text:#1e293b; --muted:#475569; --muted2:#64748b;
+  --bg-rgb:255,255,255; --muted-rgb:71,85,105;
   --shadow:0 4px 12px rgba(0,0,0,0.08);
   --overlay-bg:rgba(0,0,0,0.3);
   --h2-color:#1e293b; --stat-num-color:#1e293b;
@@ -4944,7 +5545,7 @@ nav{position:sticky;top:0;z-index:20;background:rgba(var(--bg-rgb),0.9);backdrop
 .navwrap{max-width:1080px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}.navlinks{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
 .brand{font-weight:800;font-size:20px;background:linear-gradient(135deg,#818cf8,#c084fc);-webkit-background-clip:text;background-clip:text;color:transparent;cursor:pointer;}
 .navlinks{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
-.navlinks a,.navlinks button{color:var(--muted);background:transparent;border:none;padding:8px 12px;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;}
+.navlinks a,.navlinks button{color:var(--muted);background:transparent;border:none;padding:8px 12px;min-height:36px;box-sizing:border-box;display:inline-flex;align-items:center;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;}
 .navlinks a:hover,.navlinks button:hover{color:var(--text);background:rgba(99,102,241,0.12);}
 .navlinks a.active{color:var(--text);background:rgba(99,102,241,0.2);}
 .badge{display:inline-block;padding:3px 10px;border-radius:9999px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;}
@@ -5003,6 +5604,7 @@ tr:hover td{background:var(--hover-row);}
 .copybox{display:flex;gap:8px;align-items:center;background:var(--copybox-bg);border:1px dashed rgba(99,102,241,0.4);border-radius:12px;padding:12px 16px;margin:14px 0;word-break:break-all;}
 .copybox .u{font-family:ui-monospace,monospace;color:var(--link-color);font-weight:700;flex:1;}
 footer{text-align:center;color:var(--muted2);font-size:12px;padding:30px 20px;}
+footer a{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 6px;}
 @media(max-width:640px){.row > *{min-width:100%;}}
 /* === LANGUAGE SWITCHER === */
 .upgrade-banner{background:var(--upsell-bg);border:1px solid var(--upsell-border);border-radius:12px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
@@ -5204,7 +5806,7 @@ ${googleAdsGtagHead(env)}
 <div class="app-shell">
   <div class="sb-overlay" id="sbOverlay" onclick="closeSidebarMobile()"></div>
   <aside class="sb" id="sidebar">
-    <div class="sb-brand" id="navBrand"><img src="data:image/png;base64,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" alt="SHURL" style="height:24px;vertical-align:middle;"> <span class="sb-brand-text">SHORT URL</span></div>
+    <div class="sb-brand" id="navBrand"><img src="data:image/png;base64,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" width="24" height="24" alt="SHURL" style="width:24px;height:24px;aspect-ratio:1/1;vertical-align:middle;"> <span class="sb-brand-text">SHORT URL</span></div>
     
     <nav class="sb-nav" id="sbNav"></nav>
     <div class="sb-footer" id="sbFooter"></div>
@@ -5212,8 +5814,8 @@ ${googleAdsGtagHead(env)}
   <div class="sb-main">
     <header class="sb-header">
       <div class="sb-header-left">
-        <div class="sb-header-brand" onclick="navigate(&#39;home&#39;)"><img src="data:image/png;base64,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" alt="SHURL" style="height:26px;vertical-align:middle;"> <span>SHORT URL</span></div>
-        <button class="sb-mobile-toggle" onclick="openSidebarMobile()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+        <div class="sb-header-brand" onclick="navigate(&#39;home&#39;)"><img src="data:image/png;base64,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" width="26" height="26" alt="SHURL" style="width:26px;height:26px;aspect-ratio:1/1;vertical-align:middle;"> <span>SHORT URL</span></div>
+        <button class="sb-mobile-toggle" onclick="openSidebarMobile()" aria-label="Mở menu điều hướng"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
         <div class="sb-search" id="sbSearchBox"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--muted);"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" id="sbSearchInput" placeholder="Tìm link..." oninput="sbSearchLinks(this.value)"></div>
       </div>
       <div class="sb-header-right" id="sbHeaderRight"></div>
@@ -5226,7 +5828,6 @@ ${googleAdsGtagHead(env)}
     </main>
   </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.9.2/lib/qr-code-styling.js"></script>
 <script src="/assets/qr-scanner.umd.min.js"></script>
 <script>
 var LANGS = ["vi", "en", "ko", "zh", "hi", "ja", "fr", "es"];
@@ -5354,6 +5955,8 @@ var i18n = {
     qr_fail_title:"Yêu cầu chưa thể xử lý", qr_fail_desc1:"Rất tiếc, giao dịch nâng cấp lên gói {tier} của bạn chưa được xác nhận thành công.",
     qr_fail_reason_label:"Lý do:", qr_fail_reason_default:"Không tìm thấy giao dịch khớp với nội dung chuyển khoản",
     qr_fail_desc2:"Vui lòng kiểm tra lại thông tin chuyển khoản, hoặc liên hệ {email} kèm ảnh chụp biên lai để được hỗ trợ nhanh nhất.",
+    qr_revoked_title:"Giao dịch đã được thu hồi", qr_revoked_desc1:"Đã xảy ra lỗi trong quá trình kiểm tra giao dịch <strong>{order}</strong>.",
+    qr_revoked_desc2:"Chúng tôi thành thật xin lỗi vì sự bất tiện này.", qr_revoked_desc3:"Nếu bạn đã thực hiện chuyển khoản, vui lòng liên hệ {email} để được hỗ trợ xử lý ngay.",
     stripe_success_title:"Thanh toán thành công!", stripe_success_desc1:"Tài khoản của bạn đã được nâng cấp lên gói {tier}.",
     stripe_success_desc2:"Gói sẽ hết hạn sau 30 ngày. Bạn có thể gia hạn bất cứ lúc nào.",
     stripe_cancel_title:"Thanh toán đã hủy", stripe_cancel_desc:"Bạn đã hủy giao dịch. Tài khoản không thay đổi. Bạn có thể thử lại bất cứ lúc nào.",
@@ -5450,6 +6053,14 @@ var i18n = {
     // ===== TIER LIMITS =====
     tier_limits_title:"Hạn mức gói hiện tại", links_per_day:"Link/ngày", advanced_mgmt:"Quản lý nâng cao",
     detailed_stats:"Thống kê chi tiết", max:"tối đa",
+    // ===== BROWSER EXTENSION =====
+    ext_title:"Kết nối tiện ích trình duyệt",
+    ext_desc:"Dùng mã này để kết nối tiện ích SHURL trên Chrome — xem link vừa tạo, số lượt click và rút gọn nhanh link đang xem, ngay trên popup. Miễn phí cho mọi gói.",
+    ext_no_token:"Bạn chưa có mã kết nối tiện ích.", ext_gen_btn:"Tạo mã kết nối", ext_regen_btn:"Tạo lại mã kết nối",
+    // ===== AI ASSISTANT =====
+    ai_assistant_title:"Hỏi AI", ai_assistant_placeholder:"Nhập câu hỏi của bạn...", ai_assistant_send:"Gửi",
+    ai_assistant_greeting:"Dạ chào bạn! Em là trợ lý AI của SHURL, bạn cần hỗ trợ gì ạ?",
+    ai_assistant_error:"Không gửi được câu hỏi, vui lòng thử lại.",
     // ===== API =====
     api_title:"API Token", api_no_token:"Bạn chưa có API token.", api_gen_token:"Tạo token",
     api_regen_token:"Tạo lại token", api_monthly_limit:"Hạn mức:", api_requests_month:"requests/tháng.",
@@ -5799,6 +6410,8 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     qr_fail_title:"Request could not be processed", qr_fail_desc1:"Unfortunately, your upgrade transaction to the {tier} plan hasn't been confirmed.",
     qr_fail_reason_label:"Reason:", qr_fail_reason_default:"No matching transaction found for the transfer content",
     qr_fail_desc2:"Please double-check your transfer details, or contact {email} with a screenshot of your receipt for faster support.",
+    qr_revoked_title:"Transaction reversed", qr_revoked_desc1:"An error occurred while verifying transaction <strong>{order}</strong>.",
+    qr_revoked_desc2:"We sincerely apologize for the inconvenience.", qr_revoked_desc3:"If you already made the bank transfer, please contact {email} so we can resolve this right away.",
     stripe_success_title:"Payment successful!", stripe_success_desc1:"Your account has been upgraded to the {tier} plan.",
     stripe_success_desc2:"The plan expires in 30 days. You can renew it anytime.",
     stripe_cancel_title:"Payment cancelled", stripe_cancel_desc:"You cancelled the transaction. Your account is unchanged. You can try again anytime.",
@@ -5895,6 +6508,14 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     // ===== TIER LIMITS =====
     tier_limits_title:"Current plan limits", links_per_day:"Links/day", advanced_mgmt:"Advanced management",
     detailed_stats:"Detailed analytics", max:"max",
+    // ===== BROWSER EXTENSION =====
+    ext_title:"Connect browser extension",
+    ext_desc:"Use this code to connect the SHURL Chrome extension — see recent links, click counts, and quick-shorten the page you're viewing, right from the popup. Free on every plan.",
+    ext_no_token:"You don't have an extension connection code yet.", ext_gen_btn:"Generate code", ext_regen_btn:"Regenerate code",
+    // ===== AI ASSISTANT =====
+    ai_assistant_title:"Ask AI", ai_assistant_placeholder:"Type your question...", ai_assistant_send:"Send",
+    ai_assistant_greeting:"Hi there! I'm SHURL's AI assistant — how can I help?",
+    ai_assistant_error:"Couldn't send your message, please try again.",
     // ===== API =====
     api_title:"API Token", api_no_token:"You don't have an API token yet.", api_gen_token:"Generate token",
     api_regen_token:"Regenerate token", api_monthly_limit:"Quota:", api_requests_month:"requests/month.",
@@ -6109,6 +6730,11 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
   },
 
   ko: {
+    ai_assistant_title:"AI에게 물어보기", ai_assistant_placeholder:"질문을 입력하세요...", ai_assistant_send:"전송",
+    ai_assistant_greeting:"안녕하세요! SHURL의 AI 어시스턴트입니다. 무엇을 도와드릴까요?",
+    ai_assistant_error:"메시지를 보내지 못했습니다. 다시 시도해 주세요.",
+    ext_title:"브라우저 확장 프로그램 연결",
+    ext_desc:"이 코드를 사용해 SHURL Chrome 확장 프로그램을 연결하세요 — 최근 생성한 링크, 클릭 수 확인, 현재 보고 있는 페이지를 팝업에서 바로 단축할 수 있습니다. 모든 요금제에서 무료입니다.",
     // ===== NAV =====
     home:"홈", nav_home:"홈", plans:"요금제", login:"로그인", register:"회원가입", logout:"로그아웃", language:"언어",
     dashboard:"대시보드", account:"계정", api:"API", bulk:"대량 생성", admin:"관리자",
@@ -6383,6 +7009,11 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
   },
 
   zh: {
+    ai_assistant_title:"问AI", ai_assistant_placeholder:"输入您的问题...", ai_assistant_send:"发送",
+    ai_assistant_greeting:"您好！我是 SHURL 的 AI 助手，请问需要什么帮助？",
+    ai_assistant_error:"发送失败，请重试。",
+    ext_title:"连接浏览器扩展程序",
+    ext_desc:"使用此代码连接 SHURL Chrome 扩展程序——在弹出窗口中查看最近创建的链接、点击次数，并快速缩短当前浏览的网址。所有套餐均可免费使用。",
     // ===== NAV =====
     home:"首页", nav_home:"首页", plans:"价格", login:"登录", register:"注册", logout:"退出登录", language:"语言",
     dashboard:"控制面板", account:"账户", api:"API", bulk:"批量创建", admin:"管理",
@@ -6654,6 +7285,11 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
 
 
   hi: {
+    ai_assistant_title:"AI से पूछें", ai_assistant_placeholder:"अपना सवाल लिखें...", ai_assistant_send:"भेजें",
+    ai_assistant_greeting:"नमस्ते! मैं SHURL का AI सहायक हूं, आपको किस चीज़ में मदद चाहिए?",
+    ai_assistant_error:"संदेश नहीं भेजा जा सका, कृपया पुनः प्रयास करें।",
+    ext_title:"ब्राउज़र एक्सटेंशन कनेक्ट करें",
+    ext_desc:"SHURL Chrome एक्सटेंशन कनेक्ट करने के लिए इस कोड का उपयोग करें — हाल ही के लिंक, क्लिक की संख्या देखें और पॉपअप से ही मौजूदा पेज को तुरंत छोटा करें। सभी प्लान पर मुफ़्त।",
     // ===== NAV =====
     home:"होम", nav_home:"होम", plans:"मूल्य", login:"लॉगिन", register:"रजिस्टर", logout:"लॉगआउट", language:"भाषा",
     dashboard:"डैशबोर्ड", account:"खाता", api:"API", bulk:"बल्क", admin:"एडमिन",
@@ -6924,6 +7560,11 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
   },
 
   ja: {
+    ai_assistant_title:"AIに質問", ai_assistant_placeholder:"質問を入力してください...", ai_assistant_send:"送信",
+    ai_assistant_greeting:"こんにちは！SHURLのAIアシスタントです。どのようにお手伝いしましょうか？",
+    ai_assistant_error:"メッセージを送信できませんでした。もう一度お試しください。",
+    ext_title:"ブラウザ拡張機能を接続",
+    ext_desc:"このコードを使ってSHURLのChrome拡張機能を接続しましょう — 最近作成したリンクやクリック数の確認、閲覧中のページのすぐ短縮ができます。すべてのプランで無料です。",
     // ===== NAV =====
     home:"ホーム", nav_home:"ホーム", plans:"料金", login:"ログイン", register:"新規登録", logout:"ログウト", language:"言語",
     dashboard:"ダッシュボード", account:"アカウント", api:"API", bulk:"一括作成", admin:"管理",
@@ -7196,6 +7837,11 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
   },
 
   fr: {
+    ai_assistant_title:"Demander à l'IA", ai_assistant_placeholder:"Tapez votre question...", ai_assistant_send:"Envoyer",
+    ai_assistant_greeting:"Bonjour ! Je suis l'assistant IA de SHURL, comment puis-je vous aider ?",
+    ai_assistant_error:"Impossible d'envoyer le message, veuillez réessayer.",
+    ext_title:"Connecter l'extension de navigateur",
+    ext_desc:"Utilisez ce code pour connecter l'extension Chrome de SHURL — consultez les liens récents, le nombre de clics et raccourcissez rapidement la page en cours, directement depuis le popup. Gratuit sur tous les forfaits.",
     // ===== NAV =====
     home:"Accueil", nav_home:"Accueil", plans:"Tarifs", login:"Connexion", register:"Inscription", logout:"Déconnexion", language:"Langue",
     dashboard:"Tableau de bord", account:"Compte", api:"API", bulk:"En masse", admin:"Administration",
@@ -7465,6 +8111,11 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
   },
 
   es: {
+    ai_assistant_title:"Preguntar a la IA", ai_assistant_placeholder:"Escribe tu pregunta...", ai_assistant_send:"Enviar",
+    ai_assistant_greeting:"¡Hola! Soy el asistente de IA de SHURL, ¿en qué puedo ayudarte?",
+    ai_assistant_error:"No se pudo enviar el mensaje, inténtalo de nuevo.",
+    ext_title:"Conectar extensión del navegador",
+    ext_desc:"Usa este código para conectar la extensión de Chrome de SHURL: mira los enlaces recientes, el número de clics y acorta rápidamente la página que estás viendo, directo desde la ventana emergente. Gratis en todos los planes.",
     // ===== NAV =====
     home:"Inicio", nav_home:"Inicio", plans:"Precios", login:"Iniciar sesión", register:"Registrarse", logout:"Cerrar sesión", language:"Idioma",
     dashboard:"Panel", account:"Cuenta", api:"API", bulk:"Masivo", admin:"Administración",
@@ -8170,28 +8821,32 @@ async function renderPricing(app){
     { name: "Free", price: "$0", unit: t("pricing_per_month"), desc: t("pricing_free_desc"), popular: false, btn: t("register_free"), btnClass: "btn-ghost", tier: "free",
       features: [
         { t: t("pricing_f_10links"), y: true }, { t: t("custom_alias"), y: true }, { t: t("pricing_f_manage"), y: true },
-        { t: t("pricing_f_clickstats"), y: true }, { t: t("pixel_tracking"), y: false }, { t: t("ab_testing"), y: false },
+        { t: t("pricing_f_clickstats"), y: true }, { t: "Tiện ích trình duyệt (rút gọn nhanh)", y: true },
+        { t: t("pixel_tracking"), y: false }, { t: t("ab_testing"), y: false }, { t: "Link-in-bio", y: false },
         { t: t("deep_link"), y: false }, { t: t("password_protect"), y: false }, { t: "API", y: false }
       ]},
     { name: "Plus", price: "$2.49", unit: t("pricing_per_week"), desc: t("pricing_plus_desc"), popular: false, btn: t("pricing_plus_btn"), btnClass: "btn-primary", tier: "plus",
       features: [
         { t: t("pricing_plus_f1"), y: true }, { t: t("pricing_plus_f2"), y: true },
         { t: t("custom_alias"), y: true }, { t: t("pricing_f_manage"), y: true }, { t: t("pricing_f_clickstats"), y: true },
-        { t: t("campaign_history"), y: true }, { t: t("pricing_f_qrdyn_plus"), y: true },
+        { t: t("campaign_history"), y: true }, { t: t("pricing_f_qrdyn_plus"), y: true }, { t: "Tiện ích trình duyệt (rút gọn nhanh)", y: true },
+        { t: "Link-in-bio (1 trang)", y: true },
         { t: t("pixel_tracking"), y: false }, { t: t("ab_testing"), y: false }, { t: t("deep_link"), y: false },
         { t: t("password_protect"), y: false }, { t: t("webhooks"), y: false }, { t: t("data_export"), y: false }, { t: t("team_management"), y: false }, { t: "API", y: false }
       ]},
     { name: "Pro", price: "$8", unit: t("pricing_per_month"), desc: t("account_pro_desc"), popular: true, btn: t("upgrade_pro"), btnClass: "btn-primary", tier: "pro",
       features: [
         { t: t("plan_pro_f1"), y: true }, { t: t("bulk_title") + " (300/" + t("pricing_per_batch") + ")", y: true }, { t: t("custom_alias") + " " + t("plan_unlimited"), y: true },
-        { t: t("pricing_advanced_mgmt"), y: true }, { t: t("analytics_title") + " " + t("plan_pro_f4"), y: true }, { t: t("plan_pro_f5"), y: true }, { t: t("pricing_f_qrdyn_pro"), y: true },
+        { t: t("pricing_advanced_mgmt"), y: true }, { t: t("analytics_title") + " " + t("plan_pro_f4") + " + Real-time", y: true }, { t: t("plan_pro_f5"), y: true }, { t: t("pricing_f_qrdyn_pro"), y: true },
+        { t: "Tiện ích trình duyệt (rút gọn nhanh)", y: true }, { t: "Link-in-bio (3 trang)", y: true },
         { t: t("pixel_tracking") + " — 1/" + t("pricing_per_link") + ", 50 " + t("pricing_links"), y: true }, { t: t("ab_testing") + " — 2 URL, 20 " + t("pricing_links"), y: true }, { t: t("deep_link") + " iOS/Android", y: true },
         { t: t("password_protect"), y: true }, { t: t("webhooks"), y: true }, { t: t("data_export"), y: true }, { t: t("campaign_history"), y: true }, { t: "API 5.000 " + t("pricing_req_month"), y: true }, { t: t("export"), y: true }
       ]},
     { name: "Super", price: "$20", unit: t("pricing_per_month"), desc: t("account_super_desc"), popular: false, btn: t("upgrade_super"), btnClass: "btn-primary", tier: "super",
       features: [
         { t: t("plan_super_f1"), y: true }, { t: t("bulk_title") + " (600/" + t("pricing_per_batch") + ")", y: true }, { t: t("plan_super_f3"), y: true },
-        { t: t("analytics_title") + " " + t("plan_super_f4"), y: true }, { t: t("plan_super_f5"), y: true }, { t: t("pricing_f_qrdyn_super"), y: true }, { t: t("pixel_tracking") + " — 2/" + t("pricing_per_link") + ", " + t("plan_unlimited"), y: true },
+        { t: t("analytics_title") + " " + t("plan_super_f4") + " + Real-time", y: true }, { t: t("plan_super_f5"), y: true }, { t: t("pricing_f_qrdyn_super"), y: true }, { t: t("pixel_tracking") + " — 2/" + t("pricing_per_link") + ", " + t("plan_unlimited"), y: true },
+        { t: "Tiện ích trình duyệt (rút gọn nhanh)", y: true }, { t: "Link-in-bio (10 trang)", y: true },
         { t: t("ab_testing") + " — 3 URL, % " + t("pricing_custom") + ", ∞", y: true }, { t: t("deep_link") + " + " + t("plan_super_f10"), y: true }, { t: t("password_protect") + " + " + t("plan_super_f11"), y: true },
         { t: t("webhooks"), y: true }, { t: t("data_export"), y: true }, { t: t("campaign_history"), y: true }, { t: t("team_management"), y: true }, { t: "API 10.000 " + t("pricing_req_month"), y: true }, { t: "Custom domain", y: true }, { t: t("plan_priority_support"), y: true }
       ]}
@@ -8818,6 +9473,7 @@ function renderNav() {
   html += '<div class="sb-section-label">Links</div>';
   html += sbItem("bulkqr", "qr", "QR Codes");
   html += sbItem("scanner", "scan", "Scanner QR");
+  html += sbItem("linkinbio", "user", "Link-in-bio");
   html += '<div class="sb-section-label">Tools</div>';
   html += sbItem("bulk", "package", "Bulk");
   html += sbItem("webhooks", "zap", "Webhooks");
@@ -8840,10 +9496,11 @@ function renderNav() {
 
   if (headerRight) {
     var hHtml = "";
+    hHtml += '<span class="sb-icon-btn" id="aiAssistantBtn" title="' + esc(t("ai_assistant_title")) + '" role="button" tabindex="0" aria-label="' + esc(t("ai_assistant_title")) + '">' + li("sparkles", 18) + '</span>';
     if (state.user) {
       var bellId = state.user.role === "admin" ? "adminBell" : "userBell";
       var countId = state.user.role === "admin" ? "adminBellCount" : "userBellCount";
-      hHtml += '<span class="sb-icon-btn" id="' + bellId + '" title="Thông báo">' + li("bell", 18) + '<span class="sb-notif-dot" id="' + countId + '">0</span></span>';
+      hHtml += '<span class="sb-icon-btn" id="' + bellId + '" title="Thông báo" role="button" tabindex="0" aria-label="Thông báo">' + li("bell", 18) + '<span class="sb-notif-dot" id="' + countId + '">0</span></span>';
     }
     if (state.user) {
       var initial = (state.user.username || "?").charAt(0).toUpperCase();
@@ -8860,7 +9517,7 @@ function renderNav() {
       hHtml += '</div></div>';
     } else {
       hHtml += '<div style="position:relative;" id="guestLangWrap">';
-      hHtml += '<button class="sb-icon-btn" onclick="toggleGuestLangDropdown(event)" title="' + tr("language", "Ngôn ngữ") + '" style="gap:6px;padding:8px 10px;">' + li("globe", 18) + '<span style="font-size:12px;font-weight:700;">' + esc(currentLang.toUpperCase()) + '</span></button>';
+      hHtml += '<button class="sb-icon-btn" onclick="toggleGuestLangDropdown(event)" title="' + tr("language", "Ngôn ngữ") + '" aria-label="' + esc(tr("language", "Ngôn ngữ")) + '" style="gap:6px;padding:8px 10px;">' + li("globe", 18) + '<span style="font-size:12px;font-weight:700;">' + esc(currentLang.toUpperCase()) + '</span></button>';
       if (guestLangDropdownOpen) {
         hHtml += '<div class="lang-dropdown">';
         for (var gi = 0; gi < LANGS.length; gi++) {
@@ -8872,8 +9529,8 @@ function renderNav() {
         hHtml += '</div>';
       }
       hHtml += '</div>';
-      hHtml += '<button class="sb-icon-btn" onclick="navigate(&#39;login&#39;)" title="' + tr("login", "Đăng nhập") + '">' + li("user", 18) + '</button>';
-      hHtml += '<button class="sb-icon-btn" onclick="navigate(&#39;register&#39;)" title="' + tr("register", "Đăng ký") + '">' + li("plus", 18) + '</button>';
+      hHtml += '<button class="sb-icon-btn" onclick="navigate(&#39;login&#39;)" title="' + tr("login", "Đăng nhập") + '" aria-label="' + esc(tr("login", "Đăng nhập")) + '">' + li("user", 18) + '</button>';
+      hHtml += '<button class="sb-icon-btn" onclick="navigate(&#39;register&#39;)" title="' + tr("register", "Đăng ký") + '" aria-label="' + esc(tr("register", "Đăng ký")) + '">' + li("plus", 18) + '</button>';
     }
     headerRight.innerHTML = hHtml;
     var userBtn = document.getElementById("sbUserBtn");
@@ -8889,6 +9546,8 @@ function renderNav() {
     if (bell) { bell.onclick = function() { toggleAdminNotifications(); }; fetchAdminNotifications(); }
     var userBell = document.getElementById("userBell");
     if (userBell) { userBell.onclick = function() { toggleUserNotifications(); }; fetchUserNotifications(); }
+    var aiBtn = document.getElementById("aiAssistantBtn");
+    if (aiBtn) aiBtn.onclick = function(e) { e.stopPropagation(); toggleAiChatPanel(); };
   }
   var brand = document.getElementById("navBrand");
   if (brand) brand.onclick = function() { navigate("home"); };
@@ -8922,7 +9581,9 @@ function sbSearchLinks(val) {
   });
 }
 
+var analyticsPollTimer = null;
 function render(){
+  if (analyticsPollTimer) { clearInterval(analyticsPollTimer); analyticsPollTimer = null; }
   if (window.location.search.includes("upgrade=")) {
     var cleanUrl = window.location.origin + window.location.pathname + window.location.hash;
     window.history.replaceState({}, document.title, cleanUrl);
@@ -8931,14 +9592,15 @@ function render(){
   renderNav();
   renderSidebars();
   var app = document.getElementById("app");
-  var authRoutes = ["dashboard","team","campaigns","admin","account"];
+  var authRoutes = ["dashboard","team","campaigns","admin","account","linkinbio"];
   if (authRoutes.indexOf(route) !== -1 && !state.user){ navigate("login"); return; }
-  var majorRoutes = ["home","bulkqr","scanner","login","register","forgot-password","dashboard","bulk","api","webhooks","export","team","campaigns","account","pricing","admin","terms","privacy"];
+  var majorRoutes = ["home","bulkqr","scanner","login","register","forgot-password","dashboard","bulk","api","webhooks","export","team","campaigns","account","pricing","admin","terms","privacy","linkinbio"];
   var isMajor = majorRoutes.indexOf(route) !== -1 || route.indexOf("reset-password") === 0;
   function doRender(){
     if (route === "home") renderHome(app);
     else if (route === "bulkqr") { renderBulkQR(app); bindCrownHints(); }
     else if (route === "scanner") renderScanner(app);
+    else if (route === "linkinbio") renderLinkInBio(app);
     else if (route === "login") renderLogin(app);
     else if (route === "register") renderRegister(app);
     else if (route === "forgot-password") renderForgotPassword(app);
@@ -10200,7 +10862,142 @@ function bars(items, labelKey, valueKey, max){
       '<div class="cnt">' + fmtNum(it[valueKey]) + '</div></div>';
   }).join("");
 }
+// ---------- LINK-IN-BIO ----------
+var bioRowCount = 0;
+function bioSubLinkRowHtml(title, url){
+  var idx = bioRowCount++;
+  return '<div class="bio-row" data-idx="' + idx + '" style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">' +
+    '<input type="text" class="bio-row-title" placeholder="Tiêu đề (VD: Fanpage Facebook)" value="' + esc(title || "") + '" style="flex:1;">' +
+    '<input type="url" class="bio-row-url" placeholder="https://..." value="' + esc(url || "") + '" style="flex:2;">' +
+    '<button type="button" class="btn btn-ghost btn-sm" onclick="this.parentElement.remove()">' + li('x', 14) + '</button>' +
+    '</div>';
+}
+function renderLinkInBio(app){
+  var limits = state.limits || {};
+  if (!limits.maxBioPages) {
+    app.innerHTML = lockedFeatureCard('<h1>' + li('user', 24) + ' Link-in-bio</h1>') +
+      '<div class="card"><p class="hint">Link-in-bio là trang mini gom nhiều liên kết (Facebook, Zalo, Shop, v.v...) vào 1 short URL duy nhất — giống Linktree. Tính năng dành cho gói Plus trở lên.</p></div>';
+    return;
+  }
+
+  bioRowCount = 0;
+  var html = '<div class="page-head"><h1>' + li('user', 24) + ' Link-in-bio' + helpLinkHtml('link-in-bio-la-gi-huong-dan-tao-trang-nhieu-link', 'Link-in-bio là gì? Xem hướng dẫn sử dụng') + '</h1></div>' +
+    '<div class="card">' +
+    '<h2>Tạo trang mới</h2>' +
+    '<p class="hint">Gom nhiều liên kết vào 1 short URL duy nhất, kiểu Linktree.</p>' +
+    '<label>Tên hiển thị</label>' +
+    '<input type="text" id="bioDisplayName" placeholder="VD: Cửa hàng ABC" maxlength="60">' +
+    '<label>Mô tả ngắn (tuỳ chọn)</label>' +
+    '<textarea id="bioBio" rows="2" maxlength="200" style="width:100%;padding:10px;border:1px solid var(--input-border);border-radius:8px;background:var(--input-bg);color:var(--text);resize:vertical;"></textarea>' +
+    '<label style="margin-top:10px;display:block;">Các liên kết</label>' +
+    '<div id="bioRows">' + bioSubLinkRowHtml("", "") + bioSubLinkRowHtml("", "") + '</div>' +
+    '<button type="button" class="btn btn-ghost btn-sm" id="bioAddRowBtn">' + li('plus', 12) + ' Thêm liên kết</button>' +
+    '<div style="margin-top:14px;">' +
+    '<label>Mã tuỳ chỉnh (tuỳ chọn)</label>' +
+    '<input type="text" id="bioCustomCode" placeholder="vd: cua-hang-abc">' +
+    '</div>' +
+    '<div id="bioCreateMsg" style="margin-top:8px;"></div>' +
+    '<button class="btn btn-primary" id="bioCreateBtn" style="margin-top:8px;">' + li('save', 12) + ' Tạo trang</button>' +
+    '</div>' +
+    '<div class="card" id="bioListCard">' +
+    '<h2>' + li('user', 14) + ' Trang đã tạo</h2>' +
+    '<div id="bioListBody"><p class="hint">' + t("processing") + '</p></div>' +
+    '</div>';
+  app.innerHTML = html;
+
+  document.getElementById("bioAddRowBtn").onclick = function(){
+    document.getElementById("bioRows").insertAdjacentHTML("beforeend", bioSubLinkRowHtml("", ""));
+  };
+
+  document.getElementById("bioCreateBtn").onclick = function(){
+    var btn = this;
+    var msg = document.getElementById("bioCreateMsg");
+    var displayName = document.getElementById("bioDisplayName").value.trim();
+    var bio = document.getElementById("bioBio").value.trim();
+    var customCode = document.getElementById("bioCustomCode").value.trim();
+    var rows = document.querySelectorAll("#bioRows .bio-row");
+    var links = [];
+    rows.forEach(function(row){
+      var title = row.querySelector(".bio-row-title").value.trim();
+      var url = row.querySelector(".bio-row-url").value.trim();
+      if (title && url) links.push({ title: title, url: url });
+    });
+    if (!displayName) { msg.innerHTML = '<div class="msg msg-error">Vui lòng nhập tên hiển thị.</div>'; return; }
+    if (links.length === 0) { msg.innerHTML = '<div class="msg msg-error">Cần ít nhất 1 liên kết hợp lệ.</div>'; return; }
+    btn.disabled = true;
+    msg.innerHTML = '<p class="hint">Đang tạo...</p>';
+    api("/api/links/bio", "POST", { displayName: displayName, bio: bio, links: links, customCode: customCode || undefined }).then(function(data){
+      msg.innerHTML = '<div class="msg msg-ok">Đã tạo: ' + esc(data.bioPage.shortUrl) + '</div>';
+      document.getElementById("bioDisplayName").value = "";
+      document.getElementById("bioBio").value = "";
+      document.getElementById("bioCustomCode").value = "";
+      document.getElementById("bioRows").innerHTML = bioSubLinkRowHtml("", "") + bioSubLinkRowHtml("", "");
+      // KV list() is eventually consistent — a GET right after this write can still miss it,
+      // so update the client-side list directly from the create response instead of re-fetching
+      // (same reasoning as qrDynItems for the Dynamic QR list).
+      bioPageItems.unshift(data.bioPage);
+      bioRenderList();
+    }).catch(function(err){
+      msg.innerHTML = '<div class="msg msg-error">' + esc(err.message) + '</div>';
+    }).then(function(){ btn.disabled = false; });
+  };
+
+  bioLoadList();
+}
+
+var bioPageItems = [];
+function bioLoadList(){
+  var body = document.getElementById("bioListBody");
+  if (!body) return;
+  api("/api/links").then(function(data){
+    bioPageItems = (data.links || []).filter(function(l){ return l.type === "bio" && !l.isDeleted; });
+    bioRenderList();
+  }).catch(function(err){
+    body.innerHTML = '<div class="msg msg-error">' + esc(err.message) + '</div>';
+  });
+}
+
+function bioRenderList(){
+  var body = document.getElementById("bioListBody");
+  if (!body) return;
+  if (bioPageItems.length === 0) { body.innerHTML = '<p class="hint">Bạn chưa tạo trang Link-in-bio nào.</p>'; return; }
+  body.innerHTML = bioPageItems.map(function(p){
+    var subRows = (p.bioLinks || []).map(function(sl){
+      return '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);padding:2px 0;">' +
+        '<span>' + esc(sl.title) + '</span><span>' + fmtNum(sl.clicks || 0) + ' click</span></div>';
+    }).join("");
+    return '<div class="card" style="margin-top:10px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+      '<strong>' + esc(p.title) + '</strong>' +
+      '<span class="hint">' + fmtNum(p.totalClicks || 0) + ' lượt xem</span>' +
+      '</div>' +
+      '<div class="mono" style="margin:6px 0;"><a href="' + esc(p.shortUrl) + '" target="_blank">' + esc(p.shortUrl) + '</a></div>' +
+      subRows +
+      '</div>';
+  }).join("");
+}
+
+// Nạp thư viện qr-code-styling (~15KB) chỉ khi vào trang QR — trước đây nạp cứng trong <head>
+// nên mọi trang (kể cả trang chủ) đều tải thư viện này dù không dùng tới. Idempotent: gọi nhiều
+// lần chỉ tạo 1 request. new QRCodeStyling(...) ở qrWsBuildStyling() đã có try/catch bao ngoài
+// nên nếu thư viện chưa kịp tải xong (hiếm, chỉ khi user gõ cực nhanh ngay sau khi vào trang)
+// sẽ hiện thông báo lỗi xem trước thay vì crash — không cần chặn render đồng bộ của trang.
+var _qrStylingLoadPromise = null;
+function loadQrStylingScript(){
+  if (window.QRCodeStyling) return Promise.resolve();
+  if (_qrStylingLoadPromise) return _qrStylingLoadPromise;
+  _qrStylingLoadPromise = new Promise(function(resolve, reject){
+    var s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/qr-code-styling@1.9.2/lib/qr-code-styling.js";
+    s.onload = function(){ resolve(); };
+    s.onerror = function(){ _qrStylingLoadPromise = null; reject(new Error("qr-code-styling failed to load")); };
+    document.head.appendChild(s);
+  });
+  return _qrStylingLoadPromise;
+}
+
 function renderBulkQR(app){
+  loadQrStylingScript();
   var limits = state.limits || {};
   var maxBatch = limits.maxBulkQrBatch || 0;
   var canUse = !!limits.hasBulkQr;
@@ -11227,7 +12024,7 @@ function renderAnalytics(app, code){
       '<h1 style="margin-top:10px;">' + t("analytics_title") + ' /' + esc(a.code) + helpLinkHtml('thong-ke-chi-tiet-link-huong-dan-doc-analytics-shurlvn', 'Thống kê chi tiết link — Xem hướng dẫn đọc') + '</h1>' +
       '<p class="sub">' + esc(a.title || a.url) + '</p>' +
       '<div class="grid-stats">' +
-      '<div class="stat"><div class="num">' + fmtNum(a.totalClicks) + '</div><div class="lbl">' + t("analytics_total") + '</div></div>' +
+      '<div class="stat"><div class="num" id="analyticsTotalNum">' + fmtNum(a.totalClicks) + '</div><div class="lbl">' + t("analytics_total") + (state.limits && state.limits.hasDetailedAnalytics ? ' <span id="analyticsLiveDot" class="analytics-live-dot" title="Tự động cập nhật"></span>' + helpLinkHtml('xem-luot-click-real-time-khong-can-refresh-trang', 'Xem click real-time — Xem hướng dẫn') : '') + '</div></div>' +
       '<div class="stat"><div class="num">' + fmtNum(a.todayClicks) + '</div><div class="lbl">' + t("analytics_24h") + '</div></div>' +
       '<div class="stat"><div class="num">' + fmtNum(a.clicks7d) + '</div><div class="lbl">' + t("analytics_7d") + '</div></div>' +
       '<div class="stat"><div class="num">' + fmtNum(a.clicks30d) + '</div><div class="lbl">' + t("analytics_30d") + '</div></div>' +
@@ -11245,15 +12042,45 @@ function renderAnalytics(app, code){
       '<div class="card"><h2>' + t("analytics_referrer") + '</h2>' + bars(a.referrerBreakdown, "name", "count", 8) + '</div>' +
       '</div>' +
       '<div class="card"><h2>' + t("analytics_recent") + '</h2><div style="overflow-x:auto;"><table><thead><tr>' +
-      '<th>' + t("analytics_time") + '</th><th>' + t("analytics_device") + '</th><th>' + t("analytics_browser") + '</th><th>' + t("analytics_country") + '</th><th>' + t("analytics_referrer") + '</th></tr></thead><tbody>' +
-      a.recentClicks.map(function(c){
-        return '<tr><td style="font-size:12px;color:var(--muted);">' + fmtDate(c.timestamp) + '</td><td>' + esc(c.device) + '</td><td>' + esc(c.browser) + '</td><td>' + esc(c.country) + '</td><td>' + esc(c.referrer) + '</td></tr>';
-      }).join("") +
-      '</tbody></table></div>' + (a.recentClicks.length === 0 ? '<p class="hint">' + t("analytics_no_clicks") + '</p>' : '') + '</div>';
+      '<th>' + t("analytics_time") + '</th><th>' + t("analytics_device") + '</th><th>' + t("analytics_browser") + '</th><th>' + t("analytics_country") + '</th><th>' + t("analytics_referrer") + '</th></tr></thead><tbody id="analyticsRecentTbody">' +
+      analyticsRecentRowsHtml(a.recentClicks) +
+      '</tbody></table></div><p class="hint" id="analyticsRecentEmpty"' + (a.recentClicks.length === 0 ? '' : ' style="display:none;"') + '>' + t("analytics_no_clicks") + '</p></div>';
     if (qrCtx) qrDynPaintImg(document.getElementById("qrAnalyticsBannerImg"), qrCtx, 320);
+    if (state.limits && state.limits.hasDetailedAnalytics) startAnalyticsPolling(a.code, a.totalClicks);
   }).catch(function(err){
     app.innerHTML = '<div class="card"><div class="msg msg-error">' + esc(err.message) + '</div></div>';
   });
+}
+
+function analyticsRecentRowsHtml(recentClicks){
+  return recentClicks.map(function(c){
+    return '<tr><td style="font-size:12px;color:var(--muted);">' + fmtDate(c.timestamp) + '</td><td>' + esc(c.device) + '</td><td>' + esc(c.browser) + '</td><td>' + esc(c.country) + '</td><td>' + esc(c.referrer) + '</td></tr>';
+  }).join("");
+}
+
+// Real-time-ish click updates for Pro/Super (inspired by Shlink's live visit tracking).
+// No WebSocket/Durable Objects — short-interval polling only, so it costs nothing to
+// add to this single-file Worker and can't destabilize the existing architecture.
+function startAnalyticsPolling(code, lastKnownTotal){
+  if (analyticsPollTimer) clearInterval(analyticsPollTimer);
+  analyticsPollTimer = setInterval(function(){
+    api("/api/analytics/" + encodeURIComponent(code)).then(function(data){
+      var a = data.analytics;
+      var totalEl = document.getElementById("analyticsTotalNum");
+      var tbody = document.getElementById("analyticsRecentTbody");
+      var emptyMsg = document.getElementById("analyticsRecentEmpty");
+      if (!totalEl || !tbody) return; // user navigated away between tick scheduling and response
+      if (a.totalClicks !== lastKnownTotal) {
+        lastKnownTotal = a.totalClicks;
+        totalEl.textContent = fmtNum(a.totalClicks);
+        totalEl.classList.remove("analytics-flash");
+        void totalEl.offsetWidth; // restart CSS animation
+        totalEl.classList.add("analytics-flash");
+        tbody.innerHTML = analyticsRecentRowsHtml(a.recentClicks);
+        if (emptyMsg) emptyMsg.style.display = a.recentClicks.length === 0 ? "" : "none";
+      }
+    }).catch(function(){ /* silent — a transient poll failure shouldn't interrupt the page */ });
+  }, 4000);
 }
 
 function buildCurlExample(origin, token){
@@ -11277,7 +12104,16 @@ function renderApiTab(app){
   var tokenBlock = state.user.apiToken
     ? '<div class="copybox"><span class="u">' + esc(state.user.apiToken) + '</span><button class="btn btn-ghost btn-sm" id="btnCopyToken">' + t("copy") + '</button></div>'
     : '<p class="hint">' + t("api_no_token") + '</p>';
+  var extTokenBlock = state.user.extToken
+    ? '<div class="copybox"><span class="u">' + esc(state.user.extToken) + '</span><button class="btn btn-ghost btn-sm" id="btnCopyExtToken">' + t("copy") + '</button></div>'
+    : '<p class="hint">' + t("ext_no_token") + '</p>';
   app.innerHTML = guideCard("api") + upgradeBanner("api") +
+    '<div class="card"><h1>' + t("ext_title") + '</h1>' +
+    '<p class="sub">' + t("ext_desc") + '</p>' +
+    extTokenBlock +
+    '<div id="extMsg"></div>' +
+    '<button class="btn btn-primary btn-sm" id="btnGenExtToken">' + (state.user.extToken ? t("ext_regen_btn") : t("ext_gen_btn")) + '</button>' +
+    '</div>' +
     '<div class="card"><h1>' + t("api_title") + helpLinkHtml('api-shurlvn-huong-dan-lay-token-va-goi-api-rut-gon-link', 'API Shurlvn là gì? Xem hướng dẫn sử dụng') + '</h1>' +
     (limits.hasApi ? '' : '<p class="sub">' + t("api_no_access") + '</p>') +
     tokenBlock +
@@ -11318,6 +12154,17 @@ function renderApiTab(app){
   }
   var copyBtn = document.getElementById("btnCopyToken");
   if (copyBtn) copyBtn.onclick = function(){ copyText(state.user.apiToken, this); };
+
+  var extBtn = document.getElementById("btnGenExtToken");
+  var extMsg = document.getElementById("extMsg");
+  extBtn.onclick = function(){
+    api("/api/extension/token", "POST").then(function(data){
+      state.user.extToken = data.extToken;
+      renderApiTab(app);
+    }).catch(function(err){ extMsg.innerHTML = '<div class="msg msg-error">' + esc(err.message) + '</div>'; });
+  };
+  var copyExtBtn = document.getElementById("btnCopyExtToken");
+  if (copyExtBtn) copyExtBtn.onclick = function(){ copyText(state.user.extToken, this); };
 
   // URL Encoder/Decoder — thuần client-side, không gọi API
   var urlToolMsg = document.getElementById("urlToolMsg");
@@ -11735,6 +12582,17 @@ function showQrResultModal(p){
       '<p style="color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 20px;">' + tf("qr_success_desc2", { domain: domain }) + '</p>' +
       '<p style="color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 24px;">' + tf("qr_success_desc3", { email: supportEmail }) + '</p>' +
       '<button id="qrAckBtn" class="btn btn-primary" style="width:100%;justify-content:center;border-radius:12px;padding:14px;font-weight:700;">' + t("btn_confirm") + '</button>';
+  } else if (p.status === "revoked"){
+    card.innerHTML =
+      '<div style="font-size:40px;margin-bottom:16px;">' + li('alert', 40) + '</div>' +
+      '<h2 style="margin:0 0 12px;font-size:20px;color:var(--text);">' + t("qr_revoked_title") + '</h2>' +
+      '<p style="color:var(--text);font-size:15px;line-height:1.6;margin:0 0 8px;">' + tf("qr_revoked_desc1", { order: esc(p.orderId) }) + '</p>' +
+      '<p style="color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 8px;">' + t("qr_revoked_desc2") + '</p>' +
+      '<p style="color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 24px;">' + tf("qr_revoked_desc3", { email: supportEmail }) + '</p>' +
+      '<div style="display:flex;gap:10px;">' +
+      '<button id="qrAckBtn" class="btn btn-ghost" style="flex:1;justify-content:center;border-radius:12px;padding:14px;font-weight:700;">' + t("btn_understood") + '</button>' +
+      '<button id="qrSupportBtn" class="btn btn-primary" style="flex:1;justify-content:center;border-radius:12px;padding:14px;font-weight:700;">' + t("contact_support_btn") + '</button>' +
+      '</div>';
   } else {
     card.innerHTML =
       '<div style="font-size:40px;margin-bottom:16px;">' + li('alert', 40) + '</div>' +
@@ -11752,7 +12610,7 @@ function showQrResultModal(p){
   document.getElementById("qrAckBtn").onclick = function(){
     modal.remove();
     api("/api/billing/qr-status-ack", "POST", { orderId: p.orderId }).then(function(){
-      if (p.status === "approved") { render(); renderSidebars(); }
+      if (p.status === "approved" || p.status === "revoked") { render(); renderSidebars(); }
     }).catch(function(){});
   };
   var supportBtn = document.getElementById("qrSupportBtn");
@@ -12524,6 +13382,9 @@ function loadAdminMaintenance(body){
       { key: "qr_code", label: "Tạo QR Code", icon: li("qr", 20), category: "Tính năng" },
       { key: "data_export", label: "Xuất dữ liệu (CSV/JSON)", icon: li("upload", 20), category: "Tính năng" },
       { key: "webhooks", label: "Webhooks", icon: "🪝", category: "Tính năng" },
+      { key: "link_in_bio", label: "Link-in-bio", icon: li("user", 20), category: "Tính năng" },
+      { key: "extension", label: "Kết nối tiện ích trình duyệt", icon: "🧩", category: "Tính năng" },
+      { key: "ai_assistant", label: "Trợ lý Hỏi AI", icon: "🤖", category: "Tính năng" },
       { key: "login", label: "Đăng nhập / Đăng ký", icon: li("lock", 20), category: "Hệ thống" },
       { key: "shorten", label: "Tạo link rút gọn", icon: li("link", 20), category: "Hệ thống" }
     ];
@@ -12684,15 +13545,26 @@ function loadAdminSettings(body){
   });
 }
 
+var ADMIN_NOTIF_TEMPLATES = {
+  welcome: { label: "Chào mừng", title: "Chào mừng đến với SHURL!", message: "Cảm ơn bạn đã tham gia SHURL. Chúc bạn có trải nghiệm tuyệt vời!", type: "success" },
+  security: { label: "Cảnh báo bảo mật", title: "Cảnh báo bảo mật", message: "Chúng tôi phát hiện hoạt động bất thường trên tài khoản của bạn. Nếu không phải bạn, vui lòng đổi mật khẩu ngay.", type: "danger" },
+  maintenance: { label: "Bảo trì hệ thống", title: "Thông báo bảo trì", message: "Hệ thống sẽ bảo trì trong thời gian tới, một số tính năng có thể tạm gián đoạn. Xin lỗi vì sự bất tiện này.", type: "warning" },
+  promo: { label: "Khuyến mãi", title: "Ưu đãi đặc biệt dành cho bạn!", message: "SHURL đang có chương trình khuyến mãi giới hạn thời gian — nâng cấp gói ngay để không bỏ lỡ.", type: "info" }
+};
+
 function loadAdminNotifications(body){
+  var templateOptionsHtml = '<option value="">— Chọn mẫu có sẵn (tuỳ chọn) —</option>' +
+    Object.keys(ADMIN_NOTIF_TEMPLATES).map(function(k){ return '<option value="' + k + '">' + esc(ADMIN_NOTIF_TEMPLATES[k].label) + '</option>'; }).join("");
   body.innerHTML =
     '<div style="margin-bottom:16px;">' +
     '<h3 style="margin:0 0 8px;">Gửi thông báo</h3>' +
     '<div style="display:flex;flex-direction:column;gap:8px;max-width:500px;">' +
+    '<select id="notifTemplate" class="input" style="padding:8px;border:1px solid var(--border);border-radius:6px;">' + templateOptionsHtml + '</select>' +
     '<input id="notifTitle" placeholder="Tiêu đề thông báo" class="input" style="padding:8px;border:1px solid var(--border);border-radius:6px;" />' +
     '<textarea id="notifMsg" placeholder="Nội dung thông báo" class="input" style="padding:8px;border:1px solid var(--border);border-radius:6px;min-height:60px;"></textarea>' +
     '<select id="notifTarget" class="input" style="padding:8px;border:1px solid var(--border);border-radius:6px;"><option value="">Gửi cho tất cả users</option></select>' +
     '<select id="notifType" class="input" style="padding:8px;border:1px solid var(--border);border-radius:6px;"><option value="info">Info</option><option value="warning">Warning</option><option value="success">Success</option><option value="danger">Danger</option></select>' +
+    '<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" id="notifSendEmail" /> Cũng gửi email cho người nhận</label>' +
     '<button id="sendNotifBtn" class="btn btn-primary" style="padding:8px 16px;">Gửi thông báo</button>' +
     '</div></div>' +
     '<hr style="margin:16px 0;border:none;border-top:1px solid var(--border);" />' +
@@ -12709,14 +13581,22 @@ function loadAdminNotifications(body){
       }
     });
   }).catch(function(){});
+  document.getElementById("notifTemplate").onchange = function(){
+    var tpl = ADMIN_NOTIF_TEMPLATES[this.value];
+    if (!tpl) return;
+    document.getElementById("notifTitle").value = tpl.title;
+    document.getElementById("notifMsg").value = tpl.message;
+    document.getElementById("notifType").value = tpl.type;
+  };
   function attachSend(){
     document.getElementById("sendNotifBtn").onclick = function(){
       var title = document.getElementById("notifTitle").value.trim();
       var msg = document.getElementById("notifMsg").value.trim();
       var target = document.getElementById("notifTarget").value;
       var type = document.getElementById("notifType").value;
+      var sendEmailToo = document.getElementById("notifSendEmail").checked;
       if (!title || !msg) { alert("Nhập tiêu đề và nội dung"); return; }
-      var payload = { title: title, message: msg, type: type };
+      var payload = { title: title, message: msg, type: type, sendEmailToo: sendEmailToo };
       if (target) payload.targetUsername = target;
       api("/api/admin/notifications", "POST", payload).then(function(data){
         alert(data.message || "Đã gửi thông báo");
@@ -12747,7 +13627,19 @@ function loadAdminNotifications(body){
       tr.querySelector(".admNotifViewBtn").onclick = function() { showAdminNotifDetailModal(n2); };
       tr.querySelector(".admNotifDelBtn").onclick = function() {
         if (!confirm(t("adm_notif_delete_confirm"))) return;
-        api("/api/admin/notifications/" + encodeURIComponent(n2.id), "DELETE").then(function(){ loadAdminNotifications(body); }).catch(function(err){ alert(err.message); });
+        api("/api/admin/notifications/" + encodeURIComponent(n2.id), "DELETE").then(function(){
+          // Chỉ xoá đúng dòng này khỏi DOM (mờ dần) thay vì gọi lại loadAdminNotifications() —
+          // tránh render lại toàn bộ tab (form gửi + dropdown user + danh sách), gây giật/mất
+          // dữ liệu đang nhập dở trong form.
+          tr.style.transition = "opacity 0.15s ease";
+          tr.style.opacity = "0";
+          setTimeout(function(){
+            tr.remove();
+            if (!container.querySelector("tr[data-notif-idx]")) {
+              container.innerHTML = '<p class="hint">Chưa có thông báo nào.</p>';
+            }
+          }, 150);
+        }).catch(function(err){ alert(err.message); });
       };
     });
   }).catch(function(err){ container.innerHTML = '<p class="hint">Loi: ' + esc(err.message) + '</p>'; });
@@ -12801,11 +13693,14 @@ function loadAdminQrPayments(body){
     payments.forEach(function(p){
       var statusBadge = p.status === "pending" ? '<span class="badge" style="background:rgba(251,191,36,0.15);color:#fbbf24;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;">⏳ Chờ duyệt</span>' :
         p.status === "approved" ? '<span class="badge" style="background:rgba(110,231,183,0.15);color:#6ee7b7;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;">Đã duyệt</span>' :
+        p.status === "revoked" ? '<span class="badge" style="background:rgba(148,163,184,0.15);color:#94a3b8;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;">🔁 Đã thu hồi</span>' :
         '<span class="badge" style="background:rgba(253,164,175,0.15);color:#fda4af;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;">❌ Từ chối</span>';
       var actions = '';
       if (p.status === "pending"){
         actions = '<button class="btn btn-primary btn-sm" style="margin-right:6px;" data-approve="' + p.orderId + '">Duyệt</button>' +
           '<button class="btn btn-danger btn-sm" data-reject="' + p.orderId + '">❌ Từ chối</button>';
+      } else if (p.status === "approved"){
+        actions = '<button class="btn btn-ghost btn-sm" style="color:#94a3b8;" data-revoke="' + p.orderId + '" title="Chỉ dùng khi duyệt nhầm">🔁 Thu hồi</button>';
       }
       var tierColor = tierColors[p.tier] || "#64748b";
       html += '<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.06);transition:box-shadow 0.2s ease;">' +
@@ -12834,6 +13729,7 @@ function loadAdminQrPayments(body){
     body.querySelectorAll('div[style*="border-radius:14px"]').forEach(function(card){ card.onmouseenter = function(){ this.style.boxShadow = '0 4px 16px rgba(0,0,0,0.12)'; }; card.onmouseleave = function(){ this.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)'; }; });
     body.querySelectorAll('[data-approve]').forEach(function(btn){ btn.onclick = function(){ approveQrPayment(this.getAttribute('data-approve')); }; });
     body.querySelectorAll('[data-reject]').forEach(function(btn){ btn.onclick = function(){ rejectQrPayment(this.getAttribute('data-reject')); }; });
+    body.querySelectorAll('[data-revoke]').forEach(function(btn){ btn.onclick = function(){ revokeQrPayment(this.getAttribute('data-revoke')); }; });
   }).catch(function(err){ body.innerHTML = '<div class="msg msg-error">' + esc(err.message) + '</div>'; });
 }
 
@@ -12881,6 +13777,37 @@ function rejectQrPayment(orderId){
     modal.remove();
     api("/api/admin/qr-reject", "POST", { orderId: orderId, reason: reason }).then(function(){
       alert("Đã từ chối giao dịch.\\nLý do: " + reason);
+      var body = document.getElementById("adminBody");
+      if (body) loadAdminQrPayments(body);
+    }).catch(function(err){ alert(err.message); });
+  };
+  modal.addEventListener("click", function(e){ if (e.target === modal) modal.remove(); });
+}
+
+function revokeQrPayment(orderId){
+  var modal = document.createElement("div");
+  modal.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;";
+  var card = document.createElement("div");
+  card.style.cssText = "background:var(--card);border-radius:16px;padding:24px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);";
+  card.innerHTML =
+    '<h3 style="margin:0 0 12px;color:var(--text);">🔁 Thu hồi giao dịch đã duyệt</h3>' +
+    '<p style="font-size:13px;color:var(--muted);margin:0 0 12px;font-family:monospace;word-break:break-all;">' + esc(orderId) + '</p>' +
+    '<p style="font-size:13px;color:#f59e0b;background:rgba(245,158,11,0.1);border-radius:8px;padding:10px 12px;margin:0 0 16px;line-height:1.5;">' +
+    'User sẽ bị hạ về đúng gói/thời hạn trước khi duyệt lệnh này, và sẽ nhận thông báo toàn màn hình + email xin lỗi. Chỉ dùng khi chắc chắn đã duyệt nhầm.</p>' +
+    '<p style="font-size:14px;color:var(--text);margin:0 0 8px;font-weight:600;">Lý do thu hồi (tuỳ chọn):</p>' +
+    '<textarea id="revokeReasonInput" placeholder="Vd: Duyệt nhầm giao dịch, giao dịch còn lại của user mới là hợp lệ" style="width:100%;min-height:70px;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);color:var(--text);font-family:inherit;font-size:13px;box-sizing:border-box;"></textarea>' +
+    '<div style="display:flex;gap:10px;margin-top:16px;">' +
+    '<button id="cancelRevokeBtn" class="btn btn-ghost" style="flex:1;justify-content:center;border-radius:10px;padding:12px;">Huỷ</button>' +
+    '<button id="confirmRevokeBtn" class="btn btn-danger" style="flex:1;justify-content:center;border-radius:10px;padding:12px;font-weight:700;">Xác nhận thu hồi</button>' +
+    '</div>';
+  modal.appendChild(card);
+  document.body.appendChild(modal);
+  document.getElementById("cancelRevokeBtn").onclick = function(){ modal.remove(); };
+  document.getElementById("confirmRevokeBtn").onclick = function(){
+    var reason = document.getElementById("revokeReasonInput").value.trim();
+    modal.remove();
+    api("/api/admin/qr-revoke", "POST", { orderId: orderId, reason: reason || undefined }).then(function(){
+      alert("Đã thu hồi giao dịch. User đã được thông báo và gửi email.");
       var body = document.getElementById("adminBody");
       if (body) loadAdminQrPayments(body);
     }).catch(function(err){ alert(err.message); });
@@ -13065,6 +13992,7 @@ function li(icon, size) {
     help: '<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
     help_circle: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
     message: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+    sparkles: '<path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.937A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/>',
     trash: '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>',
     lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
     unlock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>',
@@ -13911,6 +14839,85 @@ function renderFooter(){
   if (fBlog) fBlog.textContent = t("footer_blog");
 }
 
+// ---------- AI ASSISTANT ("Hỏi AI" — sparkle icon in header, dropdown chat panel) ----------
+var aiChatHistory = [];
+var _aiChatPanelClickHandler = null;
+function closeAiChatPanel(){
+  var p = document.getElementById("aiChatPanel");
+  if (p) p.remove();
+  if (_aiChatPanelClickHandler) {
+    document.removeEventListener("click", _aiChatPanelClickHandler);
+    _aiChatPanelClickHandler = null;
+  }
+}
+function toggleAiChatPanel(){
+  var existing = document.getElementById("aiChatPanel");
+  if (existing) { closeAiChatPanel(); return; }
+  var panel = document.createElement("div");
+  panel.id = "aiChatPanel";
+  panel.style.cssText = "position:fixed;top:60px;right:16px;width:340px;max-width:calc(100vw - 32px);height:440px;max-height:calc(100vh - 100px);background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,0.25);z-index:10000;display:flex;flex-direction:column;overflow:hidden;";
+  panel.innerHTML =
+    '<div style="padding:12px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">' +
+    '<strong style="font-size:14px;display:flex;align-items:center;gap:6px;color:var(--indigo);">' + li("sparkles", 16) + ' ' + esc(t("ai_assistant_title")) + '</strong>' +
+    '<button id="aiChatCloseBtn" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:2px;">' + li("x", 16) + '</button>' +
+    '</div>' +
+    '<div id="aiChatMessages" style="flex:1;overflow-y:auto;padding:12px 14px;font-size:13px;"></div>' +
+    '<div style="padding:10px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;">' +
+    '<input type="text" id="aiChatInput" placeholder="' + esc(t("ai_assistant_placeholder")) + '" style="flex:1;padding:8px 10px;border:1px solid var(--input-border);border-radius:8px;background:var(--input-bg);color:var(--text);font-size:13px;">' +
+    '<button class="btn btn-primary btn-sm" id="aiChatSendBtn">' + esc(t("ai_assistant_send")) + '</button>' +
+    '</div>';
+  document.body.appendChild(panel);
+
+  if (aiChatHistory.length === 0) {
+    appendAiChatBubble("assistant", t("ai_assistant_greeting"));
+  } else {
+    for (var i = 0; i < aiChatHistory.length; i++) appendAiChatBubble(aiChatHistory[i].role, aiChatHistory[i].content);
+  }
+
+  document.getElementById("aiChatCloseBtn").onclick = function(e) { e.stopPropagation(); closeAiChatPanel(); };
+  document.getElementById("aiChatSendBtn").onclick = sendAiChatMessage;
+  document.getElementById("aiChatInput").onkeypress = function(e){ if (e.key === "Enter") sendAiChatMessage(); };
+  document.getElementById("aiChatInput").focus();
+
+  _aiChatPanelClickHandler = function(e) {
+    if (!panel.contains(e.target) && !(e.target.closest && e.target.closest("#aiAssistantBtn"))) {
+      closeAiChatPanel();
+    }
+  };
+  setTimeout(function() { document.addEventListener("click", _aiChatPanelClickHandler); }, 0);
+}
+function appendAiChatBubble(role, text){
+  var wrap = document.getElementById("aiChatMessages");
+  var bubble = document.createElement("div");
+  bubble.style.cssText = "margin-bottom:10px;max-width:85%;padding:8px 12px;border-radius:12px;line-height:1.5;white-space:pre-wrap;" +
+    (role === "user" ? "margin-left:auto;background:var(--indigo);color:#fff;border-bottom-right-radius:2px;" : "background:var(--stat-bg);color:var(--text);border-bottom-left-radius:2px;");
+  bubble.textContent = text;
+  wrap.appendChild(bubble);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+function sendAiChatMessage(){
+  var input = document.getElementById("aiChatInput");
+  var message = input.value.trim();
+  if (!message) return;
+  var sendBtn = document.getElementById("aiChatSendBtn");
+  appendAiChatBubble("user", message);
+  input.value = "";
+  input.disabled = true;
+  sendBtn.disabled = true;
+  api("/api/ask-ai", "POST", { message: message, history: aiChatHistory }).then(function(data){
+    appendAiChatBubble("assistant", data.reply);
+    aiChatHistory.push({ role: "user", content: message });
+    aiChatHistory.push({ role: "assistant", content: data.reply });
+    if (aiChatHistory.length > 12) aiChatHistory = aiChatHistory.slice(-12);
+  }).catch(function(err){
+    appendAiChatBubble("assistant", (err && err.message) || t("ai_assistant_error"));
+  }).then(function(){
+    input.disabled = false;
+    sendBtn.disabled = false;
+    input.focus();
+  });
+}
+
 // ---------- INIT ----------
 window.addEventListener("hashchange", function(){ render(); renderFooter(); fetchMaintenanceStatus(); });
 document.addEventListener("click", function(e){
@@ -14531,21 +15538,36 @@ async function handleAdminApplyVoucher(request, env, corsHeaders) {
 }
 
 // ===================== ADMIN: BROADCAST NOTIFICATION =====================
+// Email đơn giản cho nội dung admin tự gõ (không có bản dịch đa ngôn ngữ như NOTIFICATION_TEMPLATES
+// — gửi nguyên văn title/message admin đã nhập, dùng lại đúng khung/màu email đã có).
+function buildAdminBroadcastEmailHtml(title, message) {
+  return buildEmailShell({
+    lang: "vi", illustration: "maintenance",
+    title: title,
+    introHtml: '<p style="white-space:pre-wrap;">' + message + '</p>',
+    ctaText: "Truy cập SHURL", ctaUrl: "https://shurlvn.com",
+    footerReason: "Bạn nhận được email này từ quản trị viên SHURL."
+  });
+}
+
 async function handleAdminBroadcastNotification(request, env, corsHeaders) {
   const authedUser = await getAuthenticatedUser(request, env);
   if (!authedUser) return requireAuthResponse(corsHeaders, request);
   if (authedUser.role !== "admin") return requireAdminResponse(corsHeaders, request);
   let body;
   try { body = await request.json(); } catch (e) { body = {}; }
-  const { title, message, targetUsername, type } = body || {};
+  const { title, message, targetUsername, type, sendEmailToo } = body || {};
   if (!title || !message) return json({ error: "Thiếu title hoặc message" }, 400, corsHeaders);
   const notifType = type || "info";
-  const notifId = "notif_" + Date.now() + "_" + randomHex(4);
-  const notif = { id: notifId, title, message, type: notifType, from: authedUser.username, createdAt: new Date().toISOString(), targetUsername: targetUsername || null };
+  const emailSubject = title;
+  const emailHtml = buildAdminBroadcastEmailHtml(title, message);
   if (targetUsername) {
     const targetUser = await getUser(env, targetUsername);
     if (!targetUser) return json({ error: "Không tìm thấy người dùng " + targetUsername }, 400, corsHeaders);
-    await env.LINKS_KV.put("notif:user:" + targetUser.username.toLowerCase() + ":" + notifId, JSON.stringify({ ...notif, read: false }));
+    const notifId = await notifyUser(env, {
+      username: targetUser.username, type: notifType, from: authedUser.username, title, message,
+      sendEmailToo: !!sendEmailToo, emailSubject, emailHtml
+    });
     await addAuditLog(env, authedUser, "SEND_NOTIFICATION", { targetUsername: targetUser.username, title }, request);
     return json({ ok: true, message: "Đã gửi thông báo tới " + targetUser.username, notifId }, 200, corsHeaders);
   } else {
@@ -14553,12 +15575,14 @@ async function handleAdminBroadcastNotification(request, env, corsHeaders) {
     let sentCount = 0;
     for (const user of allUsers) {
       if (user.role === "admin") continue;
-      const userNotifId = notifId + "_" + user.username.toLowerCase();
-      await env.LINKS_KV.put("notif:user:" + user.username.toLowerCase() + ":" + userNotifId, JSON.stringify({ ...notif, id: userNotifId, read: false }));
+      await notifyUser(env, {
+        username: user.username, type: notifType, from: authedUser.username, title, message,
+        sendEmailToo: !!sendEmailToo, emailSubject, emailHtml
+      });
       sentCount++;
     }
     await addAuditLog(env, authedUser, "BROADCAST_NOTIFICATION", { title, sentCount }, request);
-    return json({ ok: true, message: "Đã gửi thông báo tới " + sentCount + " users", sentCount, notifId }, 200, corsHeaders);
+    return json({ ok: true, message: "Đã gửi thông báo tới " + sentCount + " users", sentCount }, 200, corsHeaders);
   }
 }
 // ===================== ADMIN: LIST NOTIFICATIONS =====================

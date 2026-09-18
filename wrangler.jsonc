@@ -5,6 +5,7 @@
   "kv_namespaces": [
     { "binding": "LINKS_KV", "id": "c9b55fe1b2574330923003a5d68f4591" }
   ],
+  "ai": { "binding": "AI" },
   "triggers": {
     "crons": ["0 * * * *"]
   },
