@@ -3,6 +3,10 @@
 // ==============================================================================
 // ===================== CẤU HÌNH HẠN MỨC 5 TẦNG (khớp src/types.ts) ==========
 
+import { getAuthenticatedUser, requireAuthResponse, requireAdminResponse, clearOauthStateCookieHeader } from "./src/utils/auth.js";
+import { getTierOverrides, getEffectiveTierConfig, checkDailyQuota, incrementDailyQuota, checkMonthlyApiQuota, incrementMonthlyApiQuota, checkMonthlyDynamicQrQuota, incrementMonthlyDynamicQrQuota } from "./src/utils/quota.js";
+import { isMaintenance, handleGetMaintenance, handleSetMaintenance, handleGetMaintenanceStatus, checkMaintenance } from "./src/utils/maintenance.js";
+
 import { bytesToHex, randomHex, randomSixDigitCode, hashPassword } from "./src/utils/crypto.js";
 import { json, html, escHtml, escJsString, isBlockedWebhookHost, todayStr, thisMonthStr, parseCookies, setSessionCookieHeader, clearSessionCookieHeader, getClientIp } from "./src/utils/http.js";
 import { safeUser, getUser, putUser, listAllUsers } from "./src/kv/users.js";
@@ -402,49 +406,6 @@ async function purgeExpiredLinksLogged(env) {
 // ===================== SEED DỮ LIỆU MẪU (chạy 1 lần duy nhất) =====================
 
 // ===================== AUTH =====================
-async function getAuthenticatedUser(request, env) {
-  try {
-    const cookies = parseCookies(request);
-    const sessionToken = cookies[SESSION_COOKIE];
-    if (sessionToken) {
-      const username = await env.LINKS_KV.get("session:" + sessionToken);
-      if (username) {
-        const user = await getUser(env, username);
-        if (user) {
-          if (user.banned) return null;
-          return safeUser(user);
-        }
-      }
-    }
-
-    const authHeader = request.headers.get("Authorization");
-    const apiKeyHeader = request.headers.get("x-api-key");
-    const rawToken = (authHeader || apiKeyHeader || "").replace(/^Bearer\s+/i, "").trim();
-    if (rawToken) {
-      const username = await env.LINKS_KV.get("apitoken:" + rawToken);
-      if (username) {
-        const user = await getUser(env, username);
-        if (user) {
-          if (user.banned) return null;
-          if (user.tierExpiresAt && user.role !== "admin" && new Date(user.tierExpiresAt) < new Date()) {
-            user.role = "free";
-            user.tierExpiresAt = null;
-            await putUser(env, user);
-          }
-          return safeUser(user);
-        }
-      }
-    }
-  } catch(e) { /* KV error - treat as unauthenticated */ }
-  return null;
-}
-
-function requireAuthResponse(corsHeaders, request) {
-  return json({ error: st("require_auth", request) }, 401, corsHeaders);
-}
-function requireAdminResponse(corsHeaders, request) {
-  return json({ error: st("require_admin", request) }, 403, corsHeaders);
-}
 
 // ===================== HANDLERS: AUTH =====================
 async function handleRegister(request, env, corsHeaders) {
@@ -568,10 +529,6 @@ async function handleLogout(request, env, corsHeaders) {
     await env.LINKS_KV.delete("session:" + sessionToken);
   }
   return json({ ok: true }, 200, corsHeaders, { "Set-Cookie": clearSessionCookieHeader() });
-}
-
-function clearOauthStateCookieHeader() {
-  return `${OAUTH_STATE_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Secure; Max-Age=0`;
 }
 
 async function handleGoogleAuthStart(request, env, corsHeaders) {
@@ -1207,110 +1164,6 @@ async function handleDisable2fa(request, env, corsHeaders){
 // Admin có thể override dailyLinks/maxBulkBatch/monthlyApiLimit theo từng gói ở tab Cài đặt
 // (sys:settings.tierOverrides) — merge lên trên TIER_CONFIG mặc định. Cache 30s như các list
 // khác trong file này (env._linksCache, env._usersCache) để không đọc KV trên mỗi request.
-async function getTierOverrides(env) {
-  if (env._tierOverridesCache && env._tierOverridesCacheTime && (Date.now() - env._tierOverridesCacheTime < 30000)) {
-    return env._tierOverridesCache;
-  }
-  const raw = await env.LINKS_KV.get("sys:settings");
-  const overrides = (raw && JSON.parse(raw).tierOverrides) || {};
-  env._tierOverridesCache = overrides;
-  env._tierOverridesCacheTime = Date.now();
-  return overrides;
-}
-async function getEffectiveTierConfig(env, role) {
-  const base = TIER_CONFIG[role];
-  if (!base) return base;
-  const overrides = await getTierOverrides(env);
-  const ov = overrides[role];
-  if (!ov) return base;
-  const merged = { ...base };
-  if (typeof ov.dailyLinks === "number") merged.dailyLinks = ov.dailyLinks;
-  if (typeof ov.maxBulkBatch === "number") merged.maxBulkBatch = ov.maxBulkBatch;
-  if (typeof ov.monthlyApiLimit === "number") merged.monthlyApiLimit = ov.monthlyApiLimit;
-  return merged;
-}
-async function checkDailyQuota(env, user, role, addCount) {
-  if (role === "admin") return { ok: true };
-  const limit = (await getEffectiveTierConfig(env, role)).dailyLinks;
-  const today = todayStr();
-  let currentCount = 0;
-  if (user && user.dailyQuota && user.dailyQuota.date === today) {
-    currentCount = user.dailyQuota.count;
-  }
-  if (currentCount + addCount > limit) {
-    const tierName = role === "guest" ? "Khách chưa đăng ký" : role === "free" ? "Registered (Miễn phí)" : role === "plus" ? "Plus" : role === "pro" ? "Pro" : "Super";
-    return { ok: false, message: `Bạn đã vượt quá giới hạn ${limit} link/ngày của gói ${tierName} (đã tạo ${currentCount} link hôm nay).` };
-  }
-  return { ok: true };
-}
-async function incrementDailyQuota(env, ownerUsername, count) {
-  const user = await getUser(env, ownerUsername);
-  if (!user) return;
-  const today = todayStr();
-  if (!user.dailyQuota || user.dailyQuota.date !== today) {
-    user.dailyQuota = { date: today, count };
-  } else {
-    user.dailyQuota.count += count;
-  }
-  await putUser(env, user);
-}
-async function checkMonthlyApiQuota(env, user, role) {
-  if (role === "admin") return { ok: true };
-  if (user && user.tierExpiresAt && role !== "admin" && new Date(user.tierExpiresAt) < new Date()) {
-    return { ok: false, code: "TIER_EXPIRED", message: "Gói của bạn đã hết hạn. Vui lòng nâng cấp để tiếp tục sử dụng API.", upgradeUrl: "#/pricing" };
-  }
-  if (!TIER_CONFIG[role].hasApi) {
-    return { ok: false, code: "API_NOT_AVAILABLE", message: "Gói hiện tại chưa hỗ trợ API. Nâng cấp PRO hoặc SUPER để sử dụng.", upgradeUrl: "#/pricing" };
-  }
-  const limit = (await getEffectiveTierConfig(env, role)).monthlyApiLimit;
-  const thisMonth = thisMonthStr();
-  let currentCount = 0;
-  if (user && user.monthlyApiQuota && user.monthlyApiQuota.month === thisMonth) {
-    currentCount = user.monthlyApiQuota.count;
-  }
-  if (currentCount >= limit) {
-    return { ok: false, code: "QUOTA_EXCEEDED", message: `Bạn đã dùng hết hạn mức API ${limit.toLocaleString()} requests/tháng. Vui lòng nâng cấp để tăng giới hạn.`, upgradeUrl: "#/pricing", retryAt: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString() };
-  }
-  return { ok: true };
-}
-async function incrementMonthlyApiQuota(env, ownerUsername) {
-  const user = await getUser(env, ownerUsername);
-  if (!user) return;
-  const thisMonth = thisMonthStr();
-  if (!user.monthlyApiQuota || user.monthlyApiQuota.month !== thisMonth) {
-    user.monthlyApiQuota = { month: thisMonth, count: 1 };
-  } else {
-    user.monthlyApiQuota.count += 1;
-  }
-  await putUser(env, user);
-}
-function checkMonthlyDynamicQrQuota(user, role) {
-  if (role === "admin") return { ok: true, limit: 999999, remaining: 999999 };
-  const limit = (TIER_CONFIG[role] && TIER_CONFIG[role].maxDynamicQrPerMonth) || 0;
-  if (!limit) {
-    return { ok: false, code: "DYNAMIC_QR_NOT_AVAILABLE", message: "Gói hiện tại chưa hỗ trợ QR động. Nâng cấp Plus trở lên để sử dụng.", upgradeUrl: "#/pricing" };
-  }
-  const thisMonth = thisMonthStr();
-  let currentCount = 0;
-  if (user && user.monthlyDynamicQrQuota && user.monthlyDynamicQrQuota.month === thisMonth) {
-    currentCount = user.monthlyDynamicQrQuota.count;
-  }
-  if (currentCount >= limit) {
-    return { ok: false, code: "QUOTA_EXCEEDED", message: `Bạn đã dùng hết ${limit} QR động/tháng. Các QR động đã tạo vẫn hoạt động bình thường — nâng cấp gói để tạo thêm.`, upgradeUrl: "#/pricing", limit: limit, remaining: 0, retryAt: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString() };
-  }
-  return { ok: true, limit: limit, remaining: limit - currentCount };
-}
-async function incrementMonthlyDynamicQrQuota(env, ownerUsername) {
-  const user = await getUser(env, ownerUsername);
-  if (!user) return;
-  const thisMonth = thisMonthStr();
-  if (!user.monthlyDynamicQrQuota || user.monthlyDynamicQrQuota.month !== thisMonth) {
-    user.monthlyDynamicQrQuota = { month: thisMonth, count: 1 };
-  } else {
-    user.monthlyDynamicQrQuota.count += 1;
-  }
-  await putUser(env, user);
-}
 
 // ===================== HANDLERS: LINKS (CORE) =====================
 
@@ -3249,43 +3102,6 @@ async function handleQrGenerate(request, env, corsHeaders) {
 }
 
 // === MAINTENANCE SYSTEM ===
-async function isMaintenance(env, feature) {
-  try {
-    var raw = await env.LINKS_KV.get("maintenance:" + feature);
-    if (!raw) return null;
-    try { return JSON.parse(raw); } catch(e) { return null; }
-  } catch(e) { return null; }
-}
-async function handleGetMaintenance(request, env, corsHeaders) {
-  const user = await getAuthenticatedUser(request, env);
-  if (!user || (user.role !== "admin" && user.role !== "super")) return json({ error: "Chỉ admin" }, 403, corsHeaders);
-  var features = ["global", "stripe", "qr_payment", "bulk", "api", "analytics", "voucher", "login", "shorten", "password_link", "qr_code", "data_export", "webhooks", "link_in_bio", "extension", "ai_assistant"];
-  var result = {};
-  for (var i = 0; i < features.length; i++) { result[features[i]] = (await isMaintenance(env, features[i])) || { active: false, note: "" }; }
-  return json({ maintenance: result }, 200, corsHeaders);
-}
-async function handleSetMaintenance(request, env, corsHeaders) {
-  const user = await getAuthenticatedUser(request, env);
-  if (!user || (user.role !== "admin" && user.role !== "super")) return json({ error: "Chỉ admin" }, 403, corsHeaders);
-  let body; try { body = await request.json(); } catch (e) { body = {}; }
-  var feature = body.feature, active = body.active, note = body.note || "";
-  if (!feature) return json({ error: "Thiếu tính năng" }, 400, corsHeaders);
-  if (active) { await env.LINKS_KV.put("maintenance:" + feature, JSON.stringify({ active: true, note: note, setAt: new Date().toISOString(), setBy: user.username })); }
-  else { await env.LINKS_KV.delete("maintenance:" + feature); }
-  await addAuditLog(env, user, "MAINTENANCE_TOGGLE", { feature: feature, active: active, note: note }, request);
-  return json({ success: true, feature: feature, active: active }, 200, corsHeaders);
-}
-async function handleGetMaintenanceStatus(request, env, corsHeaders) {
-  var features = ["stripe", "qr_payment", "bulk", "api", "analytics", "voucher"];
-  var result = {};
-  for (var i = 0; i < features.length; i++) { result[features[i]] = (await isMaintenance(env, features[i])) || { active: false, note: "" }; }
-  return json({ maintenance: result }, 200, corsHeaders);
-}
-async function checkMaintenance(env, feature, corsHeaders, request) {
-  var m = await isMaintenance(env, feature);
-  if (m && m.active) return json({ error: st("maintenance_feature_prefix", request) + (m.note ? ": " + m.note : "") }, 503, corsHeaders);
-  return null;
-}
 
 async function handleListQrPayments(request, env, corsHeaders) {
   const user = await getAuthenticatedUser(request, env);
