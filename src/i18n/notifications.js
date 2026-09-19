@@ -1,5 +1,7 @@
 // Multi-language notification/email templates and rendering helpers.
 
+import { buildEmailShell } from "../views/emailTemplates.js";
+
 export var EMAIL_LABELS = {
   vi: { tagline:"Nền tảng rút gọn link đa tầng", terms:"Điều khoản sử dụng", privacy:"Chính sách bảo mật", account:"Tài khoản", plan:"Gói", reasonGeneric:"Bạn nhận được email này vì đây là thông báo liên quan tới tài khoản SHURL của bạn.", support:"Cần hỗ trợ? Liên hệ" },
   en: { tagline:"The multi-tier link shortening platform", terms:"Terms of Service", privacy:"Privacy Policy", account:"Account", plan:"Plan", reasonGeneric:"You're receiving this email because it relates to your SHURL account.", support:"Need help? Contact" },
