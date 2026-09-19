@@ -21,7 +21,7 @@ var QD_T = {
     lay_vq0: "Bảng đứng", lay_vq1: "Ngang", lay_vc0: "Cổ điển", lay_vc1: "Thẻ đứng", lay_vc2: "Nền đậm", lay_vc3: "Chia đôi", lay_vc4: "Tối giản", lay_vc5: "Đứng tối",
     layout: "Bố cục", color: "Màu chủ đạo", title: "Tiêu đề trên bảng", title_def: "QUÉT MÃ ĐỂ CHUYỂN KHOẢN",
     holder: "Tên chủ tài khoản (chỉ hiện trên bảng, không nằm trong mã QR)", holder_ph: "NGUYEN VAN AN",
-    show_amount: "Hiện số tiền", show_content: "Hiện nội dung", brand: "Hiện dòng shurlvn.com ở chân thẻ",
+    show_amount: "Hiện số tiền", show_content: "Hiện nội dung", brand: "Hiện dòng \"Tạo bởi shurlvn.com\" ở chân thẻ", made_by: "Tạo bởi shurlvn.com", vq_check: "Kiểm tra tên người nhận trong app trước khi chuyển", brand_locked: "Từ gói Plus trở lên mới bỏ được dòng này. Bấm để xem bảng giá.",
     note: "Tải về dạng PNG để in hoặc đăng. Mã QR giữ nguyên, phần thiết kế chỉ nằm bên ngoài; công cụ tự quét lại thẻ để kiểm tra.",
     dl: "Tải thẻ PNG",
     vq_acc: "Số tài khoản", vq_amount: "Số tiền", vq_content: "Nội dung", vq_foot: "Quét bằng app ngân hàng bất kỳ · VietQR",
@@ -32,7 +32,7 @@ var QD_T = {
     lay_vq0: "Portrait sign", lay_vq1: "Landscape", lay_vc0: "Classic", lay_vc1: "Tall card", lay_vc2: "Bold", lay_vc3: "Split", lay_vc4: "Minimal", lay_vc5: "Dark tall",
     layout: "Layout", color: "Accent color", title: "Sign title", title_def: "SCAN TO TRANSFER",
     holder: "Account holder name (shown on the sign only, not inside the QR code)", holder_ph: "NGUYEN VAN AN",
-    show_amount: "Show amount", show_content: "Show message", brand: "Show shurlvn.com at the bottom",
+    show_amount: "Show amount", show_content: "Show message", brand: "Show \"Made with shurlvn.com\" at the bottom", made_by: "Made with shurlvn.com", vq_check: "Check the recipient name in your app before transferring", brand_locked: "Plus plan and above can remove this line. Click to see plans.",
     note: "Download as PNG to print or post. The QR code is untouched, the design sits only around it; the tool re-scans the card to verify.",
     dl: "Download card PNG",
     vq_acc: "Account number", vq_amount: "Amount", vq_content: "Message", vq_foot: "Scan with any banking app · VietQR",
@@ -174,7 +174,7 @@ function qdQrPanel(ctx, img, x, y, qs, pad, accent){
 }
 function qdBrand(ctx, W, y, show, align, x){
   if (!show) { return; }
-  qdText(ctx, "shurlvn.com", x == null ? W / 2 : x, y, { size: 26, weight: "600", color: "#94a3b8", align: align || "center", maxW: W - 80 });
+  qdText(ctx, qdT("made_by"), x == null ? W / 2 : x, y, { size: 26, weight: "600", color: "#94a3b8", align: align || "center", maxW: W - 80 });
 }
 
 // ---------- Màu phụ ----------
@@ -261,8 +261,10 @@ function qdVqPortrait(ctx, s){
   y += s.qr;
   if (s.amount) { y += 24; qdVqPill(ctx, s.amount, cx, y, s.accent, on, cw - 100); y += 92; }
   if (s.content) { y += 18; qdText(ctx, qdT("vq_content") + ": " + s.content, cx, y, { size: 34, minSize: 22, weight: "500", color: "#475569", align: "center", maxW: cw - 120, maxLines: 1 }); }
-  qdText(ctx, qdT("vq_foot"), cx, H - 150, { size: 30, weight: "500", color: "#64748b", align: "center", maxW: W - 160 });
-  qdBrand(ctx, W, H - 96, s.brand);
+  qdText(ctx, qdT("vq_foot"), cx, H - 164, { size: 28, weight: "500", color: "#64748b", align: "center", maxW: W - 160 });
+  // Dòng nhắc chống lừa đảo: luôn hiện trên thẻ VietQR (người chuyển tự đối chiếu tên với app ngân hàng).
+  qdText(ctx, qdT("vq_check"), cx, H - 118, { size: 30, minSize: 22, weight: "700", color: "#334155", align: "center", maxW: W - 120, maxLines: 1 });
+  qdBrand(ctx, W, H - 64, s.brand);
 }
 function qdVqLandscape(ctx, s){
   var W = s.W, H = s.H, ink = qdInk(s.accent), on = qdTextOn(s.accent);
@@ -286,8 +288,8 @@ function qdVqLandscape(ctx, s){
     y += 82 + 16;
   }
   if (s.content) { qdText(ctx, qdT("vq_content") + ": " + s.content, x0, y, { size: 32, minSize: 22, weight: "500", color: "#475569", maxW: mw, maxLines: 2 }); }
-  qdText(ctx, qdT("vq_foot"), x0, H - 130, { size: 26, weight: "500", color: "#64748b", maxW: mw });
-  qdBrand(ctx, W, H - 84, s.brand, "left", x0);
+  qdText(ctx, qdT("vq_check"), x0, H - 150, { size: 28, minSize: 22, weight: "700", color: "#334155", maxW: mw, maxLines: 2 });
+  qdBrand(ctx, W, H - 70, s.brand, "left", x0);
 }
 
 // ---------- Bố cục Danh thiếp ----------
@@ -349,7 +351,7 @@ function qdVcBold(ctx, s){
   y += qdText(ctx, s.org, x, y, { size: 28, minSize: 20, weight: "500", color: on, maxW: mw, maxLines: 2, alpha: 0.8 }) + 16;
   ctx.fillStyle = on; ctx.globalAlpha = 0.5; ctx.fillRect(x, y, 90, 5); ctx.globalAlpha = 1; y += 28;
   var endY = qdContactRows(ctx, s, x, y, mw, 25, 10, on, on);
-  if (endY < H - 58 && s.brand) { qdText(ctx, "shurlvn.com", x, H - 44, { size: 24, weight: "600", color: on, maxW: mw, alpha: 0.6 }); }
+  if (endY < H - 58 && s.brand) { qdText(ctx, qdT("made_by"), x, H - 44, { size: 24, weight: "600", color: on, maxW: mw, alpha: 0.6 }); }
 }
 // Chia đôi: cột trái tô màu chủ đạo chứa QR, cột phải trắng chứa tên và thông tin liên hệ.
 function qdVcSplit(ctx, s){
@@ -364,7 +366,7 @@ function qdVcSplit(ctx, s){
   ctx.fillStyle = "#ffffff"; qdRoundRect(ctx, px, py, pw, pw, 24); ctx.fill();
   ctx.restore();
   qdDrawQr(ctx, s.qrImg, px + pad, py + pad, s.qr);
-  if (s.brand) { qdText(ctx, "shurlvn.com", lw / 2, H - 46, { size: 24, weight: "600", color: on, align: "center", maxW: lw - 40, alpha: 0.7 }); }
+  if (s.brand) { qdText(ctx, qdT("made_by"), lw / 2, H - 46, { size: 24, weight: "600", color: on, align: "center", maxW: lw - 40, alpha: 0.7 }); }
   var x = lw + 50, mw = W - x - 50, y = 62;
   y += qdText(ctx, s.name, x, y, { size: 58, minSize: 30, weight: "800", color: "#0f172a", maxW: mw, maxLines: 2, lh: 1.1 }) + 6;
   y += qdText(ctx, s.title, x, y, { size: 30, minSize: 20, weight: "700", color: ink, maxW: mw, maxLines: 2 }) + 4;
@@ -403,7 +405,7 @@ function qdVcDark(ctx, s){
   ctx.restore();
   qdDrawQr(ctx, s.qrImg, (W - pw) / 2 + pad, py + pad, s.qr);
   var endY = qdContactRows(ctx, s, 56, py + pw + 44, W - 112, 25, 10, lift, "#e2e8f0");
-  if (endY < H - 58 && s.brand) { qdText(ctx, "shurlvn.com", W / 2, H - 44, { size: 26, weight: "600", color: "#64748b", align: "center", maxW: W - 80 }); }
+  if (endY < H - 58 && s.brand) { qdText(ctx, qdT("made_by"), W / 2, H - 44, { size: 26, weight: "600", color: "#64748b", align: "center", maxW: W - 80 }); }
 }
 
 // Dựng canvas thẻ từ ảnh QR đã tải. spec: { kind, layout(0|1), qrImg, + trường theo bố cục }
@@ -450,6 +452,23 @@ function qdSwatchesHtml(){
   return h;
 }
 
+// Chỉ gói Plus trở lên (cờ canRemoveQrBrand trong TIER_CONFIG) mới được bỏ dòng thương hiệu; khách/Free thấy ổ khoá.
+function qdBrandRemovable(){
+  return !!(typeof state !== "undefined" && state.user && state.limits && state.limits.canRemoveQrBrand);
+}
+function qdBrandLockedClick(){
+  if (typeof state !== "undefined" && state.user) { navigate("pricing"); } else { navRegister(); }
+}
+function qdBrandRowHtml(){
+  if (qdBrandRemovable()) {
+    return '<label class="qd-chk"><input type="checkbox" id="qd_brand" checked> ' + qdT("brand") + '</label>';
+  }
+  return '<div class="qd-chk qd-chk-locked" onclick="qdBrandLockedClick()" title="' + qdT("brand_locked") + '">' +
+    '<input type="checkbox" id="qd_brand" checked disabled> <span>' + qdT("brand") + '</span>' +
+    '<span class="qd-lock">' + li('lock_icon', 11) + '</span></div>' +
+    '<p class="hint" style="margin:2px 0 0;font-size:12px;">' + qdT("brand_locked") + '</p>';
+}
+
 function qrDesignPanelHtml(){
   return '' +
     '<div class="qr-collapsible-toggle" id="qrWsDesignToggle" style="display:none;">' + li('plus', 12) + ' ' + qdT("toggle") + '</div>' +
@@ -467,7 +486,7 @@ function qrDesignPanelHtml(){
           '<label class="qd-chk"><input type="checkbox" id="qd_show_amount" checked> ' + qdT("show_amount") + '</label>' +
           '<label class="qd-chk"><input type="checkbox" id="qd_show_content" checked> ' + qdT("show_content") + '</label>' +
         '</div>' +
-        '<label class="qd-chk"><input type="checkbox" id="qd_brand" checked> ' + qdT("brand") + '</label>' +
+        qdBrandRowHtml() +
         '<p class="hint" style="margin:8px 0 0;font-size:12px;">' + qdT("note") + '</p>' +
       '</div>' +
     '</div>';
@@ -523,7 +542,8 @@ function qdSetColor(hex){
 // Đọc form -> spec để vẽ thẻ ("" nếu loại không hỗ trợ).
 function qrDesignCollect(type){
   var brand = document.getElementById("qd_brand");
-  var spec = { kind: type, layout: qdLayout, accent: qdAccent, brand: !!(brand && brand.checked) };
+  // Gói thấp: dòng "Tạo bởi shurlvn.com" luôn được gắn (ô chọn bị khoá); từ gói Plus mới bỏ chọn được.
+  var spec = { kind: type, layout: qdLayout, accent: qdAccent, brand: !qdBrandRemovable() || !!(brand && brand.checked) };
   if (type === "vietqr") {
     var bankSel = document.getElementById("qt_vq_bank");
     var bankName = bankSel && bankSel.selectedIndex >= 0 && bankSel.value ? bankSel.options[bankSel.selectedIndex].text : "";
@@ -619,6 +639,15 @@ function qrDesignBind(onChange){
   var col = document.getElementById("qd_color"), hex = document.getElementById("qd_color_hex");
   if (col) { col.addEventListener("input", function(){ qdSetColor(col.value); onChange(); }); }
   if (hex) { hex.addEventListener("change", function(){ qdSetColor(hex.value); onChange(); }); }
+  // Chọn ngân hàng thì tự đặt màu chủ đạo theo ngân hàng đó (người dùng vẫn đổi lại được).
+  var bankSel = document.getElementById("qt_vq_bank");
+  if (bankSel) {
+    bankSel.addEventListener("change", function(){
+      var c = QR_BANK_COLORS[bankSel.value];
+      if (c) { qdSetColor(c); }
+      onChange();
+    });
+  }
   var others = document.querySelectorAll("#qd_vq input, #qd_brand");
   for (var m = 0; m < others.length; m++) {
     others[m].addEventListener("input", onChange);

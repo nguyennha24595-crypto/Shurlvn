@@ -14,6 +14,14 @@ var QR_BANKS = [
   ["VietCapitalBank","970454"],["KienLongBank","970452"],["PGBank","970430"],["BaoVietBank","970438"],
   ["ShinhanBank","970424"],["VietABank","970427"],["COOPBANK","970446"]
 ];
+// Màu chủ đạo gần đúng theo nhận diện từng ngân hàng (chỉ MÀU, không dùng logo/font vì là nhãn hiệu); khoá = mã BIN.
+// Ngân hàng không có trong bảng thì giữ nguyên màu đang chọn.
+var QR_BANK_COLORS = {
+  "970436": "#00794e", "970415": "#1c56a4", "970418": "#1e5aa8", "970405": "#a6193c", "970422": "#1f3a9e",
+  "970407": "#e31b23", "970416": "#1a4f9e", "970432": "#0a8f4a", "970423": "#6b2a86", "970403": "#1d4e9e",
+  "970437": "#d9262c", "970441": "#0066b3", "970443": "#ee7623", "970448": "#2a9250", "970426": "#e2101b",
+  "970440": "#d32029", "970431": "#0a58a6"
+};
 var QR_T = {
   vi: {
     t_vietqr:"VietQR", t_zalo:"Zalo", t_wifi:"WiFi", t_vcard:"Danh thiếp",
@@ -21,6 +29,7 @@ var QR_T = {
     vq_bank:"Ngân hàng", vq_bank_ph:"Chọn ngân hàng…", vq_acc:"Số tài khoản", vq_amount:"Số tiền (VND, tuỳ chọn)",
     vq_content:"Nội dung chuyển khoản (tuỳ chọn, tối đa 25 ký tự, tự bỏ dấu)",
     vq_note:"Mã theo chuẩn VietQR/NAPAS 247, quét được bằng app ngân hàng. Hãy quét thử và kiểm tra tên người nhận trước khi in hoặc chia sẻ.",
+    vq_safe:"Lưu ý an toàn: tên chủ tài khoản hiển thị trên thẻ do người tạo tự nhập, SHURL không xác minh. Không dùng để lừa đảo hoặc giả mạo cá nhân/tổ chức khác. Phát hiện lạm dụng, vui lòng báo về",
     e_bank:"Hãy chọn ngân hàng.", e_acc:"Số tài khoản chỉ gồm chữ số (6 đến 19 số).", e_amount:"Số tiền không hợp lệ (chỉ nhập số, tối đa 12 chữ số).",
     zl_id:"Số điện thoại hoặc ID Zalo OA", zl_note:"QR mở thẳng cuộc trò chuyện Zalo với số điện thoại hoặc trang OA này.",
     e_zalo:"Nhập số điện thoại (8 đến 15 số) hoặc ID Zalo OA (chữ, số, dấu chấm, gạch nối, gạch dưới).",
@@ -37,6 +46,7 @@ var QR_T = {
     vq_bank:"Bank", vq_bank_ph:"Select a bank…", vq_acc:"Account number", vq_amount:"Amount (VND, optional)",
     vq_content:"Transfer message (optional, max 25 chars, accents removed)",
     vq_note:"Follows the VietQR / NAPAS 247 standard and scans in Vietnamese banking apps. Test-scan it and check the recipient name before printing or sharing.",
+    vq_safe:"Safety notice: the account holder name shown on the card is typed in by the creator and is not verified by SHURL. Do not use this to scam or impersonate any person or organization. To report abuse, contact",
     e_bank:"Please select a bank.", e_acc:"Account number must be digits only (6 to 19 digits).", e_amount:"Invalid amount (digits only, max 12 digits).",
     zl_id:"Phone number or Zalo OA ID", zl_note:"The QR opens a Zalo chat with this phone number or OA page.",
     e_zalo:"Enter a phone number (8 to 15 digits) or a Zalo OA ID (letters, digits, dot, hyphen, underscore).",
@@ -205,6 +215,7 @@ function qrTypesFormsHtml(){
       qtField("qt_vq_amount", "vq_amount", "50000", ' inputmode="numeric"') +
       qtField("qt_vq_content", "vq_content", "Thanh toan don hang", ' maxlength="40"') +
       '<p class="hint" style="margin:6px 0 0;font-size:12px;">' + qrT("vq_note") + '</p>' + priv + err("vietqr") +
+      '<div class="qr-safe-note">' + qrT("vq_safe") + ' <a href="mailto:support@shurlvn.com">support@shurlvn.com</a>.</div>' +
     '</div>' +
     '<div class="qr-tp" data-qrpanel="zalo" style="display:none;">' +
       qtField("qt_zl_id", "zl_id", "0912345678") +
