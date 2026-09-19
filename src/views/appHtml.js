@@ -141,6 +141,12 @@ export function renderAppHtml(env) {
 .sb-icon-btn:hover{color:var(--indigo);background:rgba(99,102,241,0.12);border-color:rgba(99,102,241,0.4);box-shadow:0 0 12px rgba(99,102,241,0.25);}
 .sb-icon-btn svg{transition:color 0.2s ease,filter 0.2s ease,transform 0.2s ease;}
 .sb-icon-btn:hover svg{color:var(--indigo);filter:drop-shadow(0 0 6px rgba(99,102,241,0.55));transform:scale(1.08);}
+@keyframes tool-shake{0%{transform:scale(1.1) rotate(0deg);}20%{transform:scale(1.1) rotate(-6deg);}40%{transform:scale(1.1) rotate(6deg);}60%{transform:scale(1.1) rotate(-3deg);}80%{transform:scale(1.1) rotate(3deg);}100%{transform:scale(1.1) rotate(0deg);}}
+.sb-item:hover svg,.sb-icon-btn:hover svg{animation:tool-shake 0.4s ease-in-out;}
+.sb-icon-btn .tooltip{position:absolute;top:calc(100% + 10px);left:50%;transform:translateX(-50%) translateY(-6px) scale(0.9);opacity:0;visibility:hidden;background:rgba(15,23,42,0.92);color:#fff;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:500;white-space:nowrap;box-shadow:0 10px 15px -3px rgba(0,0,0,0.15),0 4px 6px -2px rgba(0,0,0,0.08);backdrop-filter:blur(4px);transition:all 0.2s cubic-bezier(0.175,0.885,0.32,1.275);pointer-events:none;z-index:80;}
+.sb-icon-btn .tooltip::after{content:"";position:absolute;bottom:100%;left:50%;transform:translateX(-50%);border-width:5px;border-style:solid;border-color:transparent transparent rgba(15,23,42,0.92) transparent;}
+.sb-icon-btn:hover .tooltip,.sb-icon-btn:focus-visible .tooltip{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0) scale(1);}
+@media (prefers-reduced-motion:reduce){.sb-item:hover svg,.sb-icon-btn:hover svg{animation:none;}.sb-icon-btn .tooltip{transition:none;}}
 .sb-notif-dot{position:absolute;top:-2px;right:-2px;background:#ef4444;color:#fff;font-size:9px;min-width:16px;height:16px;border-radius:50%;display:none;align-items:center;justify-content:center;font-weight:700;padding:0 3px;}
 .sb-user{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:10px;border:1px solid var(--border);cursor:pointer;transition:all 0.15s ease;background:transparent;color:var(--text);font-family:inherit;}
 .sb-user:hover{background:rgba(99,102,241,0.1);}
@@ -4174,11 +4180,11 @@ function renderNav() {
 
   if (headerRight) {
     var hHtml = "";
-    hHtml += '<span class="sb-icon-btn" id="aiAssistantBtn" title="' + esc(t("ai_assistant_title")) + '" role="button" tabindex="0" aria-label="' + esc(t("ai_assistant_title")) + '">' + li("sparkles", 18) + '</span>';
+    hHtml += '<span class="sb-icon-btn" id="aiAssistantBtn" role="button" tabindex="0" aria-label="' + esc(t("ai_assistant_title")) + '">' + li("sparkles", 18) + '<span class="tooltip">' + esc(t("ai_assistant_title")) + '</span></span>';
     if (state.user) {
       var bellId = state.user.role === "admin" ? "adminBell" : "userBell";
       var countId = state.user.role === "admin" ? "adminBellCount" : "userBellCount";
-      hHtml += '<span class="sb-icon-btn" id="' + bellId + '" title="Thông báo" role="button" tabindex="0" aria-label="Thông báo">' + li("bell", 18) + '<span class="sb-notif-dot" id="' + countId + '">0</span></span>';
+      hHtml += '<span class="sb-icon-btn" id="' + bellId + '" role="button" tabindex="0" aria-label="Thông báo">' + li("bell", 18) + '<span class="sb-notif-dot" id="' + countId + '">0</span><span class="tooltip">Thông báo</span></span>';
     }
     if (state.user) {
       var initial = (state.user.username || "?").charAt(0).toUpperCase();
@@ -4195,7 +4201,7 @@ function renderNav() {
       hHtml += '</div></div>';
     } else {
       hHtml += '<div style="position:relative;" id="guestLangWrap">';
-      hHtml += '<button class="sb-icon-btn" onclick="toggleGuestLangDropdown(event)" title="' + tr("language", "Ngôn ngữ") + '" aria-label="' + esc(tr("language", "Ngôn ngữ")) + '" style="gap:6px;padding:8px 10px;">' + li("globe", 18) + '<span style="font-size:12px;font-weight:700;">' + esc(currentLang.toUpperCase()) + '</span></button>';
+      hHtml += '<button class="sb-icon-btn" onclick="toggleGuestLangDropdown(event)" aria-label="' + esc(tr("language", "Ngôn ngữ")) + '" style="gap:6px;padding:8px 10px;">' + li("globe", 18) + '<span style="font-size:12px;font-weight:700;">' + esc(currentLang.toUpperCase()) + '</span><span class="tooltip">' + tr("language", "Ngôn ngữ") + '</span></button>';
       if (guestLangDropdownOpen) {
         hHtml += '<div class="lang-dropdown">';
         for (var gi = 0; gi < LANGS.length; gi++) {
@@ -4207,8 +4213,8 @@ function renderNav() {
         hHtml += '</div>';
       }
       hHtml += '</div>';
-      hHtml += '<button class="sb-icon-btn" onclick="navigate(&#39;login&#39;)" title="' + tr("login", "Đăng nhập") + '" aria-label="' + esc(tr("login", "Đăng nhập")) + '">' + li("user", 18) + '</button>';
-      hHtml += '<button class="sb-icon-btn" onclick="navigate(&#39;register&#39;)" title="' + tr("register", "Đăng ký") + '" aria-label="' + esc(tr("register", "Đăng ký")) + '">' + li("plus", 18) + '</button>';
+      hHtml += '<button class="sb-icon-btn" onclick="navigate(&#39;login&#39;)" aria-label="' + esc(tr("login", "Đăng nhập")) + '">' + li("user", 18) + '<span class="tooltip">' + tr("login", "Đăng nhập") + '</span></button>';
+      hHtml += '<button class="sb-icon-btn" onclick="navigate(&#39;register&#39;)" aria-label="' + esc(tr("register", "Đăng ký")) + '">' + li("plus", 18) + '<span class="tooltip">' + tr("register", "Đăng ký") + '</span></button>';
     }
     headerRight.innerHTML = hHtml;
     var userBtn = document.getElementById("sbUserBtn");
