@@ -1,6 +1,6 @@
 // Công cụ "Đếm ký tự" — chạy hoàn toàn trên trình duyệt (không gọi API, không lưu dữ liệu).
 // Client script viết bằng ES5 thuần, KHÔNG dùng template literal / ${} bên trong để tránh lỗi escape.
-import { esc, safeJson, BASE_CSS } from "./shared.js";
+import { esc, safeJson, BASE_CSS, btnLabel } from "./shared.js";
 
 // Số giới hạn lấy từ tài liệu chính thức/nguồn tổng hợp, kiểm chứng 09/2026 — cập nhật ở LIMITS bên dưới.
 
@@ -161,8 +161,8 @@ function clientScript(lang) {
     "ta.addEventListener('input',render);",
     "var copyBtn=$('ct-copy');",
     "if(copyBtn){copyBtn.addEventListener('click',function(){",
-    "  var done=function(){var old=copyBtn.textContent;copyBtn.textContent=L.copied;setTimeout(function(){copyBtn.textContent=old;},1500);};",
-    "  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(ta.value).then(done,function(){});}",
+    "  var done=function(){var lbl=copyBtn.querySelector('.ct-lbl')||copyBtn;var old=lbl.textContent;lbl.textContent=L.copied;setTimeout(function(){lbl.textContent=old;},1500);};",
+    "  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(ta.value).then(done,function(){ta.select();try{document.execCommand('copy');done();}catch(e){}});}",
     "  else{ta.select();try{document.execCommand('copy');done();}catch(e){}}",
     "});}",
     "var clearBtn=$('ct-clear');if(clearBtn){clearBtn.addEventListener('click',function(){ta.value='';render();ta.focus();});}",
@@ -190,9 +190,9 @@ function renderApp(lang) {
     '<div class="ct-box">' +
     '<textarea id="ct-text" class="ct-ta" placeholder="' + esc(L.placeholder) + '" aria-label="' + esc(L.h1) + '"></textarea>' +
     '<div class="ct-actions">' +
-    '<button type="button" class="ct-btn" id="ct-copy">' + esc(lb.copy) + "</button>" +
-    '<button type="button" class="ct-btn" id="ct-clear">' + esc(lb.clear) + "</button>" +
-    '<button type="button" class="ct-btn" id="ct-sample">' + esc(lb.sample) + "</button>" +
+    '<button type="button" class="ct-btn" id="ct-copy">' + btnLabel("copy", lb.copy) + "</button>" +
+    '<button type="button" class="ct-btn" id="ct-clear">' + btnLabel("trash", lb.clear) + "</button>" +
+    '<button type="button" class="ct-btn" id="ct-sample">' + btnLabel("sparkles", lb.sample) + "</button>" +
     "</div></div>" +
     '<div class="ct-stats">' +
     stat("chars", lb.chars) + stat("charsNoSpace", lb.charsNoSpace) + stat("words", lb.words) +
@@ -204,4 +204,4 @@ function renderApp(lang) {
     clientScript(lang);
 }
 
-export const charCounter = { id: "char-counter", vi: TEXT.vi, en: TEXT.en, renderApp: renderApp };
+export const charCounter = { id: "char-counter", icon: "align", vi: TEXT.vi, en: TEXT.en, renderApp: renderApp };

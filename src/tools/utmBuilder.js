@@ -1,7 +1,7 @@
 // Công cụ "Tạo link UTM" — chạy hoàn toàn trên trình duyệt (không gọi API, không lưu dữ liệu).
 // Client script viết bằng ES5 thuần, KHÔNG dùng template literal / dấu đô-la-ngoặc-nhọn bên trong.
 
-import { esc, safeJson, BASE_CSS } from "./shared.js";
+import { esc, safeJson, BASE_CSS, btnLabel } from "./shared.js";
 
 const PRESETS = [
   { label: "Facebook", source: "facebook", medium: "social" },
@@ -205,8 +205,8 @@ function clientScript(lang) {
     "var copyBtn=$('ut-copy');",
     "if(copyBtn){copyBtn.addEventListener('click',function(){",
     "  if(!out.value){return;}",
-    "  var done=function(){var old=copyBtn.textContent;copyBtn.textContent=L.copied;setTimeout(function(){copyBtn.textContent=old;},1500);};",
-    "  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(out.value).then(done,function(){});}",
+    "  var done=function(){var lbl=copyBtn.querySelector('.ct-lbl')||copyBtn;var old=lbl.textContent;lbl.textContent=L.copied;setTimeout(function(){lbl.textContent=old;},1500);};",
+    "  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(out.value).then(done,function(){out.select();try{document.execCommand('copy');done();}catch(e){}});}",
     "  else{out.select();try{document.execCommand('copy');done();}catch(e){}}",
     "});}",
     "$('ut-clear').addEventListener('click',function(){for(var k in f){if(f.hasOwnProperty(k)){f[k].value='';}}render();f.url.focus();});",
@@ -245,10 +245,10 @@ function renderApp(lang) {
     '<textarea id="ut-out" class="ut-out" readonly placeholder="' + esc(L.resultPh) + '"></textarea></div>' +
     '<div class="ut-msg" id="ut-msg" role="status"></div>' +
     '<div class="ct-actions">' +
-    '<button type="button" class="ct-btn" id="ut-copy">' + esc(L.copy) + "</button>" +
-    '<a class="ct-btn primary disabled" id="ut-shorten" target="_blank" rel="noopener">' + esc(L.shorten) + "</a>" +
-    '<button type="button" class="ct-btn" id="ut-clear">' + esc(L.clear) + "</button>" +
-    '<button type="button" class="ct-btn" id="ut-sample">' + esc(L.sample) + "</button>" +
+    '<button type="button" class="ct-btn" id="ut-copy">' + btnLabel("copy", L.copy) + "</button>" +
+    '<a class="ct-btn primary disabled" id="ut-shorten" target="_blank" rel="noopener">' + btnLabel("link", L.shorten) + "</a>" +
+    '<button type="button" class="ct-btn" id="ut-clear">' + btnLabel("trash", L.clear) + "</button>" +
+    '<button type="button" class="ct-btn" id="ut-sample">' + btnLabel("sparkles", L.sample) + "</button>" +
     "</div>" +
     '<h2 style="font-size:16px;margin:22px 0 0;">' + esc(L.paramsTitle) + "</h2>" +
     '<table class="ut-params" id="ut-params" style="display:none"></table>' +
@@ -256,4 +256,4 @@ function renderApp(lang) {
     clientScript(lang);
 }
 
-export const utmBuilder = { id: "utm-builder", vi: TEXT.vi, en: TEXT.en, renderApp: renderApp };
+export const utmBuilder = { id: "utm-builder", icon: "tag", vi: TEXT.vi, en: TEXT.en, renderApp: renderApp };

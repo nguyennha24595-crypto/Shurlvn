@@ -4,6 +4,12 @@
 import { renderBlogLayout } from "./blogHtml.js";
 import { escHtml } from "../utils/http.js";
 import { listTools, toolPath, toolsIndexPath } from "../tools/registry.js";
+import { icon } from "../tools/shared.js";
+
+// Icon SVG đứng trước tên công cụ trong danh sách (màu tím thương hiệu).
+function leadIcon(t) {
+  return '<span class="ct-lead">' + icon(t.icon || "align", 18) + "</span>";
+}
 
 const ORIGIN = "https://shurlvn.com";
 
@@ -11,7 +17,7 @@ const UI = {
   vi: {
     indexTitle: "Công cụ miễn phí cho marketing & mạng xã hội | SHURL",
     indexH1: "Công cụ miễn phí",
-    indexDesc: "Bộ công cụ chạy ngay trên trình duyệt cho marketing và mạng xã hội: đếm ký tự caption, quảng cáo, SEO. Miễn phí, không cần đăng ký.",
+    indexDesc: "Bộ công cụ chạy ngay trên trình duyệt cho marketing và mạng xã hội: đếm ký tự caption/quảng cáo, tạo link UTM, bỏ dấu tiếng Việt và tạo slug. Miễn phí, không cần đăng ký.",
     indexIntro: "Các công cụ nhỏ chạy hoàn toàn trên trình duyệt của bạn — nhanh, miễn phí, không lưu dữ liệu.",
     related: "Công cụ khác",
     switchLang: "English version",
@@ -23,7 +29,7 @@ const UI = {
   en: {
     indexTitle: "Free Marketing & Social Media Tools | SHURL",
     indexH1: "Free tools",
-    indexDesc: "Browser-based tools for marketers and social media: character counter for captions, ads and SEO. Free, no sign-up.",
+    indexDesc: "Browser-based tools for marketers and social media: character counter for captions and ads, UTM link builder, Vietnamese accent remover and slug generator. Free, no sign-up.",
     indexIntro: "Small tools that run entirely in your browser — fast, free, and nothing is stored.",
     related: "More tools",
     switchLang: "Phiên bản tiếng Việt",
@@ -65,7 +71,7 @@ export function renderToolPage(tool, lang, env) {
   const others = listTools().filter(function (t) { return t.id !== tool.id; });
   const relatedHtml = others.length
     ? '<div class="ct-sec"><h2>' + escHtml(U.related) + '</h2><ul>' +
-      others.map(function (t) { return '<li><a href="' + toolPath(t, lang) + '">' + escHtml(t[lang].navName) + "</a> — " + escHtml(t[lang].short) + "</li>"; }).join("") +
+      others.map(function (t) { return '<li>' + leadIcon(t) + '<a href="' + toolPath(t, lang) + '">' + escHtml(t[lang].navName) + "</a> — " + escHtml(t[lang].short) + "</li>"; }).join("") +
       "</ul></div>"
     : "";
 
@@ -90,9 +96,9 @@ export function renderToolsIndexPage(lang, env) {
   const U = UI[lang];
   const other = lang === "vi" ? "en" : "vi";
   const items = listTools().map(function (t) {
-    return '<li><a href="' + toolPath(t, lang) + '">' + escHtml(t[lang].h1) + "</a><p>" + escHtml(t[lang].short) + "</p></li>";
+    return '<li>' + leadIcon(t) + '<a href="' + toolPath(t, lang) + '">' + escHtml(t[lang].h1) + "</a><p>" + escHtml(t[lang].short) + "</p></li>";
   }).join("");
-  const body = "<h1>" + escHtml(U.indexH1) + "</h1><p>" + escHtml(U.indexIntro) + '</p><ul class="postlist">' + items + "</ul>" +
+  const body = '<style>.ct-lead{color:#6366f1;margin-right:8px;vertical-align:-3px;}</style>' + "<h1>" + escHtml(U.indexH1) + "</h1><p>" + escHtml(U.indexIntro) + '</p><ul class="postlist">' + items + "</ul>" +
     '<p class="meta"><a href="' + toolsIndexPath(other) + '" hreflang="' + other + '">' + escHtml(U.switchLang) + "</a></p>";
   return renderBlogLayout(U.indexTitle, U.indexDesc, toolsIndexPath(lang), body, env, {
     lang: lang, ogType: "website", headExtra: alternates(toolsIndexPath("vi"), toolsIndexPath("en")), footerHtml: U.footer

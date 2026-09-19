@@ -2,8 +2,9 @@
 
 import { charCounter } from "./charCounter.js";
 import { utmBuilder } from "./utmBuilder.js";
+import { slugTool } from "./slugTool.js";
 
-export const TOOLS = [charCounter, utmBuilder];
+export const TOOLS = [charCounter, utmBuilder, slugTool];
 
 export function listTools() {
   return TOOLS;
