@@ -8,6 +8,7 @@ The app is split into ES modules under **[src/](src/)**, entry point **[src/inde
 - `src/utils/` — crypto, HTTP/response helpers, auth guard, quota checks, maintenance-mode toggles, email sending.
 - `src/handlers/` — route handlers by domain (auth, links, qr, analytics, feedback, ai, redirect, admin, billing, webhooks, export, teams, campaigns, notifications).
 - `src/views/` — `appHtml.js` (renders the SPA shell; contains the ~9,000-line client-side app script embedded verbatim as a template literal — treat that block as client JS, not server code), `blogHtml.js`, `bioHtml.js`, `emailTemplates.js`.
+- `src/tools/` + `src/views/toolsHtml.js` — free browser-only SEO tools (server-rendered pages at `/tools/<slug>` and `/en/tools/<slug>`, bilingual vi/en, listed in sitemap). One tool = one file (see `charCounter.js`), registered in `src/tools/registry.js`. Tool client scripts are plain ES5 with no template literals.
 - `src/cron.js` — scheduled-trigger tasks (expired-link purge, analytics cache refresh).
 Wrangler bundles everything back into one Worker at deploy time (esbuild) — there's still no separate build step to run yourself.
 Config: [wrangler.jsonc](wrangler.jsonc) (`main: src/index.js`, KV binding `LINKS_KV`, cron trigger). No test suite.

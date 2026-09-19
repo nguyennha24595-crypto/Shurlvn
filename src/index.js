@@ -22,6 +22,8 @@ import { HTML_SECURITY_HEADERS, html, json } from "./utils/http.js";
 import { checkMaintenance, handleGetMaintenance, handleGetMaintenanceStatus, handleSetMaintenance, isMaintenance } from "./utils/maintenance.js";
 import { renderAppHtml } from "./views/appHtml.js";
 import { renderBlogIndexPage, renderBlogPostPage } from "./views/blogHtml.js";
+import { renderToolPage, renderToolsIndexPage, renderToolNotFound, toolSitemapEntries } from "./views/toolsHtml.js";
+import { getToolBySlug } from "./tools/registry.js";
 import { MAINTENANCE_HTML } from "./views/emailTemplates.js";
 
 // Cloudflare Worker entry point: routing dispatcher (fetch) + cron tasks (scheduled).
@@ -317,16 +319,34 @@ export default {
           { loc: "https://shurlvn.com/", changefreq: "daily", priority: "1.0", lastmod: today },
           { loc: "https://shurlvn.com/blog", changefreq: "weekly", priority: "0.8", lastmod: today }
         ].concat(publishedPosts.map(p => ({ loc: "https://shurlvn.com/blog/" + p.slug, changefreq: "monthly", priority: "0.7", lastmod: p.date })));
+        // Trang công cụ song ngữ: mỗi bản có xhtml:alternate trỏ chéo sang bản còn lại.
+        for (const e of toolSitemapEntries()) {
+          const alts = [{ l: "vi", h: "https://shurlvn.com" + e.vi }, { l: "en", h: "https://shurlvn.com" + e.en }, { l: "x-default", h: "https://shurlvn.com" + e.vi }];
+          urls.push({ loc: "https://shurlvn.com" + e.vi, changefreq: "monthly", priority: "0.7", lastmod: today, alts: alts });
+          urls.push({ loc: "https://shurlvn.com" + e.en, changefreq: "monthly", priority: "0.6", lastmod: today, alts: alts });
+        }
         const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
 ` + urls.map(u => `  <url>
     <loc>${u.loc}</loc>
-    <lastmod>${u.lastmod}</lastmod>
+${(u.alts || []).map(a => `    <xhtml:link rel="alternate" hreflang="${a.l}" href="${a.h}"/>
+`).join("")}    <lastmod>${u.lastmod}</lastmod>
     <changefreq>${u.changefreq}</changefreq>
     <priority>${u.priority}</priority>
   </url>`).join("\n") + `
 </urlset>`;
         return new Response(sitemap, { headers: { "Content-Type": "application/xml; charset=utf-8" } });
+      }
+      // ===== 8c-2. TOOLS (công cụ trình duyệt miễn phí, dựng phía server để SEO; song ngữ vi/en) =====
+      if (path === "tools" || path === "en/tools") {
+        return html(renderToolsIndexPage(path === "tools" ? "vi" : "en", env), 200, { "Cache-Control": "public, max-age=3600" });
+      }
+      if (path.startsWith("tools/") || path.startsWith("en/tools/")) {
+        const toolLang = path.startsWith("en/") ? "en" : "vi";
+        const toolSlug = path.slice(toolLang === "en" ? "en/tools/".length : "tools/".length);
+        const tool = getToolBySlug(toolLang, toolSlug);
+        if (tool) return html(renderToolPage(tool, toolLang, env), 200, { "Cache-Control": "public, max-age=3600" });
+        return html(renderToolNotFound(toolLang), 404);
       }
       // ===== 8c. BLOG (server-rendered, indexable; posts stored in KV) =====
       if (path === "blog") {

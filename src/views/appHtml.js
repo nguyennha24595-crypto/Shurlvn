@@ -514,7 +514,7 @@ ${googleAdsGtagHead(env)}
       <div id="app" class="fade-in"></div>
       <div id="sidebarLeft" style="display:none;"></div>
       <div id="sidebarRight" style="display:none;"></div>
-      <footer><span id="footerTagline"></span><br><a href="https://mail.google.com/mail/?view=cm&fs=1&to=support@shurlvn.com&su=SHURL%20Support" target="_blank"><span id="footerContact"></span>: support@shurlvn.com</a><br><a href="/blog" id="footerBlogLink"></a> · <a href="#/terms" id="footerTermsLink"></a> · <a href="#/privacy" id="footerPrivacyLink"></a><br>🇻🇳 Trường Sa | Hoàng Sa là của Việt Nam</footer>
+      <footer><span id="footerTagline"></span><br><a href="https://mail.google.com/mail/?view=cm&fs=1&to=support@shurlvn.com&su=SHURL%20Support" target="_blank"><span id="footerContact"></span>: support@shurlvn.com</a><br><a href="/tools" id="footerToolsLink"></a> · <a href="/blog" id="footerBlogLink"></a> · <a href="#/terms" id="footerTermsLink"></a> · <a href="#/privacy" id="footerPrivacyLink"></a><br>🇻🇳 Trường Sa | Hoàng Sa là của Việt Nam</footer>
     </main>
   </div>
 </div>
@@ -808,7 +808,7 @@ var i18n = {
     // ===== MISC =====
     days:"ngày", hours:"giờ", minutes:"phút", loading:"Đang tải...", footer_tagline:"Nền tảng rút gọn link đa tầng · An toàn · Nhanh chóng",
     footer_contact:"Liên hệ",
-    footer_terms:"Điều khoản sử dụng", footer_privacy:"Chính sách bảo mật", footer_blog:"Blog", legal_last_updated:"Cập nhật lần cuối",
+    footer_terms:"Điều khoản sử dụng", footer_privacy:"Chính sách bảo mật", footer_blog:"Blog", footer_tools:"Công cụ", legal_last_updated:"Cập nhật lần cuối",
     terms_title:"Điều khoản sử dụng", terms_subtitle:"Quy định sử dụng dịch vụ SHORT URL.",
     privacy_title:"Chính sách bảo mật", privacy_subtitle:"Cách SHORT URL thu thập, sử dụng và bảo vệ thông tin của bạn.",
     register_legal_notice:"Bằng việc đăng ký, bạn đồng ý với", and:"và",
@@ -1263,7 +1263,7 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     // ===== MISC =====
     days:"days", hours:"hours", minutes:"minutes", loading:"Loading...", footer_tagline:"Multi-tier link shortening platform · Secure · Fast",
     footer_contact:"Contact",
-    footer_terms:"Terms of Service", footer_privacy:"Privacy Policy", footer_blog:"Blog", legal_last_updated:"Last updated",
+    footer_terms:"Terms of Service", footer_privacy:"Privacy Policy", footer_blog:"Blog", footer_tools:"Free tools", legal_last_updated:"Last updated",
     terms_title:"Terms of Service", terms_subtitle:"Rules for using the SHORT URL service.",
     privacy_title:"Privacy Policy", privacy_subtitle:"How SHORT URL collects, uses, and protects your information.",
     register_legal_notice:"By signing up, you agree to our", and:"and",
@@ -9501,6 +9501,8 @@ function renderFooter(){
   var fc = document.getElementById("footerContact");
   var fTerms = document.getElementById("footerTermsLink");
   var fPrivacy = document.getElementById("footerPrivacyLink");
+  var fTools = document.getElementById("footerToolsLink");
+  if (fTools) fTools.textContent = t("footer_tools");
   var fBlog = document.getElementById("footerBlogLink");
   if (ft) ft.textContent = "SHURL — " + t("footer_tagline");
   if (fc) fc.textContent = t("footer_contact");
