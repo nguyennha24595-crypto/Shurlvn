@@ -9620,6 +9620,17 @@ window.addEventListener("DOMContentLoaded", function(){
       } else if (params.get("voucher") === "cancelled") {
         showVoucherCancelModal();
       }
+      // Trang công cụ (ví dụ Tạo link UTM) chuyển sang đây với ?shorten=<link> để điền sẵn ô rút gọn.
+      var preShorten = params.get("shorten");
+      if (preShorten && (preShorten.indexOf("https://") === 0 || preShorten.indexOf("http://") === 0)) {
+        // render() vẽ trang có hiệu ứng mờ dần nên form chưa có ngay — chờ tới khi ô nhập xuất hiện (tối đa ~3 giây).
+        var preTries = 0;
+        (function fillPreShorten() {
+          var preInput = document.getElementById("f_url");
+          if (preInput) { preInput.value = preShorten; if (typeof updateHomePreview === "function") updateHomePreview(); }
+          else if (preTries++ < 30) { setTimeout(fillPreShorten, 100); }
+        })();
+      }
       if (window.location.search) history.replaceState(null, "", window.location.pathname + window.location.hash);
     });
 });

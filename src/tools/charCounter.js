@@ -1,5 +1,7 @@
 // Công cụ "Đếm ký tự" — chạy hoàn toàn trên trình duyệt (không gọi API, không lưu dữ liệu).
 // Client script viết bằng ES5 thuần, KHÔNG dùng template literal / ${} bên trong để tránh lỗi escape.
+import { esc, safeJson, BASE_CSS } from "./shared.js";
+
 // Số giới hạn lấy từ tài liệu chính thức/nguồn tổng hợp, kiểm chứng 09/2026 — cập nhật ở LIMITS bên dưới.
 
 const LIMITS = [
@@ -96,24 +98,15 @@ const TEXT = {
   }
 };
 
-function safeJson(v) {
-  // Escape "<" và 2 ký tự phân dòng Unicode để JSON nhúng trong <script> luôn an toàn.
-  return JSON.stringify(v).replace(/</g, "\\u003C").split(String.fromCharCode(8232)).join("\\u2028").split(String.fromCharCode(8233)).join("\\u2029");
-}
-
 const STYLE = [
   "<style>",
-  ".wrap{max-width:900px;}",
-  ".ct-box{margin:22px 0;}",
+  BASE_CSS,
   ".ct-ta{width:100%;min-height:200px;padding:14px 16px;border:1px solid #cbd5e1;border-radius:12px;font-size:16px;line-height:1.6;font-family:inherit;color:#0f172a;background:#fff;resize:vertical;box-sizing:border-box;}",
   ".ct-ta:focus{outline:2px solid #6366f1;outline-offset:1px;border-color:#6366f1;}",
   ".ct-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:14px 0;}",
   ".ct-stat{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;}",
   ".ct-stat b{display:block;font-size:24px;color:#4f46e5;line-height:1.2;}",
   ".ct-stat span{font-size:12px;color:#64748b;}",
-  ".ct-actions{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 4px;}",
-  ".ct-btn{border:1px solid #cbd5e1;background:#fff;color:#334155;border-radius:10px;padding:9px 16px;font-size:14px;font-weight:600;cursor:pointer;min-height:40px;}",
-  ".ct-btn:hover{border-color:#6366f1;color:#4f46e5;}",
   ".ct-table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;font-size:14px;}",
   ".ct-table th,.ct-table td{padding:10px 12px;text-align:left;border-bottom:1px solid #eef2f7;vertical-align:middle;}",
   ".ct-table th{background:#f1f5f9;color:#0f172a;font-size:13px;}",
@@ -125,11 +118,6 @@ const STYLE = [
   ".ct-num{font-size:12px;color:#475569;margin-top:4px;}",
   ".ct-num.over{color:#dc2626;font-weight:700;}",
   ".ct-kind{font-size:12px;color:#64748b;white-space:nowrap;}",
-  ".ct-note{font-size:13px;color:#64748b;margin:10px 0 0;}",
-  ".ct-sec h2{margin-top:34px;}",
-  ".ct-faq details{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px 16px;margin:8px 0;}",
-  ".ct-faq summary{cursor:pointer;font-weight:600;color:#0f172a;}",
-  ".ct-faq p{margin:8px 0 0;}",
   "@media(max-width:640px){.ct-table th:nth-child(3),.ct-table td:nth-child(3){display:none;}.ct-name{white-space:normal;}}",
   "</style>"
 ].join("\n");
@@ -184,10 +172,6 @@ function clientScript(lang) {
     "})();",
     "</script>"
   ].join("\n");
-}
-
-function esc(s) {
-  return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
 function renderApp(lang) {
