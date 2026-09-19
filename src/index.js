@@ -1,54 +1,30 @@
-// ==============================================================================
-// SHURL — CLOUDFLARE WORKER FULL ENGINE (Nền tảng rút gọn link đa tầng)
-// ==============================================================================
-// ===================== CẤU HÌNH HẠN MỨC 5 TẦNG (khớp src/types.ts) ==========
+import { FAVICON_PNG_BASE64 } from "./config/constants.js";
+import { purgeExpiredLinks, purgeExpiredLinksLogged, refreshCfAnalyticsCache } from "./cron.js";
+import { handleAddBlacklist, handleAdminApplyVoucher, handleAdminBanUser, handleAdminBroadcastNotification, handleAdminDeleteBlogPost, handleAdminDeleteFeedback, handleAdminDeleteNotification, handleAdminDeleteUser, handleAdminDismissReport, handleAdminGetBlogPost, handleAdminGetSettings, handleAdminListAuditLogs, handleAdminListBlogPosts, handleAdminListFeedback, handleAdminListNotifications, handleAdminListReports, handleAdminListUsers, handleAdminOverview, handleAdminReplyFeedback, handleAdminSaveBlogPost, handleAdminSaveSettings, handleAdminSearchUsers, handleAdminSetRole, handleAdminTranslateFeedback, handleAdminUpdateFeedbackStatus, handleExportWorker, handleGetBlacklist, handlePaymentReports, handleRemoveBlacklist } from "./handlers/admin.js";
+import { handleAskAi } from "./handlers/ai.js";
+import { handleAnalyticsOverview, handleApiAnalytics, handleApiListLinks, handleApiShorten, handleGetLinkAnalytics } from "./handlers/analytics.js";
+import { handleDisable2fa, handleForgotPassword, handleGenerateExtensionToken, handleGenerateToken, handleGoogleAuthCallback, handleGoogleAuthStart, handleLogin, handleLogout, handleMe, handleRegister, handleResetPassword, handleSetup2fa, handleVerify2fa } from "./handlers/auth.js";
+import { handleApproveQrPayment, handleCreateVoucher, handleDeleteVoucher, handleGetPromoSettings, handleListQrPayments, handleListVouchers, handlePaymentHistory, handleQrCheckout, handleQrGenerate, handleQrStatus, handleQrStatusAck, handleRedeemVoucher, handleRejectQrPayment, handleRevokeQrPayment, handleSavePromoSettings, handleStripeCheckout, handleStripeWebhook, handleVoucherCheckout } from "./handlers/billing.js";
+import { handleCampaignHistory, handleListCampaigns } from "./handlers/campaigns.js";
+import { handleExportCsv, handleExportJson } from "./handlers/export.js";
+import { handleCreateReport, handleFeedback } from "./handlers/feedback.js";
+import { handleBioLinkClick, handleBulkCreateLinks, handleCreateBioPage, handleCreateLink, handleDeleteLink, handleForceDeleteLink, handleListLinks, handleRestoreLink, handleUpdateBioPage, handleUpdateLink } from "./handlers/links.js";
+import { handleGetMyNotifications, handleMarkNotificationRead } from "./handlers/notifications.js";
+import { handleAcceptQrDynamicTerms, handleCreateDynamicQr, handleCreateQr, handleDeleteDynamicQr, handleInspectQr, handleListDynamicQr, handleUpdateDynamicQr } from "./handlers/qr.js";
+import { handleRedirect, handleVerifyPassword } from "./handlers/redirect.js";
+import { handleAddTeamMember, handleCreateTeam, handleDeleteTeam, handleListTeams, handleRemoveTeamMember, handleUpdateTeam } from "./handlers/teams.js";
+import { handleCreateWebhook, handleDeleteWebhook, handleListWebhooks } from "./handlers/webhooks.js";
+import { st } from "./i18n/server.js";
+import { seedIfNeeded } from "./kv/blacklist.js";
+import { getBlogPost, getPublishedBlogPosts, isPostPublished, seedBlogPostsIfNeeded } from "./kv/blog.js";
+import { getAuthenticatedUser, requireAdminResponse } from "./utils/auth.js";
+import { html, json } from "./utils/http.js";
+import { checkMaintenance, handleGetMaintenance, handleGetMaintenanceStatus, handleSetMaintenance, isMaintenance } from "./utils/maintenance.js";
+import { renderAppHtml } from "./views/appHtml.js";
+import { renderBlogIndexPage, renderBlogPostPage } from "./views/blogHtml.js";
+import { MAINTENANCE_HTML } from "./views/emailTemplates.js";
 
-import { purgeExpiredLinksLogged, purgeExpiredLinks, refreshCfAnalyticsCache } from "./src/cron.js";
-import { handleRegister, handleLogin, handleLogout, handleGoogleAuthStart, handleGoogleAuthCallback, handleMe, handleGenerateToken, handleGenerateExtensionToken, handleForgotPassword, handleResetPassword, generateTotpSecret, generateTotpCode, getOtpAuthUrl, handleSetup2fa, handleVerify2fa, handleDisable2fa } from "./src/handlers/auth.js";
-import { createLinkInternal, createBioPageInternal, handleListLinks, handleCreateLink, handleBulkCreateLinks, handleUpdateLink, handleCreateBioPage, handleUpdateBioPage, handleBioLinkClick, handleDeleteLink, handleRestoreLink, handleForceDeleteLink } from "./src/handlers/links.js";
-import { handleCreateQr, looksLikePaymentUrl, validateQrLogoDataUrl, handleCreateDynamicQr, handleAcceptQrDynamicTerms, handleListDynamicQr, handleUpdateDynamicQr, handleDeleteDynamicQr, handleInspectQr } from "./src/handlers/qr.js";
-import { handleGetLinkAnalytics, handleAnalyticsOverview, handleApiShorten, handleApiListLinks, handleApiAnalytics } from "./src/handlers/analytics.js";
-import { handleFeedback, handleCreateReport } from "./src/handlers/feedback.js";
-import { handleAskAi } from "./src/handlers/ai.js";
-import { handleRedirect, pickABUrl, renderPasswordPage, renderPixelPage, handleVerifyPassword, renderSafetyWarningHtml } from "./src/handlers/redirect.js";
-import { handleAdminListUsers, handleAdminSetRole, handleAdminListReports, handleAdminDismissReport, handleAdminListFeedback, handleAdminReplyFeedback, handleAdminUpdateFeedbackStatus, handleAdminDeleteFeedback, handleAdminTranslateFeedback, handleGetBlacklist, handleAddBlacklist, handleRemoveBlacklist, handleAdminListAuditLogs, handleExportWorker, handleAdminOverview, handlePaymentReports, t, handleAdminDeleteUser, handleAdminBanUser, handleAdminSearchUsers, handleAdminGetSettings, handleAdminSaveSettings, handleAdminListBlogPosts, handleAdminGetBlogPost, handleAdminSaveBlogPost, handleAdminDeleteBlogPost, handleAdminApplyVoucher, buildAdminBroadcastEmailHtml, handleAdminBroadcastNotification, handleAdminListNotifications, handleAdminDeleteNotification } from "./src/handlers/admin.js";
-import { upgradeUserRole, handleCreateVoucher, handleListVouchers, handleDeleteVoucher, handleRedeemVoucher, verifyStripeSignature, handleStripeCheckout, handleVoucherCheckout, handleQrCheckout, handleQrGenerate, handleListQrPayments, handleApproveQrPayment, handleQrStatus, handleQrStatusAck, handleRejectQrPayment, handleRevokeQrPayment, handleStripeWebhook, handlePaymentHistory, handleGetPromoSettings, handleSavePromoSettings } from "./src/handlers/billing.js";
-import { handleCreateWebhook, handleListWebhooks, handleDeleteWebhook } from "./src/handlers/webhooks.js";
-import { handleExportCsv, handleExportJson } from "./src/handlers/export.js";
-import { getTeam, putTeam, listAllTeams, isUserInSameTeam, handleCreateTeam, handleListTeams, handleDeleteTeam, handleUpdateTeam, handleAddTeamMember, handleRemoveTeamMember } from "./src/handlers/teams.js";
-import { handleListCampaigns, handleCampaignHistory } from "./src/handlers/campaigns.js";
-import { handleGetMyNotifications, handleMarkNotificationRead } from "./src/handlers/notifications.js";
-
-import { sendEmail, sendResetEmail, notifyUser, notifyAllAdmins, sendVoucherEmail } from "./src/utils/email.js";
-
-import { MAINTENANCE_HTML, renderForgotPassword, buildEmailShell, buildResetEmail } from "./src/views/emailTemplates.js";
-import { googleAdsGtagHead, renderBlogLayout, renderBlogIndexPage, renderBlogPostPage } from "./src/views/blogHtml.js";
-import { renderBioPageHtml } from "./src/views/bioHtml.js";
-import { renderAppHtml } from "./src/views/appHtml.js";
-
-import { getAuthenticatedUser, requireAuthResponse, requireAdminResponse, clearOauthStateCookieHeader } from "./src/utils/auth.js";
-import { getTierOverrides, getEffectiveTierConfig, checkDailyQuota, incrementDailyQuota, checkMonthlyApiQuota, incrementMonthlyApiQuota, checkMonthlyDynamicQrQuota, incrementMonthlyDynamicQrQuota } from "./src/utils/quota.js";
-import { isMaintenance, handleGetMaintenance, handleSetMaintenance, handleGetMaintenanceStatus, checkMaintenance } from "./src/utils/maintenance.js";
-
-import { bytesToHex, randomHex, randomSixDigitCode, hashPassword } from "./src/utils/crypto.js";
-import { json, html, escHtml, escJsString, isBlockedWebhookHost, todayStr, thisMonthStr, parseCookies, setSessionCookieHeader, clearSessionCookieHeader, getClientIp } from "./src/utils/http.js";
-import { safeUser, getUser, putUser, listAllUsers } from "./src/kv/users.js";
-import { getLink, putLink, deleteLinkKV, listAllLinks, generateCode, shortUrlFor } from "./src/kv/links.js";
-import { getQrRecord, putQrRecord, deleteQrRecord, listAllQrRecords, generateQrId, qrRecordToResponse } from "./src/kv/qr.js";
-import { getClicks, putClicks, recordClick, computeLinkAnalytics, parseUserAgent } from "./src/kv/clicks.js";
-import { putReport, listReports, deleteReport } from "./src/kv/reports.js";
-import { getBlacklistRaw, putBlacklistRaw, isDomainBlacklisted, isKeywordBlacklisted, seedIfNeeded } from "./src/kv/blacklist.js";
-import { addAuditLog, listAuditLogs } from "./src/kv/audit.js";
-import { BLOG_POSTS_SEED, isPostPublished, seedBlogPostsIfNeeded, listAllBlogPosts, getPublishedBlogPosts, getBlogPost } from "./src/kv/blog.js";
-
-import { TIER_CONFIG, TIER_RANK, isProOrAboveRole } from "./src/config/tiers.js";
-import { BASE_DOMAIN, FAVICON_PNG_BASE64, normalizeCustomDomain, DEFAULT_KEYWORDS, DEFAULT_BLACKLIST_DOMAINS, SESSION_COOKIE, SESSION_TTL, LOGIN_MAX_ATTEMPTS, LOGIN_LOCKOUT_TTL, OAUTH_STATE_COOKIE, PW_RESET_TTL, MAX_BIO_SUBLINKS, VALID_QR_DOT_STYLES, PAYMENT_URL_PATTERNS, MAX_ATTEMPTS, LOCKOUT_SECONDS, PW_MAX_ATTEMPTS_FALLBACK, PW_LOCKOUT_TTL, AI_ASSISTANT_SYSTEM_PROMPT } from "./src/config/constants.js";
-import { getServerLang, st, SERVER_I18N } from "./src/i18n/server.js";
-import { EMAIL_LABELS, NOTIFICATION_TEMPLATES, fillTemplate, NOTIF_EMAIL_META, renderNotificationTemplate } from "./src/i18n/notifications.js";
-
-// ===================== SERVER I18N =====================
-
-// ===================== ENTRYPOINT =====================
+// Cloudflare Worker entry point: routing dispatcher (fetch) + cron tasks (scheduled).
 
 export default {
   async fetch(request, env, ctx) {
@@ -378,228 +354,3 @@ export default {
     ctx.waitUntil(purgeExpiredLinksLogged(env));
   }
 };
-
-// Wraps purgeExpiredLinks with a KV-persisted run log so admin/overview can show whether the
-// hourly cleanup cron actually ran and what it did — a silent failure here would otherwise be
-// invisible (there's no other signal that purgeExpiredLinks stopped running).
-
-// ===================== TIỆN ÍCH CHUNG =====================
-
-// Server-side escaping for HTML generated directly by the Worker (redirect/pixel/warning pages) —
-// distinct from the client-side esc() helper embedded in the SPA bundle, which only runs in the browser.
-
-// Safely embeds a value as a JS string literal inside an inline <script> tag: JSON.stringify
-// escapes quotes/backslashes/control chars, and the extra "<" -> "<" pass stops a value like
-// "</script>" from closing the surrounding <script> tag at the HTML-parser level (before any JS runs).
-
-// Blocklist-based SSRF guard for user-supplied webhook URLs — blocks the obvious internal/
-// loopback/link-local/cloud-metadata targets. Doesn't defend against DNS rebinding (would need
-// resolving the hostname and re-checking at fetch time), but stops the direct, common case.
-
-// CSPRNG 6-digit code (e.g. password reset) — Math.random() is not cryptographically secure.
-
-// ===================== KV: USERS =====================
-
-// ===================== KV: LINKS =====================
-
-// ===================== KV: DYNAMIC QR (QR động) =====================
-// A dynamic QR is just a saved mapping { id -> shortUrl code + display/customization }.
-// The destination is always resolved live from the underlying link record (getLink),
-// so retargeting the link (via handleUpdateDynamicQr) changes where the printed QR goes
-// without ever regenerating the QR image itself.
-
-// ===================== KV: CLICKS =====================
-
-// ===================== KV: REPORTS =====================
-
-// ===================== KV: BLACKLIST =====================
-
-// ===================== SEED DỮ LIỆU MẪU (chạy 1 lần duy nhất) =====================
-
-// ===================== AUTH =====================
-
-// ===================== HANDLERS: AUTH =====================
-
-// Separate from handleGenerateToken: this one is open to every tier (not just Pro/Super).
-// It powers the browser extension's Link Manager (read links + quick-shorten), which
-// doesn't touch the paid API quota, so it's kept as its own token field (user.extToken)
-// rather than reusing user.apiToken. Both are looked up the same way by
-// getAuthenticatedUser() via the shared "apitoken:<token>" -> username KV prefix.
-
-// ===================== QUÊN MẬT KHẨU (BACKEND) =====================
-
-// Nhãn giao diện dùng chung cho khung email chuyên nghiệp (buildEmailShell) — brand tagline,
-// điều khoản/chính sách, và 2 nhãn "Tài khoản"/"Gói" dùng trong khung chi tiết của các email
-// thông báo tự động. Tách riêng khỏi nội dung từng email để không lặp lại ở mọi template.
-
-// Khung email chuyên nghiệp dùng chung cho MỌI email hệ thống (reset password, voucher, chào
-// mừng, thanh toán, cảnh báo bảo mật, admin broadcast) — nền kem ngoài, card trắng, khung chi
-// tiết, nút CTA, footer có lý do nhận email + link hỗ trợ/điều khoản. Chỉ dùng inline style +
-// <table> phẳng (không lồng bảng sâu — Gmail tự thu gọn thành "..." nếu lồng quá nhiều lớp) để
-// tương thích rộng với Gmail/Outlook. Không dùng SVG cho phần trang trí — Gmail/Outlook không
-// render SVG dưới bất kỳ hình thức nào (đã xác nhận qua email thật), chỉ dùng màu nền + chữ.
-
-// Nhà cung cấp email duy nhất cho toàn bộ hệ thống — dùng chung cho reset password, voucher,
-// và các thông báo tự động (đăng ký/thanh toán) qua notifyUser(). shurlvn.com đã verify trong
-// Resend nên gửi được tới bất kỳ user nào, không giới hạn như sandbox onboarding@resend.dev.
-
-// Điểm gọi thông báo dùng chung — ghi in-app notification (đúng shape đang dùng ở khắp nơi:
-// notif:user:<username>:<id>) và, nếu truyền sendEmailToo + emailSubject/emailHtml, gửi thêm
-// email qua sendEmail(). Không đổi hành vi các nơi gọi cũ (chỉ gộp code), chỉ những chỗ mới
-// (đăng ký, thanh toán, admin broadcast) mới cần bật sendEmailToo.
-
-// Gộp pattern "báo cho mọi admin" lặp lại ở nhiều nơi (báo cáo vi phạm, góp ý mới, thanh toán
-// chờ duyệt...) — mỗi admin nhận 1 notif riêng (id riêng) qua notifyUser().
-
-// ===================== TOTP 2FA (Admin) =====================
-
-// Tạo secret key TOTP (base32)
-
-// Tạo TOTP code từ secret + thời gian
-
-// Tạo otpauth URL cho QR code
-
-// ===================== HANDLERS: BLACKLIST / SECURITY CHECKS =====================
-
-// ===================== HANDLERS: QUOTA =====================
-// Admin có thể override dailyLinks/maxBulkBatch/monthlyApiLimit theo từng gói ở tab Cài đặt
-// (sys:settings.tierOverrides) — merge lên trên TIER_CONFIG mặc định. Cache 30s như các list
-// khác trong file này (env._linksCache, env._usersCache) để không đọc KV trên mỗi request.
-
-// ===================== HANDLERS: LINKS (CORE) =====================
-
-// Link-in-bio pages reuse the "link:<code>" KV record (type:"bio" instead of a
-// redirect target) so all existing cross-cutting infra — reports, blacklist,
-// recordClick page-view counting, QR generation off the shortUrl — works for
-// free. createLinkInternal isn't reusable directly since it's built around a
-// single targetUrl rather than a list of sub-links.
-
-// ===================== HANDLERS: LINK-IN-BIO =====================
-
-// ===================== HANDLERS: CLICK TRACKING & ANALYTICS =====================
-
-// ===================== HANDLERS: PUBLIC REST API v1 (dùng API Token) =====================
-
-// ===================== HANDLERS: QR CODE (trừ dailyQuota) =====================
-
-// ===================== HANDLERS: DYNAMIC QR (QR động — QR Studio) =====================
-
-// Anti bait-and-switch: a QR động's whole point is that its destination can change
-// after the code is printed/shared — the exact opposite of what a payment link needs.
-// Someone could set a real payment page as the destination to earn trust, then quietly
-// swap it for a fraudulent one without the printed QR ever changing. So payment-looking
-// URLs are refused as a QR động destination in both directions (create AND edit) — QR
-// tĩnh (destination baked in, can never change) is the correct choice for those.
-// This is a domain heuristic, not a guarantee: it catches common providers, not every
-// possible payment page.
-
-// ===================== HANDLERS: QR INSPECTOR (Scanner QR) =====================
-// Public, read-only lookup for whatever a scanned QR decodes to. Never records a click
-// (unlike visiting the link itself) — this is purely "what would happen if I opened this?".
-
-// ===================== HANDLERS: REPORTS =====================
-
-// ===================== RATE LIMIT MAT KHAU =====================
-
-// ===================== HANDLERS: ADMIN =====================
-
-// ===================== AUDIT LOG =====================
-
-// ===================== HANDLERS: ADMIN =====================
-
-// ===================== BLOG (server-rendered, indexable by Google) =====================
-// One-time seed data only — after the first request, posts live in KV (blog:<slug>) and are
-// managed via /api/admin/blog. Editing this array after launch has no effect on production.
-
-// ===================== REDIRECT & SAFETY WARNING =====================
-
-// ===================== HTML RENDERING =====================
-
-// ===================== GIAO DIỆN WEB (SPA nhúng sẵn — không cần build) =====================
-// Toàn bộ trang web (trang chủ rút gọn link, đăng nhập/đăng ký, bảng điều khiển,
-// bulk shorten, thống kê, quản trị...) được render trực tiếp từ Worker này bằng
-// HTML/CSS/JS thuần (vanilla), điều hướng phía client qua hash (#/...), gọi thẳng
-// các API /api/** ở trên cùng origin. Không cần package.json/npm/React/Vite/dist.
-// ===================== UPGRADE USER ROLE (helper) =====================
-
-// ===================== VOUCHER SYSTEM =====================
-
-// ===================== STRIPE BILLING =====================
-
-// ===================== VOUCHER CHECKOUT (mua voucher trước) =====================
-
-// ===================== QR PAYMENT SYSTEM =====================
-
-// === VIETQR — Tạo QR động với số tiền + nội dung chuyển khoản ===
-
-// === MAINTENANCE SYSTEM ===
-
-// Thu hồi 1 giao dịch QR đã duyệt NHẦM (vd: khách gửi 2 lệnh, 1 đã chuyển khoản 1 đã huỷ, admin
-// đối chiếu nhầm duyệt cả 2). Khôi phục đúng role/tierExpiresAt từ beforeSnapshot đã lưu lúc
-// duyệt (xem handleApproveQrPayment) — không đoán lại — và chỉ cho phép khi đây là lệnh duyệt
-// GẦN NHẤT của user đó, để không vô tình xoá mất 1 giao dịch hợp lệ khác duyệt sau nó.
-
-// ===================== SEND VOUCHER EMAIL (MailChannels) =====================
-
-// Mẫu thông báo tự động đa ngôn ngữ (in-app + email) — dùng cho notifyUser() ở các điểm auto-trigger
-// (đăng ký, thanh toán) và cho admin chọn nhanh khi gửi broadcast. Cùng pattern với SERVER_I18N ở trên.
-
-// Minh hoạ (illustration key) + lý do nhận email (vi/en, fallback EMAIL_LABELS.reasonGeneric cho
-// các ngôn ngữ khác) cho từng loại thông báo tự động, hiển thị ở đầu email (buildEmailShell).
-
-// Trả về {title, message, emailSubject, emailHtml} đã điền {username}/{tier}... sẵn sàng đưa
-// thẳng vào notifyUser(). Email dùng khung chuyên nghiệp dùng chung buildEmailShell() ở trên.
-
-// ===================== PAYMENT HISTORY (user) =====================
-
-// ===================== PROMO SETTINGS (admin) =====================
-
-// ===================== DỌN DẸP LINK (cron) =====================
-// Xóa vĩnh viễn các link đã ở trong "thùng rác" (isDeleted=true) quá 24h,
-// đúng như lời hứa hiển thị cho user lúc bấm xóa ("Sẽ xóa sau 24h").
-
-// ===================== CLOUDFLARE ANALYTICS (Workers requests/errors/CPU) =====================
-// Đọc bằng GraphQL Analytics API của Cloudflare (KHÔNG phải phân tích click link của SHURL).
-// Cần secret CF_ANALYTICS_TOKEN (API Token quyền "Account > Account Analytics > Read")
-// và var CF_ACCOUNT_ID (đã có sẵn trong wrangler.jsonc, không phải bí mật).
-
-// ===================== PAYMENT REPORTS (admin) =====================
-
-// Google Ads conversion tracking — id/label come from wrangler.jsonc vars
-// (GOOGLE_ADS_ID / GOOGLE_ADS_CONVERSION_LABEL) so they can be changed without
-// touching code. Also exposes GOOGLE_ADS_CONVERSION_SEND_TO for the client-side
-// conversion-fire call in bindRegisterForm().
-
-/* === LANGUAGE SWITCHER === */
-
-// ===================== WEBHOOK HANDLERS (Pro/Super) =====================
-
-// ===================== DATA EXPORT HANDLERS (Pro/Super) =====================
-
-// ===================== TEAM HANDLERS (Super/Admin) =====================
-
-// ===================== CAMPAIGN HANDLERS (Plus+) =====================
-
-// ===================== ADMIN: DELETE USER =====================
-
-// ===================== ADMIN: BAN/UNBAN USER =====================
-
-// ===================== ADMIN: SEARCH USERS =====================
-
-// ===================== ADMIN: SYSTEM SETTINGS =====================
-
-// ===================== ADMIN: BLOG POSTS (KV-backed, no deploy needed) =====================
-
-// ===================== ADMIN: APPLY VOUCHER TO USER =====================
-
-// ===================== ADMIN: BROADCAST NOTIFICATION =====================
-// Email đơn giản cho nội dung admin tự gõ (không có bản dịch đa ngôn ngữ như NOTIFICATION_TEMPLATES
-// — gửi nguyên văn title/message admin đã nhập, dùng lại đúng khung/màu email đã có).
-
-// ===================== ADMIN: LIST NOTIFICATIONS =====================
-
-// ===================== ADMIN: DELETE NOTIFICATION =====================
-
-// ===================== USER: GET MY NOTIFICATIONS =====================
-
-// ===================== USER: MARK NOTIFICATION READ =====================
