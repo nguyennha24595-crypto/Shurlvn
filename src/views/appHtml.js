@@ -437,7 +437,10 @@ footer a{display:inline-flex;align-items:center;justify-content:center;min-heigh
 .qd-panel label.qd-chk input{width:auto;}
 .qd-swatches{display:flex;gap:8px;margin-top:8px;}
 .qd-swatch{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);cursor:pointer;padding:0;}
-.qd-preview-canvas{display:block;max-width:100%;height:auto;margin:0 auto;border-radius:10px;box-shadow:0 6px 24px rgba(15,23,42,0.18);}
+.qr-preview-box.qd-card{width:100%;max-width:320px;height:auto;min-height:240px;padding:12px;box-sizing:border-box;overflow:visible;}
+.qd-preview-canvas{display:block;max-width:100%;max-height:440px;height:auto;margin:0 auto;border-radius:10px;box-shadow:0 6px 24px rgba(15,23,42,0.18);cursor:zoom-in;}
+.qd-zoom{position:fixed;inset:0;z-index:10000;background:rgba(15,23,42,0.82);display:flex;align-items:center;justify-content:center;padding:20px;cursor:zoom-out;}
+.qd-zoom img{max-width:100%;max-height:100%;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.5);background:#fff;}
 .qr-color-row{display:flex;gap:16px;flex-wrap:wrap;}
 .qr-color-field{flex:1;min-width:130px;}
 .qr-color-field label{display:block;margin-bottom:4px;}
@@ -6002,6 +6005,23 @@ function qrWsCheckPrintReadyCanvas(cv, data, tok){
     msgEl.innerHTML = '<div class="msg msg-error" style="margin:0;">' + t("qr_print_check_fail") + '</div>';
   });
 }
+// Bấm vào thẻ xem trước để xem cỡ lớn (bấm lại hoặc Esc để đóng).
+function qrWsZoomCard(){
+  if (!qrWsDesignCanvas) return;
+  var ov = document.createElement("div");
+  ov.className = "qd-zoom";
+  var im = document.createElement("img");
+  im.src = qrWsDesignCanvas.toDataURL("image/png");
+  ov.appendChild(im);
+  var close = function(){
+    document.removeEventListener("keydown", onKey);
+    if (ov.parentNode) ov.parentNode.removeChild(ov);
+  };
+  var onKey = function(e){ if (e.key === "Escape") close(); };
+  ov.onclick = close;
+  document.addEventListener("keydown", onKey);
+  document.body.appendChild(ov);
+}
 // Dựng thẻ/bảng thiết kế quanh QR (VietQR, Danh thiếp) rồi thay ô xem trước; lỗi thì giữ QR thường.
 function qrWsRenderDesign(data){
   var type = qrWsGetType();
@@ -6014,6 +6034,8 @@ function qrWsRenderDesign(data){
     qrWsDesignCanvas = cv;
     cv.className = "qd-preview-canvas";
     box.innerHTML = "";
+    box.classList.add("qd-card");
+    cv.onclick = qrWsZoomCard;
     box.appendChild(cv);
     if (dlPng) dlPng.disabled = false;
     qrDesignRefreshButtons(true);
@@ -6030,6 +6052,7 @@ function qrWsUpdatePreview(){
   if (!box) return;
   qrWsDesignToken++;
   qrWsDesignCanvas = null;
+  box.classList.remove("qd-card");
   qrDesignRefreshButtons(false);
   qrWsCheckContrast();
   var dataEl = document.getElementById("qrWsPreviewData");
