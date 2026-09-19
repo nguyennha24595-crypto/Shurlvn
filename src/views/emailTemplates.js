@@ -102,7 +102,7 @@ export function buildEmailShell(opts) {
     '<div style="border-top:1px solid #e5e5e5;margin-top:32px;padding-top:20px;text-align:center;">' +
     '<div style="font-size:12px;color:#888888;line-height:1.7;font-family:' + FONT + ';">' +
     footerReason + '<br>' +
-    L.support + ' <a href="mailto:nguyennha24595@gmail.com" style="color:#888888;text-decoration:underline;">nguyennha24595@gmail.com</a><br>' +
+    L.support + ' <a href="mailto:support@shurlvn.com" style="color:#888888;text-decoration:underline;">support@shurlvn.com</a><br>' +
     '<a href="https://shurlvn.com/#/terms" style="color:#888888;text-decoration:underline;">' + L.terms + '</a>' +
     '<span> &middot; </span>' +
     '<a href="https://shurlvn.com/#/privacy" style="color:#888888;text-decoration:underline;">' + L.privacy + '</a>' +

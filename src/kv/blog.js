@@ -452,7 +452,7 @@ export const BLOG_POSTS_SEED = [
       <p class="mockup-caption">Ô "Tên miền riêng" chỉ hiển thị và dùng được với tài khoản gói Super</p>
 
       <h3>Bước 3: Trỏ DNS tên miền của bạn về SHURL</h3>
-      <p>Để tên miền riêng thực sự hoạt động (chứ không chỉ hiển thị dưới dạng chữ), bạn cần cấu hình bản ghi DNS của tên miền đó trỏ về hạ tầng của SHURL. Vì cấu hình DNS chính xác phụ thuộc vào tên miền và nhà cung cấp DNS của từng khách hàng, đội ngũ SHURL sẽ hỗ trợ trực tiếp bước này — liên hệ qua email <a href="https://mail.google.com/mail/?view=cm&fs=1&to=nguyennha24595@gmail.com&su=SHURL%20Custom%20Domain" target="_blank" rel="noopener">nguyennha24595@gmail.com</a> kèm tên miền bạn muốn sử dụng để được hướng dẫn trỏ DNS cụ thể.</p>
+      <p>Để tên miền riêng thực sự hoạt động (chứ không chỉ hiển thị dưới dạng chữ), bạn cần cấu hình bản ghi DNS của tên miền đó trỏ về hạ tầng của SHURL. Vì cấu hình DNS chính xác phụ thuộc vào tên miền và nhà cung cấp DNS của từng khách hàng, đội ngũ SHURL sẽ hỗ trợ trực tiếp bước này — liên hệ qua email <a href="https://mail.google.com/mail/?view=cm&fs=1&to=support@shurlvn.com&su=SHURL%20Custom%20Domain" target="_blank" rel="noopener">support@shurlvn.com</a> kèm tên miền bạn muốn sử dụng để được hướng dẫn trỏ DNS cụ thể.</p>
 
       <h2>Một vài lưu ý</h2>
       <ul>

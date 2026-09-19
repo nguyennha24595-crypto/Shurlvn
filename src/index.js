@@ -18,7 +18,7 @@ import { st } from "./i18n/server.js";
 import { seedIfNeeded } from "./kv/blacklist.js";
 import { getBlogPost, getPublishedBlogPosts, isPostPublished, seedBlogPostsIfNeeded } from "./kv/blog.js";
 import { getAuthenticatedUser, requireAdminResponse } from "./utils/auth.js";
-import { html, json } from "./utils/http.js";
+import { HTML_SECURITY_HEADERS, html, json } from "./utils/http.js";
 import { checkMaintenance, handleGetMaintenance, handleGetMaintenanceStatus, handleSetMaintenance, isMaintenance } from "./utils/maintenance.js";
 import { renderAppHtml } from "./views/appHtml.js";
 import { renderBlogIndexPage, renderBlogPostPage } from "./views/blogHtml.js";
@@ -279,10 +279,7 @@ export default {
         return new Response(renderAppHtml(env), { headers: {
           "Content-Type": "text/html; charset=utf-8",
           "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com https://www.googletagmanager.com https://googleads.g.doubleclick.net https://static.cloudflareinsights.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' data: blob: https://api.resend.com https://api.stripe.com https://www.googletagmanager.com https://www.google-analytics.com https://googleads.g.doubleclick.net https://www.google.com https://www.google.com.vn https://www.googleadservices.com https://ad.doubleclick.net https://static.cloudflareinsights.com https://cloudflareinsights.com; frame-src https://pagead2.googlesyndication.com; worker-src 'self' blob:;",
-          "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
-          "Cross-Origin-Opener-Policy": "same-origin",
-          "X-Frame-Options": "DENY",
-          "X-Content-Type-Options": "nosniff"
+          ...HTML_SECURITY_HEADERS
         } });
       }
       // ===== 8b. FAVICON =====

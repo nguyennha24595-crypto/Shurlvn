@@ -1,8 +1,10 @@
-// KV: users — CRUD + safeUser (strips salt/hash before sending to client).
+// KV: users — CRUD + safeUser (strips salt/hash/totpSecret before sending to client).
 
 export function safeUser(u) {
   if (!u) return null;
-  const { salt, hash, ...rest } = u;
+  const { salt, hash, totpSecret, ...rest } = u;
+  // Client chỉ cần biết 2FA đã bật hay chưa — không bao giờ gửi khoá TOTP về trình duyệt.
+  rest.totpEnabled = !!totpSecret;
   return rest;
 }
 

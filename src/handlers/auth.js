@@ -449,7 +449,7 @@ export async function handleSetup2fa(request, env, corsHeaders){
   }
 
   const secret = generateTotpSecret();
-  const domain = "shorturl.nguyennha24595.workers.dev";
+  const domain = "shurlvn.com";
   const otpUrl = getOtpAuthUrl(secret, user.username, domain);
   const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + encodeURIComponent(otpUrl);
 

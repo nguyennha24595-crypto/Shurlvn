@@ -16,6 +16,7 @@ export async function sendEmail(env, opts) {
       body: JSON.stringify({
         from: "SHURL <noreply@shurlvn.com>",
         to: [opts.to],
+        reply_to: "support@shurlvn.com",
         subject: opts.subject,
         html: opts.html
       })

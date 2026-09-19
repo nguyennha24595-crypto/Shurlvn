@@ -374,6 +374,14 @@ export async function handleUpdateLink(request, env, url, code, corsHeaders) {
   try { body = await request.json(); } catch (e) { body = {}; }
   let { url: newUrl, title, campaign, tags, isEnabled, expiryDate, customDomain } = body || {};
 
+  // Giới hạn kiểu/độ dài để 1 request không làm phình bản ghi KV (giá trị tối đa 25MB, nhưng bản ghi link được đọc lại ở mọi lần list).
+  if (title !== undefined && (typeof title !== "string" || title.length > 200)) return json({ error: "Tiêu đề phải là chuỗi tối đa 200 ký tự" }, 400, corsHeaders);
+  if (campaign !== undefined && (typeof campaign !== "string" || campaign.length > 100)) return json({ error: "Chiến dịch phải là chuỗi tối đa 100 ký tự" }, 400, corsHeaders);
+  if (tags !== undefined && (!Array.isArray(tags) || tags.length > 20 || tags.some(function(t){ return typeof t !== "string" || t.length > 50; }))) return json({ error: "Tags phải là mảng tối đa 20 mục, mỗi mục tối đa 50 ký tự" }, 400, corsHeaders);
+  if (isEnabled !== undefined && typeof isEnabled !== "boolean") return json({ error: "isEnabled phải là true/false" }, 400, corsHeaders);
+  if (expiryDate !== undefined && expiryDate !== null && expiryDate !== "" && (typeof expiryDate !== "string" || isNaN(new Date(expiryDate).getTime()))) return json({ error: "Ngày hết hạn không hợp lệ" }, 400, corsHeaders);
+  if (newUrl !== undefined && (typeof newUrl !== "string" || newUrl.length > 2048)) return json({ error: "URL mới không hợp lệ" }, 400, corsHeaders);
+
   const link = await getLink(env, code);
   if (!link) return json({ error: "Không tìm thấy link" }, 400, corsHeaders);
   if (role !== "admin" && link.owner !== owner) {

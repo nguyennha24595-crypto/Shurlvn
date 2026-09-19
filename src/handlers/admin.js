@@ -32,7 +32,7 @@ export async function handleAdminSetRole(request, env, corsHeaders) {
   try { body = await request.json(); } catch (e) { body = {}; }
   const { username, role } = body || {};
   if (!username || !role) return json({ error: "Thiếu username hoặc role" }, 400, corsHeaders);
-  if (!TIER_CONFIG[role]) return json({ error: "Hạng gói không hợp lệ" }, 400, corsHeaders);
+  if (typeof role !== "string" || !Object.prototype.hasOwnProperty.call(TIER_CONFIG, role)) return json({ error: "Hạng gói không hợp lệ" }, 400, corsHeaders);
 
   const user = await getUser(env, username);
   if (!user) return json({ error: `Không tìm thấy người dùng ${username}` }, 400, corsHeaders);

@@ -2,10 +2,24 @@
 
 import { SESSION_COOKIE } from "../config/constants.js";
 
+// Header bảo mật dùng chung cho mọi response do Worker tạo. camera=(self) vì trang Scanner QR cần camera.
+export const BASE_SECURITY_HEADERS = {
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Permissions-Policy": "camera=(self), microphone=(), geolocation=(), payment=()"
+};
+
+export const HTML_SECURITY_HEADERS = {
+  ...BASE_SECURITY_HEADERS,
+  "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+  "Cross-Origin-Opener-Policy": "same-origin",
+  "X-Frame-Options": "DENY"
+};
+
 export function json(body, status, corsHeaders, extraHeaders) {
   return new Response(JSON.stringify(body), {
     status: status || 200,
-    headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8", ...(extraHeaders || {}) }
+    headers: { ...BASE_SECURITY_HEADERS, ...corsHeaders, "Content-Type": "application/json; charset=utf-8", ...(extraHeaders || {}) }
   });
 }
 
@@ -14,10 +28,7 @@ export function html(body, status, extraHeaders) {
     status: status || 200,
     headers: {
       "Content-Type": "text/html; charset=utf-8",
-      "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
-      "Cross-Origin-Opener-Policy": "same-origin",
-      "X-Frame-Options": "DENY",
-      "X-Content-Type-Options": "nosniff",
+      ...HTML_SECURITY_HEADERS,
       ...(extraHeaders || {})
     }
   });

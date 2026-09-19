@@ -508,7 +508,7 @@ ${googleAdsGtagHead(env)}
       <div id="app" class="fade-in"></div>
       <div id="sidebarLeft" style="display:none;"></div>
       <div id="sidebarRight" style="display:none;"></div>
-      <footer><span id="footerTagline"></span><br><a href="https://mail.google.com/mail/?view=cm&fs=1&to=nguyennha24595@gmail.com&su=SHURL%20Support" target="_blank"><span id="footerContact"></span>: nguyennha24595@gmail.com</a><br><a href="/blog" id="footerBlogLink"></a> · <a href="#/terms" id="footerTermsLink"></a> · <a href="#/privacy" id="footerPrivacyLink"></a><br>🇻🇳 Trường Sa | Hoàng Sa là của Việt Nam</footer>
+      <footer><span id="footerTagline"></span><br><a href="https://mail.google.com/mail/?view=cm&fs=1&to=support@shurlvn.com&su=SHURL%20Support" target="_blank"><span id="footerContact"></span>: support@shurlvn.com</a><br><a href="/blog" id="footerBlogLink"></a> · <a href="#/terms" id="footerTermsLink"></a> · <a href="#/privacy" id="footerPrivacyLink"></a><br>🇻🇳 Trường Sa | Hoàng Sa là của Việt Nam</footer>
     </main>
   </div>
 </div>
@@ -3671,7 +3671,7 @@ if (hasPromo){
   html += '</div>';
 
   // Support / payment issue contact (Đa ngôn ngữ)
-  var supportEmail = "nguyennha24595@gmail.com";
+  var supportEmail = "support@shurlvn.com";
   var supportSubject = encodeURIComponent(t("support_subject"));
   var supportBody = encodeURIComponent(
     t("support_body_greeting") + "\\n\\n" +
@@ -3935,7 +3935,7 @@ function showQrModal(tier) {
 }
 
 function openSupportEmail(){
-  var email = "nguyennha24595@gmail.com";
+  var email = "support@shurlvn.com";
   var subject = (typeof t === "function" && t("support_subject")) || "SHURL — Hỗ trợ thanh toán";
   var body = ((typeof t === "function" && t("support_body_greeting")) || "Xin chào đội ngũ SHURL,") + "\\n\\n" +
     ((typeof t === "function" && t("support_body_issue")) || "Tôi gặp sự cố khi thanh toán gói:") + "\\n\\n" +
@@ -7234,7 +7234,7 @@ function checkQrPaymentStatus(){
 function showQrResultModal(p){
   var tierNames = { plus: "Plus", pro: "Pro", super: "Super" };
   var tierName = tierNames[p.tier] || p.tier;
-  var supportEmail = "nguyennha24595@gmail.com";
+  var supportEmail = "support@shurlvn.com";
   var domain = location.host;
   var username = (state.user && state.user.username) || "";
   var modal = document.createElement("div");
@@ -7548,7 +7548,7 @@ function renderAccount(app){
   secCard += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);"><div><div style="font-size:12px;color:var(--muted);margin-bottom:2px;">' + t("security_password") + '</div><div style="font-size:14px;color:var(--text);letter-spacing:2px;">••••••••</div></div><button class="btn btn-ghost btn-sm" style="font-size:12px;" onclick="openChangePasswordModal()">' + li('key', 14) + ' ' + t("change_password") + '</button></div>';
   // 2FA (admin only)
   if (u.role === "admin") {
-    secCard += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);"><div><div style="font-size:12px;color:var(--muted);margin-bottom:2px;">2FA (TOTP)</div><div style="font-size:14px;color:var(--text);">' + (u.totpSecret ? t("acct_2fa_enabled") : t("acct_2fa_disabled")) + '</div></div></div>';
+    secCard += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);"><div><div style="font-size:12px;color:var(--muted);margin-bottom:2px;">2FA (TOTP)</div><div style="font-size:14px;color:var(--text);">' + (u.totpEnabled ? t("acct_2fa_enabled") : t("acct_2fa_disabled")) + '</div></div></div>';
   }
   // Session info
   var browserName = t("acct_browser");
@@ -7744,7 +7744,7 @@ function renderTerms(app){
     { h: "Limitation of Liability", p: "The service is provided as-is, without guarantee of continuous, error-free, or uninterrupted operation. SHURL is not liable for indirect damages arising from use or inability to use the service." },
     { h: "Changes to the Service and Terms", p: "SHURL may update, change, or discontinue part or all of its features, and may revise these terms over time. Updated versions will be posted on this page." },
     { h: "Governing Law and Dispute Resolution", p: "The parties will first seek to resolve disputes in good faith. Where necessary, disputes will be handled under the applicable law governing the service." },
-    { h: "Contact", p: "For questions about these terms, please contact: nguyennha24595@gmail.com." }
+    { h: "Contact", p: "For questions about these terms, please contact: support@shurlvn.com." }
   ] : [
     { h: "Giới thiệu", p: "SHURL là dịch vụ rút gọn liên kết (short URL) kèm theo tính năng tạo mã QR, theo dõi lượt click và các công cụ quản lý link. Bằng việc truy cập hoặc sử dụng dịch vụ, bạn đồng ý với các điều khoản dưới đây." },
     { h: "Tài khoản người dùng", p: "Một số tính năng yêu cầu tạo tài khoản (tên đăng nhập/mật khẩu, hoặc đăng nhập bằng Google). Bạn chịu trách nhiệm bảo mật thông tin đăng nhập và mọi hoạt động diễn ra dưới tài khoản của mình." },
@@ -7759,7 +7759,7 @@ function renderTerms(app){
     { h: "Giới hạn trách nhiệm", p: "Dịch vụ được cung cấp trên cơ sở hiện trạng, không đảm bảo hoạt động liên tục, không lỗi hoặc không gián đoạn. SHURL không chịu trách nhiệm cho thiệt hại gián tiếp phát sinh từ việc sử dụng hoặc không thể sử dụng dịch vụ." },
     { h: "Thay đổi dịch vụ và điều khoản", p: "SHURL có thể cập nhật, thay đổi hoặc ngừng một phần hay toàn bộ tính năng, cũng như điều chỉnh điều khoản này theo thời gian. Phiên bản cập nhật sẽ được đăng tại trang này." },
     { h: "Luật áp dụng và giải quyết tranh chấp", p: "Các bên ưu tiên giải quyết tranh chấp thông qua trao đổi thiện chí. Trường hợp cần thiết, tranh chấp sẽ được xử lý theo quy định pháp luật hiện hành áp dụng cho dịch vụ." },
-    { h: "Liên hệ", p: "Mọi thắc mắc về điều khoản này, vui lòng liên hệ: nguyennha24595@gmail.com." }
+    { h: "Liên hệ", p: "Mọi thắc mắc về điều khoản này, vui lòng liên hệ: support@shurlvn.com." }
   ]);
 }
 function renderPrivacy(app){
@@ -7778,7 +7778,7 @@ function renderPrivacy(app){
     { h: "Third-Party Services", p: "The service integrates the third parties listed in section 6 (Stripe, VietQR, Resend, Google, api.qrserver.com) along with Cloudflare infrastructure. Use of these services is subject to each provider's own privacy policy." },
     { h: "Children", p: "The service is not directed at children under 13, and we do not knowingly collect information from children in that age group." },
     { h: "Changes to This Privacy Policy", p: "This policy may be updated from time to time. New versions will be posted on this page along with the update date." },
-    { h: "Contact", p: "For questions about this Privacy Policy, please contact: nguyennha24595@gmail.com." }
+    { h: "Contact", p: "For questions about this Privacy Policy, please contact: support@shurlvn.com." }
   ] : [
     { h: "Phạm vi áp dụng", p: "Chính sách này áp dụng cho dữ liệu được thu thập và xử lý khi bạn sử dụng dịch vụ SHURL." },
     { h: "Thông tin chúng tôi có thể thu thập", p: "Tùy theo cách bạn sử dụng dịch vụ, chúng tôi có thể thu thập: tên đăng nhập, mật khẩu (được băm/hash, không lưu dạng văn bản thô), email (nếu bạn cung cấp hoặc đăng nhập bằng Google), URL và mã QR bạn tạo, cùng dữ liệu lượt click trên các link đó (ví dụ: thời điểm, quốc gia, loại thiết bị, địa chỉ IP)." },
@@ -7793,7 +7793,7 @@ function renderPrivacy(app){
     { h: "Dịch vụ của bên thứ ba", p: "Dịch vụ có tích hợp một số bên thứ ba như đã nêu ở mục 6 (Stripe, VietQR, Resend, Google, api.qrserver.com) cùng hạ tầng Cloudflare. Việc sử dụng các dịch vụ này tuân theo chính sách bảo mật riêng của từng bên." },
     { h: "Trẻ em", p: "Dịch vụ không hướng đến đối tượng trẻ em dưới 13 tuổi và chúng tôi không chủ đích thu thập thông tin từ trẻ em trong độ tuổi này." },
     { h: "Thay đổi Chính sách bảo mật", p: "Chính sách này có thể được cập nhật theo thời gian. Phiên bản mới sẽ được đăng tại trang này kèm ngày cập nhật." },
-    { h: "Liên hệ", p: "Mọi câu hỏi về Chính sách bảo mật, vui lòng liên hệ: nguyennha24595@gmail.com." }
+    { h: "Liên hệ", p: "Mọi câu hỏi về Chính sách bảo mật, vui lòng liên hệ: support@shurlvn.com." }
   ]);
 }
 var adminTab = "overview";
