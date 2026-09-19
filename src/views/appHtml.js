@@ -256,6 +256,18 @@ input[type=text],input[type=url],input[type=password],input[type=email],input[ty
 input:focus,textarea:focus,select:focus{border-color:var(--indigo);}
 textarea{min-height:110px;resize:vertical;}
 .row{display:flex;gap:14px;flex-wrap:wrap;}
+.home-duo{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch;}
+.home-duo .card{display:flex;flex-direction:column;}
+.home-duo .card .btn{align-self:flex-start;margin-top:auto;}
+.home-mini{display:flex;gap:26px;margin:4px 0 18px;min-height:46px;}
+.home-mini b{display:block;font-size:26px;color:var(--indigo);line-height:1.2;}
+.home-mini span{font-size:12px;color:var(--muted);}
+.tools-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:20px;}
+.tool-card{display:block;text-decoration:none;color:var(--text);margin-bottom:0;}
+.tool-card:hover{border-color:rgba(99,102,241,0.6);transform:translateY(-2px);}
+.tool-card h3{margin:0 0 6px;font-size:16px;display:flex;align-items:center;gap:8px;}
+.tool-card svg{color:var(--indigo);}
+@media(max-width:760px){.home-duo{grid-template-columns:1fr;}}
 .row > *{flex:1;min-width:180px;}
 .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border-radius:12px;font-weight:700;
   border:none;cursor:pointer;font-size:14px;font-family:inherit;}
@@ -553,6 +565,9 @@ var i18n = {
     home_promo_sub:"Không thời hạn · Tên rút gọn tuỳ chỉnh · Quản lý link · Thống kê lượt click · QR nhanh gọn... các tính năng miễn phí",
     home_promo_desc:"Không thời hạn · Tên rút gọn tuỳ chỉnh · Quản lý link · Thống kê lượt click",
     home_promo_btn1:"Đăng ký miễn phí", home_promo_btn2:"Đã có tài khoản?",
+    home_manage_title:"Quản lý link", home_manage_desc:"Xem lịch sử link, thống kê lượt click, sửa đích đến và đặt ngày hết hạn.", home_manage_btn:"Quản lý", home_manage_links:"Link của bạn", home_manage_clicks:"Lượt click",
+    home_guest_manage_title:"Đăng nhập để quản lý link", home_guest_manage_desc:"Lưu lịch sử link, xem thống kê lượt click và tạo link với tên riêng.", home_guest_manage_btn:"Đăng nhập",
+    dash_tools_title:"Công cụ miễn phí", dash_tools_desc:"Tiện ích chạy ngay trên trình duyệt, không cần đăng ký thêm.",
     home_qr_promo_title:"Tạo mã QR miễn phí", home_qr_promo_desc:"Chuyển link hoặc văn bản thành mã QR tuỳ chỉnh màu sắc, kích thước — dùng ngay, không cần đăng ký.", home_qr_promo_btn:"Tạo mã QR ngay",
     home_hero_sub:"Nền tảng rút gọn link đa tầng — an toàn, thống kê chi tiết, quản lý chiến dịch.",
     home_guest_hint:"Đăng nhập để đặt alias tuỳ chỉnh, quản lý và xem thống kê link. Khách: 5 link/ngày.",
@@ -1008,6 +1023,9 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     home_promo_sub:"No expiry · Custom aliases · Link management · Click analytics",
     home_promo_desc:"No expiry · Custom aliases · Link management · Click analytics",
     home_promo_btn1:"Sign up free", home_promo_btn2:"Already have an account?",
+    home_manage_title:"Manage links", home_manage_desc:"See your link history, click stats, edit destinations and set expiry dates.", home_manage_btn:"Manage", home_manage_links:"Your links", home_manage_clicks:"Clicks",
+    home_guest_manage_title:"Sign in to manage your links", home_guest_manage_desc:"Keep your link history, see click stats and create links with your own name.", home_guest_manage_btn:"Sign in",
+    dash_tools_title:"Free tools", dash_tools_desc:"Handy utilities that run right in your browser, no extra sign-up.",
     home_qr_promo_title:"Free QR Code Generator", home_qr_promo_desc:"Turn any link or text into a QR code with custom colors and sizes — use it now, no sign-up required.", home_qr_promo_btn:"Create QR Code",
     home_hero_sub:"Multi-tier link shortening platform — secure, detailed analytics, campaign management.",
     home_guest_hint:"Log in to set custom aliases, manage links and view analytics. Guests: 5 links/day.",
@@ -4327,6 +4345,77 @@ function renderHome(app){
       '<button class="btn btn-ghost" style="margin-left:8px;" onclick="navLogin()">' + t("home_promo_btn2") + '</button>' +
       '</div>';
   }
+  var isUser = !!state.user;
+  var homeLimits = state.limits || {};
+  var canExpiry = isUser && isProOrAbove(state.user);
+  var canCustomDomain = !!homeLimits.hasCustomDomain;
+  var userFieldsHtml = "";
+  if (isUser){
+    userFieldsHtml =
+      '<div class="row">' +
+        '<div><label>' + t("custom_alias_opt") + helpLinkHtml('dat-ten-link-tuy-chinh', 'Tên rút gọn tuỳ chỉnh là gì? Xem hướng dẫn sử dụng') + '</label><input type="text" id="f_code" placeholder="ten-rieng-cua-ban" oninput="updateHomePreview()"></div>' +
+        '<div><label>' + t("title_opt") + '</label><input type="text" id="f_title" placeholder="Ghi chú cho link này"></div>' +
+      '</div>' +
+      '<div class="row">' +
+        '<div><label>' + t("campaign") + helpLinkHtml('campaign-la-gi-huong-dan-quan-ly-link-theo-chien-dich', 'Campaign là gì? Xem hướng dẫn sử dụng') + '</label><input type="text" id="f_campaign" placeholder="' + t("optional") + '"></div>' +
+        '<div><label>' + t("tags") + '</label><input type="text" id="f_tags" placeholder="vd: sale, q1"></div>' +
+      '</div>' +
+      '<p style="margin-top:6px;"><a href="javascript:void(0)" onclick="toggleUtmFields()">' + t("utm_builder_toggle") + '</a>' + helpLinkHtml('utm-tracking-la-gi-ket-hop-rut-gon-link', 'UTM Tracking là gì? Xem hướng dẫn sử dụng') + '</p>' +
+      '<div id="utmFields" style="display:none;margin-top:6px;">' +
+        '<p class="hint">' + t("utm_builder_hint") + '</p>' +
+        '<div class="row">' +
+          '<div><label>' + t("utm_source") + '</label><input type="text" id="u_source" placeholder="facebook"></div>' +
+          '<div><label>' + t("utm_medium") + '</label><input type="text" id="u_medium" placeholder="social"></div>' +
+        '</div>' +
+        '<div class="row">' +
+          '<div><label>' + t("utm_term") + '</label><input type="text" id="u_term" placeholder="' + t("optional") + '"></div>' +
+          '<div><label>' + t("utm_content") + '</label><input type="text" id="u_content" placeholder="' + t("optional") + '"></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="row">' +
+        '<div><label>' + t("password_protect") + helpLinkHtml('bao-ve-link-bang-mat-khau', 'Bảo vệ link bằng mật khẩu là gì? Xem hướng dẫn sử dụng') + '</label><input type="text" id="f_password" placeholder="Để trống = không bảo vệ"></div>' +
+        (canExpiry ? '<div><label>' + t("expiry_date") + helpLinkHtml('dat-ngay-het-han-cho-link', 'Đặt ngày hết hạn cho link là gì? Xem hướng dẫn sử dụng') + '</label><input type="date" id="f_expiry"></div>' : '') +
+      '</div>' +
+      (canExpiry ? '<div class="row"><div><label>' + t("custom_domain") + helpLinkHtml('tao-ten-mien-rieng-cho-link', 'Tên miền riêng là gì? Xem hướng dẫn sử dụng') + '</label>' +
+        (canCustomDomain ? '<input type="text" id="f_domain" placeholder="ten.shurl.com" oninput="updateHomePreview()">' : '<input type="text" id="f_domain" placeholder="' + t("upgrade_to_unlock") + '" disabled style="opacity:0.5;">') +
+        '</div></div>' : '') +
+      '<div id="advFields" style="display:none;margin-top:12px;">' +
+        '<label>' + t("pixel_tracking") + ' (Pro/Super)' + helpLinkHtml('pixel-tracking-la-gi-huong-dan-gan-facebook-google-tiktok', 'Pixel Tracking là gì? Xem hướng dẫn sử dụng') + '</label>' +
+        '<input type="text" id="f_pixel_fb" placeholder="Facebook Pixel ID (vd: 123456789)">' +
+        '<input type="text" id="f_pixel_ga" placeholder="Google Analytics ID (vd: G-XXXXXXX)" style="margin-top:8px;">' +
+        '<input type="text" id="f_pixel_tt" placeholder="TikTok Pixel ID" style="margin-top:8px;">' +
+        '<hr style="border-color:rgba(148,163,184,0.15);margin:14px 0;">' +
+        '<label>' + t("ab_testing") + ' — thêm URL đích (Pro/Super)' + helpLinkHtml('ab-testing-la-gi-huong-dan-chia-traffic-link-rut-gon', 'A/B Testing là gì? Xem hướng dẫn sử dụng') + '</label>' +
+        '<input type="url" id="f_ab1" placeholder="URL đích A (thêm vào)" style="margin-top:8px;">' +
+        '<input type="url" id="f_ab2" placeholder="URL đích B (thêm vào)" style="margin-top:8px;">' +
+        '<hr style="border-color:rgba(148,163,184,0.15);margin:14px 0;">' +
+        '<label>' + t("deep_link") + ' (Pro/Super)' + helpLinkHtml('deep-link-va-smart-fallback-la-gi-huong-dan-cau-hinh', 'Deep Link là gì? Xem hướng dẫn sử dụng') + '</label>' +
+        '<input type="url" id="f_dl_ios" placeholder="iOS app link (vd: myapp://)" style="margin-top:8px;">' +
+        '<input type="url" id="f_dl_android" placeholder="Android app link" style="margin-top:8px;">' +
+      '</div>' +
+      (homeLimits.hasPixel || homeLimits.hasABTest || homeLimits.hasDeepLink ?
+        '<p style="margin-top:10px;"><a href="javascript:void(0)" onclick="toggleAdvFields()">' + t("adv_options") + '</a></p>' : '');
+  } else {
+    userFieldsHtml = '<p class="hint">' + t("home_guest_hint") + '</p>';
+  }
+  var qrCardHtml =
+    '<div class="card">' +
+    '<h2>' + li('qr', 20) + ' ' + t("home_qr_promo_title") + '</h2>' +
+    '<p class="sub">' + t("home_qr_promo_desc") + '</p>' +
+    '<button class="btn btn-ghost" onclick="navigate(&#39;bulkqr&#39;)">' + t("home_qr_promo_btn") + '</button>' +
+    '</div>';
+  var sideCardHtml = isUser ?
+    ('<div class="card">' +
+      '<h2>' + li('link', 20) + ' ' + t("home_manage_title") + '</h2>' +
+      '<p class="sub">' + t("home_manage_desc") + '</p>' +
+      '<div class="home-mini" id="homeManageStats"></div>' +
+      '<button class="btn btn-primary" onclick="navigate(&#39;dashboard&#39;)">' + t("home_manage_btn") + '</button>' +
+      '</div>') :
+    ('<div class="card">' +
+      '<h2>' + li('lock', 20) + ' ' + t("home_guest_manage_title") + '</h2>' +
+      '<p class="sub">' + t("home_guest_manage_desc") + '</p>' +
+      '<button class="btn btn-primary" onclick="navLogin()">' + t("home_guest_manage_btn") + '</button>' +
+      '</div>');
   app.innerHTML =
     promo +
     '<div class="card">' +
@@ -4339,74 +4428,20 @@ function renderHome(app){
       '<div style="font-size:13px;color:var(--muted);margin-bottom:6px;">' + li('link', 14) + ' Link rút gọn của bạn:</div>' +
       '<div id="homePreviewUrl" style="font-size:16px;font-weight:600;color:#818cf8;word-break:break-all;"></div>' +
       '</div>' +
-      (state.user ? (
-        '<div class="row">' +
-          '<div><label>' + t("custom_alias_opt") + helpLinkHtml('dat-ten-link-tuy-chinh', 'Tên rút gọn tuỳ chỉnh là gì? Xem hướng dẫn sử dụng') + '</label><input type="text" id="f_code" placeholder="ten-rieng-cua-ban" oninput="updateHomePreview()"></div>' +
-          '<div><label>' + t("title_opt") + '</label><input type="text" id="f_title" placeholder="Ghi chú cho link này"></div>' +
-        '</div>' +
-        '<div class="row">' +
-          '<div><label>' + t("expiry_date") + helpLinkHtml('dat-ngay-het-han-cho-link', 'Đặt ngày hết hạn cho link là gì? Xem hướng dẫn sử dụng') + '</label><input type="date" id="f_expiry"></div>' +
-          '<div><label>' + t("password_protect") + helpLinkHtml('bao-ve-link-bang-mat-khau', 'Bảo vệ link bằng mật khẩu là gì? Xem hướng dẫn sử dụng') + '</label><input type="text" id="f_password" placeholder="Để trống = không bảo vệ"></div>' +
-        '</div>' +
-        '<div id="advFields" style="display:none;margin-top:12px;">' +
-          '<label>' + t("pixel_tracking") + ' (Pro/Super)' + helpLinkHtml('pixel-tracking-la-gi-huong-dan-gan-facebook-google-tiktok', 'Pixel Tracking là gì? Xem hướng dẫn sử dụng') + '</label>' +
-          '<input type="text" id="f_pixel_fb" placeholder="Facebook Pixel ID (vd: 123456789)">' +
-          '<input type="text" id="f_pixel_ga" placeholder="Google Analytics ID (vd: G-XXXXXXX)" style="margin-top:8px;">' +
-          '<input type="text" id="f_pixel_tt" placeholder="TikTok Pixel ID" style="margin-top:8px;">' +
-          '<hr style="border-color:rgba(148,163,184,0.15);margin:14px 0;">' +
-          '<label>' + t("ab_testing") + ' — thêm URL đích (Pro/Super)' + helpLinkHtml('ab-testing-la-gi-huong-dan-chia-traffic-link-rut-gon', 'A/B Testing là gì? Xem hướng dẫn sử dụng') + '</label>' +
-          '<input type="url" id="f_ab1" placeholder="URL đích A (thêm vào)" style="margin-top:8px;">' +
-          '<input type="url" id="f_ab2" placeholder="URL đích B (thêm vào)" style="margin-top:8px;">' +
-          '<hr style="border-color:rgba(148,163,184,0.15);margin:14px 0;">' +
-          '<label>' + t("deep_link") + ' (Pro/Super)' + helpLinkHtml('deep-link-va-smart-fallback-la-gi-huong-dan-cau-hinh', 'Deep Link là gì? Xem hướng dẫn sử dụng') + '</label>' +
-          '<input type="url" id="f_dl_ios" placeholder="iOS app link (vd: myapp://)" style="margin-top:8px;">' +
-          '<input type="url" id="f_dl_android" placeholder="Android app link" style="margin-top:8px;">' +
-        '</div>' +
-        (state.limits && (state.limits.hasPixel || state.limits.hasABTest || state.limits.hasDeepLink) ?
-          '<p style="margin-top:10px;"><a href="javascript:void(0)" onclick="toggleAdvFields()">' + t("adv_options") + '</a></p>' : '')
-      ) : '<p class="hint">' + t("home_guest_hint") + '</p>') +
+      userFieldsHtml +
       '<div style="margin-top:18px;"><button class="btn btn-primary" type="submit">' + t("shorten_now") + '</button></div>' +
     '</form>' +
     '<div id="shortenResult"></div>' +
     '</div>' +
-    '<div class="card">' +
-    '<h2>' + li('qr', 20) + ' ' + t("home_qr_promo_title") + '</h2>' +
-    '<p class="sub">' + t("home_qr_promo_desc") + '</p>' +
-    '<button class="btn btn-ghost" onclick="navigate(&#39;bulkqr&#39;)">' + t("home_qr_promo_btn") + '</button>' +
-    '</div>';
+    '<div class="home-duo">' + qrCardHtml + sideCardHtml + '</div>';
+
+  if (isUser) loadHomeManageStats();
 
   document.getElementById("shortenForm").addEventListener("submit", function(e){
     e.preventDefault();
-    var url = document.getElementById("f_url").value.trim();
-    var body = { url: url };
-    var codeEl = document.getElementById("f_code");
-    var titleEl = document.getElementById("f_title");
-    var expiryEl = document.getElementById("f_expiry");
-    var pwEl = document.getElementById("f_password");
-    if (codeEl && codeEl.value.trim()) body.customCode = codeEl.value.trim();
-    if (titleEl && titleEl.value.trim()) body.title = titleEl.value.trim();
-    if (expiryEl && expiryEl.value) body.expiryDate = expiryEl.value;
-    if (pwEl && pwEl.value.trim()) body.password = pwEl.value.trim();
-    var pixels = [];
-    var fbEl = document.getElementById("f_pixel_fb");
-    var gaEl = document.getElementById("f_pixel_ga");
-    var ttEl = document.getElementById("f_pixel_tt");
-    if (fbEl && fbEl.value.trim()) pixels.push({ type: "facebook", id: fbEl.value.trim() });
-    if (gaEl && gaEl.value.trim()) pixels.push({ type: "ga", id: gaEl.value.trim() });
-    if (ttEl && ttEl.value.trim()) pixels.push({ type: "tiktok", id: ttEl.value.trim() });
-    if (pixels.length > 0) body.pixels = pixels;
-    var abUrls = [];
-    var ab1El = document.getElementById("f_ab1");
-    var ab2El = document.getElementById("f_ab2");
-    if (ab1El && ab1El.value.trim()) abUrls.push(ab1El.value.trim());
-    if (ab2El && ab2El.value.trim()) abUrls.push(ab2El.value.trim());
-    if (abUrls.length > 0) body.abUrls = abUrls;
-    var deepLinks = {};
-    var dlIosEl = document.getElementById("f_dl_ios");
-    var dlAndroidEl = document.getElementById("f_dl_android");
-    if (dlIosEl && dlIosEl.value.trim()) deepLinks.ios = dlIosEl.value.trim();
-    if (dlAndroidEl && dlAndroidEl.value.trim()) deepLinks.android = dlAndroidEl.value.trim();
-    if (deepLinks.ios || deepLinks.android) body.deepLinks = deepLinks;
+    var submitBtn = e.target.querySelector('button[type="submit"]');
+    if (submitBtn){ if (submitBtn.disabled) return; submitBtn.disabled = true; submitBtn.style.opacity = "0.6"; }
+    var body = collectHomeLinkBody();
     var box = document.getElementById("shortenResult");
     box.innerHTML = '<p class="hint">' + t("processing") + '</p>';
     api("/api/links", "POST", body).then(function(data){
@@ -4418,6 +4453,7 @@ function renderHome(app){
       document.getElementById("btnCopyRes").onclick = function(){ copyText(link.shortUrl, this); };
       var qrInput = document.getElementById("homeQrUrl");
       if (qrInput) { qrInput.value = link.shortUrl; }
+      if (isUser) loadHomeManageStats();
     }).catch(function(err){
       var msg = err.message;
       // Dịch error code sang ngôn ngữ hiện tại
@@ -4426,20 +4462,75 @@ function renderHome(app){
         msg = t(key) || msg;
       }
       box.innerHTML = '<div class="msg msg-error">' + esc(msg) + '</div>';
+    }).then(function(){
+      if (submitBtn){ submitBtn.disabled = false; submitBtn.style.opacity = "1"; }
     });
   });
 
 }
 
+// Gom dữ liệu form tạo link ở trang chủ (form đầy đủ cho người đã đăng nhập, form đơn giản cho khách).
+function collectHomeLinkBody(){
+  var val = function(id){ var el = document.getElementById(id); return el && el.value ? el.value.trim() : ""; };
+  var campaign = val("f_campaign");
+  var body = { url: applyUtmParams(val("f_url"), campaign) };
+  if (val("f_code")) body.customCode = val("f_code");
+  if (val("f_title")) body.title = val("f_title");
+  if (campaign) body.campaign = campaign;
+  if (val("f_tags")) body.tags = val("f_tags").split(",").map(function(t2){ return t2.trim(); }).filter(Boolean);
+  if (val("f_expiry")) body.expiryDate = val("f_expiry");
+  if (val("f_password")) body.password = val("f_password");
+  if (val("f_domain")) body.customDomain = val("f_domain");
+  var pixels = [];
+  if (val("f_pixel_fb")) pixels.push({ type: "facebook", id: val("f_pixel_fb") });
+  if (val("f_pixel_ga")) pixels.push({ type: "ga", id: val("f_pixel_ga") });
+  if (val("f_pixel_tt")) pixels.push({ type: "tiktok", id: val("f_pixel_tt") });
+  if (pixels.length > 0) body.pixels = pixels;
+  var abUrls = [];
+  if (val("f_ab1")) abUrls.push(val("f_ab1"));
+  if (val("f_ab2")) abUrls.push(val("f_ab2"));
+  if (abUrls.length > 0) body.abUrls = abUrls;
+  var deepLinks = {};
+  if (val("f_dl_ios")) deepLinks.ios = val("f_dl_ios");
+  if (val("f_dl_android")) deepLinks.android = val("f_dl_android");
+  if (deepLinks.ios || deepLinks.android) body.deepLinks = deepLinks;
+  return body;
+}
+
+// Số link + lượt click hiển thị trên thẻ "Quản lý link" (tải sau khi vẽ trang, không chặn form).
+function loadHomeManageStats(){
+  var box = document.getElementById("homeManageStats");
+  if (!box) return;
+  api("/api/analytics/overview").then(function(res){
+    var s = (res && res.stats) || {};
+    var again = document.getElementById("homeManageStats");
+    if (!again) return;
+    again.innerHTML =
+      '<div><b>' + fmtNum(s.userLinksCount || 0) + '</b><span>' + t("home_manage_links") + '</span></div>' +
+      '<div><b>' + fmtNum(s.userTotalClicks || 0) + '</b><span>' + t("home_manage_clicks") + '</span></div>';
+  }).catch(function(){ var b = document.getElementById("homeManageStats"); if (b) b.innerHTML = ""; });
+}
+
 function updateHomePreview(){
   var url = document.getElementById("f_url").value.trim();
-  var alias = document.getElementById("f_code").value.trim();
+  var aliasEl = document.getElementById("f_code");
+  var alias = aliasEl ? aliasEl.value.trim() : "";
+  var domEl = document.getElementById("f_domain");
+  var domain = domEl ? domEl.value.trim() : "";
   var previewBox = document.getElementById("homeLinkPreview");
   var previewUrl = document.getElementById("homePreviewUrl");
   if (!previewBox || !previewUrl) return;
   if (!url){ previewBox.style.display = "none"; return; }
   previewBox.style.display = "block";
-  var base = location.origin + "/";
+  var base;
+  if (domain){
+    var d = domain.replace("https://", "").replace("http://", "");
+    while (d.endsWith("/")){ d = d.slice(0, -1); }
+    if (d.indexOf(".") === -1){ d = d + ".shurlvn.com"; }
+    base = "https://" + d + "/";
+  } else {
+    base = location.origin + "/";
+  }
   previewUrl.textContent = alias ? (base + alias) : (base + "...");
 }
 function toggleAdvFields(){
@@ -4658,33 +4749,6 @@ function bindRowActions(){
     if (forceBtn) forceBtn.onclick = function(e){ e.stopPropagation(); forceDeleteLink(code); };
   });
 }
-
-function updatePreview(){
-  var url = document.getElementById("c_url").value.trim();
-  var alias = document.getElementById("c_code").value.trim();
-  var domEl = document.getElementById("c_domain");
-  var domain = domEl ? domEl.value.trim() : "";
-  var previewBox = document.getElementById("linkPreview");
-  var previewUrl = document.getElementById("previewUrl");
-  if (!url){ previewBox.style.display = "none"; return; }
-  previewBox.style.display = "block";
-  var base;
-  if (domain){
-    var d = domain.replace("https://", "").replace("http://", "");
-    while (d.endsWith("/")){ d = d.slice(0, -1); }
-    if (d.indexOf(".") === -1){ d = d + ".shurlvn.com"; }
-    base = "https://" + d + "/";
-  } else {
-    base = location.origin + "/";
-  }
-  previewUrl.textContent = alias ? (base + alias) : (base + "...");
-}
-
-document.addEventListener("input", function(e){
-  if (e.target && (e.target.id === "c_url" || e.target.id === "c_code" || e.target.id === "c_domain")) {
-    updatePreview();
-  }
-});
 
 var bulkQrData = [];
 
@@ -4935,6 +4999,28 @@ function renderResetPassword(app){
 function renderRegister(app){ renderAuthShell(app, "register"); }
 
 // ---------- DASHBOARD ----------
+// Hàng thẻ "Công cụ miễn phí" ở cuối trang dashboard — mở các trang /tools (tiếng Việt) hoặc /en/tools (ngôn ngữ khác).
+function dashToolsRowHtml(){
+  var isVi = currentLang === "vi";
+  var base = isVi ? "/tools/" : "/en/tools/";
+  var items = isVi ? [
+    { href: base + "dem-ky-tu", icon: "list", name: "Đếm ký tự", desc: "Kiểm tra giới hạn caption, quảng cáo, SEO." },
+    { href: base + "tao-link-utm", icon: "megaphone", name: "Tạo link UTM", desc: "Gắn tham số theo dõi chiến dịch." },
+    { href: base + "bo-dau-tieng-viet", icon: "code2", name: "Bỏ dấu / tạo slug", desc: "Bỏ dấu tiếng Việt, tạo đường dẫn thân thiện." }
+  ] : [
+    { href: base + "character-counter", icon: "list", name: "Character counter", desc: "Check caption, ad and SEO limits." },
+    { href: base + "utm-link-builder", icon: "megaphone", name: "UTM link builder", desc: "Add campaign tracking parameters." },
+    { href: base + "slug-generator", icon: "code2", name: "Accent remover / slug", desc: "Remove Vietnamese accents, build URL slugs." }
+  ];
+  return '<div class="page-head" style="margin-top:8px;"><h2 style="margin:0;">' + li('wrench', 20) + ' ' + t("dash_tools_title") + '</h2></div>' +
+    '<p class="sub" style="margin-top:-8px;">' + t("dash_tools_desc") + '</p>' +
+    '<div class="tools-row">' +
+    items.map(function(it){
+      return '<a class="card tool-card" href="' + it.href + '"><h3>' + li(it.icon, 18) + ' ' + it.name + '</h3><p class="hint">' + it.desc + '</p></a>';
+    }).join("") +
+    '</div>';
+}
+
 function renderDashboard(app){
   var limits = state.limits || {};
   var canAdvanced = limits.hasAdvancedManagement || state.user.role === "admin";
@@ -4943,43 +5029,6 @@ function renderDashboard(app){
   var isAdmin = state.user && state.user.role === "admin";
   var linksPage = 1;
   var LINKS_PAGE_SIZE = 10;
-
-  // ====== HTML form + QR (chỉ build 1 lần) ======
-  function createSectionHtml(){
-    return '<div class="card"><h2>' + t("create_new") + '</h2>' +
-      '<form id="createForm">' +
-      '<label>' + t("url_to_shorten") + '</label><input type="url" id="c_url" required placeholder="https://..." oninput="updatePreview()">' +
-      '<div id="linkPreview" style="display:none;margin:16px 0;padding:14px 16px;background:var(--stat-bg);border:1px solid var(--border);border-radius:10px;">' +
-      '<div style="font-size:13px;color:var(--muted);margin-bottom:6px;">' + li('link', 14) + ' Link rút gọn của bạn:</div>' +
-      '<div id="previewUrl" style="font-size:16px;font-weight:600;color:#818cf8;word-break:break-all;"></div>' +
-      '</div>' +
-      '<div class="row">' +
-        '<div><label>' + t("custom_alias") + helpLinkHtml('dat-ten-link-tuy-chinh', 'Tên rút gọn tuỳ chỉnh là gì? Xem hướng dẫn sử dụng') + '</label><input type="text" id="c_code" placeholder="tuy-chon" oninput="updatePreview()"></div>' +
-        '<div><label>' + t("title_field") + '</label><input type="text" id="c_title" placeholder="' + t("optional") + '"></div>' +
-      '</div>' +
-      '<div class="row">' +
-        '<div><label>' + t("campaign") + helpLinkHtml('campaign-la-gi-huong-dan-quan-ly-link-theo-chien-dich', 'Campaign là gì? Xem hướng dẫn sử dụng') + '</label><input type="text" id="c_campaign" placeholder="' + t("optional") + '"></div>' +
-        '<div><label>' + t("tags") + '</label><input type="text" id="c_tags" placeholder="vd: sale, q1"></div>' +
-      '</div>' +
-      '<p style="margin-top:6px;"><a href="javascript:void(0)" onclick="toggleUtmFields()">' + t("utm_builder_toggle") + '</a>' + helpLinkHtml('utm-tracking-la-gi-ket-hop-rut-gon-link', 'UTM Tracking là gì? Xem hướng dẫn sử dụng') + '</p>' +
-      '<div id="utmFields" style="display:none;margin-top:6px;">' +
-        '<p class="hint">' + t("utm_builder_hint") + '</p>' +
-        '<div class="row">' +
-          '<div><label>' + t("utm_source") + '</label><input type="text" id="u_source" placeholder="facebook"></div>' +
-          '<div><label>' + t("utm_medium") + '</label><input type="text" id="u_medium" placeholder="social"></div>' +
-        '</div>' +
-        '<div class="row">' +
-          '<div><label>' + t("utm_term") + '</label><input type="text" id="u_term" placeholder="' + t("optional") + '"></div>' +
-          '<div><label>' + t("utm_content") + '</label><input type="text" id="u_content" placeholder="' + t("optional") + '"></div>' +
-        '</div>' +
-      '</div>' +
-      (canExpiry ? '<div class="row"><div><label>' + t("expiry_date") + helpLinkHtml('dat-ngay-het-han-cho-link', 'Đặt ngày hết hạn cho link là gì? Xem hướng dẫn sử dụng') + '</label><input type="date" id="c_expiry"></div>' +
-        (canCustomDomain ? '<div><label>' + t("custom_domain") + helpLinkHtml('tao-ten-mien-rieng-cho-link', 'Tên miền riêng là gì? Xem hướng dẫn sử dụng') + '</label><input type="text" id="c_domain" placeholder="ten.shurl.com" oninput="updatePreview()"></div>' : '<div><label>' + t("custom_domain") + '</label><input type="text" id="c_domain" placeholder="' + t("upgrade_to_unlock") + '" disabled style="opacity:0.5;"></div>') +
-        '</div>' : '') +
-      '<div id="createMsg"></div>' +
-      '<div style="margin-top:18px;"><button class="btn btn-primary" type="submit">' + t("create_new") + '</button></div>' +
-      '</form></div>';
-  }
 
   // ====== Bảng link — header (render 1 lần) ======
   function tableHeadHtml(){
@@ -4993,7 +5042,7 @@ function renderDashboard(app){
       '<div style="overflow-x:auto;"><table><thead><tr>' +
       '<th>' + t("col_link") + '</th><th>' + t("col_dest") + '</th>' + (isAdmin ? '<th>Chủ sở hữu</th>' : '') + '<th>' + t("col_clicks") + '</th><th>' + t("col_status") + '</th><th>' + t("col_created") + '</th>' +
       '</tr></thead><tbody id="linksBody"></tbody></table></div>' +
-      '<p class="hint" id="emptyHint" style="margin-top:14px;display:none;">Chưa có link nào. Tạo link đầu tiên ở trên.</p>' +
+      '<p class="hint" id="emptyHint" style="margin-top:14px;display:none;">Chưa có link nào. <a href="#/home">Tạo link đầu tiên ở trang chủ</a>.</p>' +
       '<div id="linksPager"></div>' +
       '</div>';
   }
@@ -5098,77 +5147,15 @@ function renderDashboard(app){
     });
   }
 
-  // ====== Xử lý submit form tạo link (dùng chung) ======
   refreshLinkList = renderLinkRows;
-  function handleCreateSubmit(e){
-    e.preventDefault();
-    var submitBtn = e.target.querySelector('button[type="submit"]');
-    if (submitBtn){ if (submitBtn.disabled) return; submitBtn.disabled = true; submitBtn.style.opacity = "0.6"; }
-    var msg = document.getElementById("createMsg");
-    msg.innerHTML = "";
-    var campaign = document.getElementById("c_campaign").value.trim();
-    var body = { url: applyUtmParams(document.getElementById("c_url").value.trim(), campaign) };
-    var code = document.getElementById("c_code").value.trim();
-    var title = document.getElementById("c_title").value.trim();
-    var tags = document.getElementById("c_tags").value.trim();
-    if (code) body.customCode = code;
-    if (title) body.title = title;
-    if (campaign) body.campaign = campaign;
-    if (tags) body.tags = tags.split(",").map(function(t2){ return t2.trim(); }).filter(Boolean);
-    var expEl = document.getElementById("c_expiry");
-    var domEl = document.getElementById("c_domain");
-    if (expEl && expEl.value) body.expiryDate = expEl.value;
-    if (domEl && domEl.value.trim()) body.customDomain = domEl.value.trim();
-    api("/api/links", "POST", body).then(function(data){
-      var shortUrl = data.link ? data.link.shortUrl : null;
-      msg.innerHTML = '<div class="msg msg-ok"> ✓ Đã tạo: <a href="' + shortUrl + '" target="_blank" style="color:#818cf8;">' + shortUrl + '</a></div>';
-      var previewBox = document.getElementById("linkPreview");
-      if (previewBox){
-        previewBox.style.display = "block";
-        document.getElementById("previewUrl").innerHTML = '<a href="' + shortUrl + '" target="_blank" style="color:#818cf8;text-decoration:none;">' + shortUrl + '</a>';
-      }
-      // V3: Thêm link mới trực tiếp vào state và render ngay — không cần reload
-      if (data.link){
-        var newLink = data.link;
-        newLink.totalClicks = newLink.totalClicks || 0;
-        newLink.isEnabled = newLink.isEnabled !== false;
-        newLink.isDeleted = false;
-        newLink.createdAt = newLink.createdAt || new Date().toISOString();
-        var existing = state.links.filter(function(l){ return l.code === newLink.code; })[0];
-        if (existing){
-          Object.keys(newLink).forEach(function(k){ existing[k] = newLink[k]; });
-        } else {
-          state.links.unshift(newLink);
-          linksPage = 1;
-        }
-        renderLinkRows();
-        api("/api/analytics/overview").then(function(anRes){
-          var stats = anRes.stats;
-          var statsGrid = document.getElementById("statsGrid");
-          if (statsGrid){
-            statsGrid.innerHTML =
-              '<div class="stat"><div class="num">' + fmtNum(stats.userLinksCount) + '</div><div class="lbl">' + t("my_links") + '</div></div>' +
-              '<div class="stat"><div class="num">' + fmtNum(stats.userTotalClicks) + '</div><div class="lbl">' + t("total_clicks") + '</div></div>';
-          }
-        }).catch(function(){});
-      }
-    }).catch(function(err){
-      msg.innerHTML = '<div class="msg msg-error">' + esc(err.message) + '</div>';
-    }).then(function(){
-      if (submitBtn){ submitBtn.disabled = false; submitBtn.style.opacity = "1"; }
-    });
-  }
 
   // ====== Render skeleton ngay lập tức (form/QR/bảng chỉ render 1 lần) ======
   app.innerHTML = guideCard("shorturls") +
     upgradeBanner() +
-    '<div class="page-head"><h1>' + li('link', 24) + ' Short URLs</h1><div class="page-actions"><button class="btn btn-primary" onclick="document.getElementById(&#39;createForm&#39;).scrollIntoView({behavior:&#39;smooth&#39;});">' + li('plus', 16) + ' ' + t("create_new") + '</button></div></div>' +
+    '<div class="page-head"><h1>' + li('link', 24) + ' Short URLs</h1><div class="page-actions"><button class="btn btn-primary" onclick="navigate(&#39;home&#39;)">' + li('plus', 16) + ' ' + t("create_new") + '</button></div></div>' +
     '<div class="grid-stats" id="statsGrid"><div class="stat"><div class="num">...</div><div class="lbl">' + t("my_links") + '</div></div><div class="stat"><div class="num">...</div><div class="lbl">' + t("total_clicks") + '</div></div></div>' +
-    createSectionHtml() +
-    tableHeadHtml();
-
-  // Bind form MỘT LẦN duy nhất
-  document.getElementById("createForm").addEventListener("submit", handleCreateSubmit);
+    tableHeadHtml() +
+    dashToolsRowHtml();
 
   // ====== Tải data nền — chỉ cập nhật stats + tbody, không đè DOM ======
   Promise.all([api("/api/links"), api("/api/analytics/overview")]).then(function(res){
