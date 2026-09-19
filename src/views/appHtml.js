@@ -3,6 +3,8 @@
 // split — it has no server-value interpolation except googleAdsGtagHead below).
 
 import { googleAdsGtagHead } from "./blogHtml.js";
+import { QR_TYPES_CLIENT_SRC } from "./qrTypes.js";
+import { QR_DESIGN_CLIENT_SRC } from "./qrDesign.js";
 
 export function renderAppHtml(env) {
   return `<!DOCTYPE html>
@@ -423,6 +425,19 @@ footer a{display:inline-flex;align-items:center;justify-content:center;min-heigh
 .qr-type-toggle{display:flex;gap:8px;margin-bottom:4px;}
 .qr-type-btn{flex:1;padding:9px 12px;border:1px solid var(--input-border);border-radius:10px;background:var(--input-bg);color:var(--muted);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.15s ease;}
 .qr-type-btn.active{border-color:var(--indigo);background:rgba(99,102,241,0.12);color:var(--indigo);}
+.qr-type-toggle{flex-wrap:wrap;}
+.qr-type-btn{flex:1 1 30%;min-width:104px;}
+.qr-tp{margin-top:6px;}
+.qr-tp label{display:block;margin-top:10px;font-size:13px;}
+.qr-tp .row > div{flex:1;min-width:150px;}
+.qr-tp-err{color:#ef4444;font-size:12px;margin-top:8px;min-height:16px;}
+.qd-panel{margin-top:6px;}
+.qd-panel label{display:block;margin-top:10px;font-size:13px;}
+.qd-panel label.qd-chk{display:flex;align-items:center;gap:8px;cursor:pointer;}
+.qd-panel label.qd-chk input{width:auto;}
+.qd-swatches{display:flex;gap:8px;margin-top:8px;}
+.qd-swatch{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);cursor:pointer;padding:0;}
+.qd-preview-canvas{display:block;max-width:100%;height:auto;margin:0 auto;border-radius:10px;box-shadow:0 6px 24px rgba(15,23,42,0.18);}
 .qr-color-row{display:flex;gap:16px;flex-wrap:wrap;}
 .qr-color-field{flex:1;min-width:130px;}
 .qr-color-field label{display:block;margin-bottom:4px;}
@@ -5724,6 +5739,10 @@ function renderBulkQR(app){
     '<div class="qr-type-toggle" id="qrWsTypeToggle">' +
     '<button type="button" class="qr-type-btn active" data-qrtype="url">' + li('link', 14) + ' ' + t("qr_type_url") + '</button>' +
     '<button type="button" class="qr-type-btn" data-qrtype="text">' + li('file', 14) + ' ' + t("qr_type_text") + '</button>' +
+    '<button type="button" class="qr-type-btn" data-qrtype="vietqr">' + li('card', 14) + ' ' + qrT("t_vietqr") + '</button>' +
+    '<button type="button" class="qr-type-btn" data-qrtype="zalo">' + li('message', 14) + ' ' + qrT("t_zalo") + '</button>' +
+    '<button type="button" class="qr-type-btn" data-qrtype="wifi">' + li('globe', 14) + ' ' + qrT("t_wifi") + '</button>' +
+    '<button type="button" class="qr-type-btn" data-qrtype="vcard">' + li('user', 14) + ' ' + qrT("t_vcard") + '</button>' +
     '</div>' +
 
     '<div class="qr-step-label">' + t("qr_step_input") + '</div>' +
@@ -5740,6 +5759,7 @@ function renderBulkQR(app){
     '<label>' + t("qr_text_label") + '</label>' +
     '<textarea id="qrWsText" rows="3" class="qr-existing-select" style="resize:vertical;font-family:inherit;"></textarea>' +
     '</div>' +
+    '<div id="qrWsTypeForms">' + qrTypesFormsHtml() + '</div>' +
 
     '<div class="qr-collapsible-toggle" id="qrWsUtmToggle">' + li('plus', 12) + ' ' + t("utm_builder_toggle") + helpLinkHtml('utm-tracking-la-gi-ket-hop-rut-gon-link', 'UTM Tracking là gì? Xem hướng dẫn sử dụng') + '</div>' +
     '<div id="utmFields" style="display:none;">' +
@@ -5753,6 +5773,8 @@ function renderBulkQR(app){
     '</div>' +
     '<button type="button" class="btn btn-ghost btn-sm" id="qrWsApplyUtmBtn" style="margin-top:8px;">' + t("utm_builder_title") + '</button>' +
     '</div>' +
+
+    '<div id="qrWsDesignWrap">' + qrDesignPanelHtml() + '</div>' +
 
     '<div class="qr-step-label">' + t("qr_step_customize") + '</div>' +
     '<div class="qr-color-row">' +
@@ -5860,13 +5882,19 @@ var qrWsPresetList = [
   { fg: "#065f46", bg: "#ecfdf5" }
 ];
 
+${QR_TYPES_CLIENT_SRC}
+
+${QR_DESIGN_CLIENT_SRC}
+
+var qrWsType = "url";
 function qrWsGetType(){
-  var textWrap = document.getElementById("qrWsTextWrap");
-  return (textWrap && textWrap.style.display !== "none") ? "text" : "url";
+  return qrWsType;
 }
 
 function qrWsGetData(){
-  if (qrWsGetType() === "text") {
+  var type = qrWsGetType();
+  if (qrTypeIsSpecial(type)) return qrTypeBuildData(type);
+  if (type === "text") {
     var textEl = document.getElementById("qrWsText");
     return textEl ? textEl.value : "";
   }
@@ -5917,7 +5945,7 @@ function qrWsBuildStyling(data, opts, sizeOverride){
     width: size,
     height: size,
     type: "canvas",
-    data: data,
+    data: qrUtf8(data),
     margin: opts.margin,
     qrOptions: { errorCorrectionLevel: qrWsLogoDataUrl ? "H" : "M" },
     dotsOptions: { color: opts.color, type: qrWsDotStyle },
@@ -5950,9 +5978,59 @@ function qrWsCheckContrast(){
   warn.style.display = Math.abs(l1 - l2) < 60 ? "flex" : "none";
 }
 
+var qrWsDesignToken = 0;
+var qrWsDesignCanvas = null;
+function qrDesignRefreshButtons(hasCard){
+  var dlSvg = document.getElementById("qrWsDlSvgBtn");
+  if (dlSvg) dlSvg.style.display = hasCard ? "none" : "";
+}
+function qrWsCheckPrintReadyCanvas(cv, data, tok){
+  var panel = document.getElementById("qrWsPrintCheck");
+  var msgEl = document.getElementById("qrWsPrintCheckMsg");
+  if (!panel || !msgEl || typeof QrScanner === "undefined") { if (panel) panel.style.display = "none"; return; }
+  panel.style.display = "block";
+  msgEl.innerHTML = '<p class="hint" style="margin:0;">' + t("processing") + '</p>';
+  QrScanner.scanImage(cv, { returnDetailedScanResult: true }).then(function(decoded){
+    if (tok !== qrWsDesignToken) return;
+    if (decoded && decoded.data === data) {
+      msgEl.innerHTML = '<div class="msg msg-ok" style="margin:0;">' + t("qr_print_check_ok") + '</div>';
+    } else {
+      msgEl.innerHTML = '<div class="msg msg-error" style="margin:0;">' + t("qr_print_check_fail") + '</div>';
+    }
+  }).catch(function(){
+    if (tok !== qrWsDesignToken) return;
+    msgEl.innerHTML = '<div class="msg msg-error" style="margin:0;">' + t("qr_print_check_fail") + '</div>';
+  });
+}
+// Dựng thẻ/bảng thiết kế quanh QR (VietQR, Danh thiếp) rồi thay ô xem trước; lỗi thì giữ QR thường.
+function qrWsRenderDesign(data){
+  var type = qrWsGetType();
+  var box = document.getElementById("qrWsPreviewBox");
+  var dlPng = document.getElementById("qrWsDlPngBtn");
+  var tok = ++qrWsDesignToken;
+  if (dlPng) dlPng.disabled = true;
+  qrDesignBuild(data, type).then(function(cv){
+    if (tok !== qrWsDesignToken || !box) return;
+    qrWsDesignCanvas = cv;
+    cv.className = "qd-preview-canvas";
+    box.innerHTML = "";
+    box.appendChild(cv);
+    if (dlPng) dlPng.disabled = false;
+    qrDesignRefreshButtons(true);
+    qrWsCheckPrintReadyCanvas(cv, data, tok);
+  }).catch(function(){
+    if (tok !== qrWsDesignToken) return;
+    if (dlPng) dlPng.disabled = false;
+    qrWsCheckPrintReady(data, true);
+  });
+}
+
 function qrWsUpdatePreview(){
   var box = document.getElementById("qrWsPreviewBox");
   if (!box) return;
+  qrWsDesignToken++;
+  qrWsDesignCanvas = null;
+  qrDesignRefreshButtons(false);
   qrWsCheckContrast();
   var dataEl = document.getElementById("qrWsPreviewData");
   var dlPng = document.getElementById("qrWsDlPngBtn");
@@ -5995,9 +6073,11 @@ function qrWsUpdatePreview(){
   if (dlSvg) dlSvg.disabled = false;
   if (copyBtn) copyBtn.disabled = false;
   qrWsCheckPrintReady(data);
+  if (qrDesignActive(qrWsGetType())) qrWsRenderDesign(data);
 }
 
-function qrWsCheckPrintReady(data){
+function qrWsCheckPrintReady(data, force){
+  if (!force && qrDesignActive(qrWsGetType())) return;
   var panel = document.getElementById("qrWsPrintCheck");
   var msgEl = document.getElementById("qrWsPrintCheckMsg");
   if (!panel || !msgEl || !qrWsCurrentQr) { if (panel) panel.style.display = "none"; return; }
@@ -6038,20 +6118,21 @@ function qrWsUpdatePreviewDebounced(){
 }
 
 function qrWsSetType(type){
+  var known = ["url", "text", "vietqr", "zalo", "wifi", "vcard"];
+  if (known.indexOf(type) === -1) type = "url";
+  qrWsType = type;
   var urlWrap = document.getElementById("qrWsUrlWrap");
   var textWrap = document.getElementById("qrWsTextWrap");
-  var btnUrl = document.querySelector('.qr-type-btn[data-qrtype="url"]');
-  var btnText = document.querySelector('.qr-type-btn[data-qrtype="text"]');
   if (!urlWrap || !textWrap) return;
-  if (type === "text") {
-    urlWrap.style.display = "none"; textWrap.style.display = "block";
-    if (btnUrl) btnUrl.classList.remove("active");
-    if (btnText) btnText.classList.add("active");
-  } else {
-    urlWrap.style.display = "block"; textWrap.style.display = "none";
-    if (btnText) btnText.classList.remove("active");
-    if (btnUrl) btnUrl.classList.add("active");
-  }
+  urlWrap.style.display = (type === "url") ? "block" : "none";
+  textWrap.style.display = (type === "text") ? "block" : "none";
+  document.querySelectorAll(".qr-tp").forEach(function(p){
+    p.style.display = (p.getAttribute("data-qrpanel") === type) ? "block" : "none";
+  });
+  document.querySelectorAll(".qr-type-btn").forEach(function(b){
+    b.classList.toggle("active", b.getAttribute("data-qrtype") === type);
+  });
+  qrDesignSetType(type);
   qrWsUpdatePreview();
 }
 
@@ -6162,6 +6243,7 @@ function qrWsRemoveLogo(){
 function qrWsDownload(format){
   var data = qrWsGetData();
   if (!data || !qrWsIsValid(data)) return;
+  if (format !== "svg" && qrWsDesignCanvas) { qrDesignDownload(qrWsDesignCanvas); return; }
   var opts = qrWsReadFormOptions();
   var qr = qrWsBuildStyling(data, opts);
   qr.download({ name: "qr_" + Date.now(), extension: format === "svg" ? "svg" : "png" });
@@ -6527,6 +6609,7 @@ function qrDynDownload(qrId){
 
 function qrWsBindWorkspace(){
   qrWsMode = "static";
+  qrWsType = "url";
   qrWsResolved = { url: null, code: null };
   qrDynItems = [];
   qrDynPage = 1;
@@ -6571,6 +6654,8 @@ function qrWsBindWorkspace(){
     qrWsUpdatePreviewDebounced();
   });
   if (textEl) textEl.addEventListener("input", qrWsUpdatePreviewDebounced);
+  qrTypesBind(qrWsUpdatePreviewDebounced);
+  qrDesignBind(qrWsUpdatePreviewDebounced);
 
   var colorEl = document.getElementById("qrWsColor");
   var colorHexEl = document.getElementById("qrWsColorHex");
