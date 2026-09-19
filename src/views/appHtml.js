@@ -214,7 +214,7 @@ export function renderAppHtml(env) {
   --h2-color:#1e293b; --stat-num-color:#1e293b;
   --input-bg:#f8fafc; --input-border:#e2e8f0;
   --stat-bg:#f8fafc; --copybox-bg:#f8fafc;
-  --nm-in:rgba(15,23,42,0.3); --nm-card:#faf9f5; --nm-bg:#faf9f5; --nm-hi:#ffffff; --nm-lo:rgba(15,23,42,0.2); --nm-ring:rgba(99,102,241,0.5); --nm-label:#6366f1;
+  --nm-in:rgba(15,23,42,0.3); --nm-card:#ffffff; --nm-bg:#faf9f5; --nm-hi:#ffffff; --nm-lo:rgba(15,23,42,0.2); --nm-ring:rgba(99,102,241,0.5); --nm-label:#6366f1;
   --code-color:#6366f1; --link-color:#0ea5e9;
   --tag-bg:rgba(99,102,241,0.1); --tag-color:#6366f1;
   --hover-row:#f1f5f9;
