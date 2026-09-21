@@ -164,6 +164,16 @@ export function renderAppHtml(env) {
 .sb-user-menu-sep{height:1px;background:var(--border);margin:4px 0;}
 .sb-content{flex:1;padding:20px;overflow-x:hidden;}
 .sb-content #app{transition:opacity 0.18s ease, transform 0.18s ease;}
+.slide-panel{position:fixed;top:0;right:0;bottom:0;left:60px;z-index:26;display:none;flex-direction:column;background:var(--bg);box-shadow:-14px 0 36px rgba(15,23,42,0.22);transform:translateX(100%);transition:transform 0.4s cubic-bezier(0.22,0.85,0.3,1);will-change:transform;}
+.slide-panel.open{transform:translateX(0);}
+.slide-bar{display:flex;align-items:center;gap:14px;padding:10px 16px;flex:none;background:var(--card-solid);border-bottom:1px solid var(--border);}
+.slide-back{display:inline-flex;align-items:center;gap:6px;}
+.slide-title{font-size:15px;color:var(--text);}
+.slide-body{flex:1;min-height:0;overflow:auto;}
+.slide-frame{display:block;width:100%;height:100%;border:0;background:#f8fafc;}
+.slide-legal{max-width:820px;margin:0 auto;padding:24px 20px 60px;}
+@media(max-width:768px){.slide-panel{left:0;}}
+@media(prefers-reduced-motion:reduce){.slide-panel{transition:none;}}
 .sb-overlay{display:none;position:fixed;inset:0;background:var(--overlay-bg);backdrop-filter:blur(4px);z-index:25;}
 .sb-overlay.show{display:block;}
 .upsell-card{background:var(--upsell-bg);border:1px solid var(--upsell-border);border-radius:16px;padding:20px;overflow:visible;position:relative;min-height:180px;}
@@ -853,7 +863,7 @@ var i18n = {
     // ===== MISC =====
     days:"ngày", hours:"giờ", minutes:"phút", loading:"Đang tải...", footer_tagline:"Nền tảng rút gọn link đa tầng · An toàn · Nhanh chóng",
     footer_contact:"Liên hệ",
-    footer_terms:"Điều khoản sử dụng", footer_privacy:"Chính sách bảo mật", footer_blog:"Blog", footer_tools:"Công cụ", legal_last_updated:"Cập nhật lần cuối",
+    footer_terms:"Điều khoản sử dụng", footer_privacy:"Chính sách bảo mật", footer_blog:"Blog", footer_tools:"Công cụ", slide_back:"Quay lại", legal_last_updated:"Cập nhật lần cuối",
     terms_title:"Điều khoản sử dụng", terms_subtitle:"Quy định sử dụng dịch vụ SHORT URL.",
     privacy_title:"Chính sách bảo mật", privacy_subtitle:"Cách SHORT URL thu thập, sử dụng và bảo vệ thông tin của bạn.",
     register_legal_notice:"Bằng việc đăng ký, bạn đồng ý với", and:"và",
@@ -1311,7 +1321,7 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     // ===== MISC =====
     days:"days", hours:"hours", minutes:"minutes", loading:"Loading...", footer_tagline:"Multi-tier link shortening platform · Secure · Fast",
     footer_contact:"Contact",
-    footer_terms:"Terms of Service", footer_privacy:"Privacy Policy", footer_blog:"Blog", footer_tools:"Free tools", legal_last_updated:"Last updated",
+    footer_terms:"Terms of Service", footer_privacy:"Privacy Policy", footer_blog:"Blog", footer_tools:"Free tools", slide_back:"Back", legal_last_updated:"Last updated",
     terms_title:"Terms of Service", terms_subtitle:"Rules for using the SHORT URL service.",
     privacy_title:"Privacy Policy", privacy_subtitle:"How SHORT URL collects, uses, and protects your information.",
     register_legal_notice:"By signing up, you agree to our", and:"and",
@@ -4320,6 +4330,7 @@ function render(){
     var cleanUrl = window.location.origin + window.location.pathname + window.location.hash;
     window.history.replaceState({}, document.title, cleanUrl);
   }
+  closeSlide();
   var route = getRoute();
   renderNav();
   renderSidebars();
@@ -9618,6 +9629,97 @@ function renderFooter(){
   if (fPrivacy) fPrivacy.textContent = t("footer_privacy");
   if (fBlog) fBlog.textContent = t("footer_blog");
 }
+
+// ---------- SLIDE PANEL: Công cụ · Blog · Điều khoản · Chính sách ----------
+// Trang trượt từ phải sang và dừng sát thanh công cụ (thanh này vẫn bấm được để quay lại tính năng).
+// /tools và /blog vẫn là trang server riêng (SEO); panel chỉ nhúng chúng bằng iframe cùng origin.
+// Điều khoản/Chính sách được vẽ thẳng vào panel bằng renderTerms/renderPrivacy. Không đổi URL, chỉ thêm 1 mục lịch sử để nút Back đóng panel.
+var slideOpen = false;
+var SLIDE_LINKS = { footerToolsLink: "tools", footerBlogLink: "blog", footerTermsLink: "terms", footerPrivacyLink: "privacy" };
+function slidePanelEl(){
+  var p = document.getElementById("slidePanel");
+  if (p) return p;
+  p = document.createElement("div");
+  p.id = "slidePanel";
+  p.className = "slide-panel";
+  p.innerHTML = '<div class="slide-bar"><button type="button" class="btn btn-ghost btn-sm slide-back">' +
+    '<svg width="16" height="16" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg> <span></span></button>' +
+    '<strong class="slide-title"></strong></div><div class="slide-body"></div>';
+  p.querySelector(".slide-back").addEventListener("click", function(){
+    if (history.state && history.state.slide) history.back(); else closeSlide();
+  });
+  document.body.appendChild(p);
+  return p;
+}
+// Trang nhúng: ẩn header riêng (logo dẫn về "/" sẽ mở cả SPA lồng trong iframe) và chặn link về trang chủ.
+function slideFrameReady(e){
+  try {
+    var d = e.target.contentDocument;
+    if (!d || !d.head) return;
+    var st = d.createElement("style");
+    st.textContent = "header{display:none!important}";
+    d.head.appendChild(st);
+    d.addEventListener("click", function(ev){
+      var a = ev.target.closest ? ev.target.closest("a") : null;
+      if (!a || !a.href || ev.ctrlKey || ev.metaKey) return;
+      var u = new URL(a.href, d.location.href);
+      if (u.origin !== location.origin) { a.target = "_blank"; a.rel = "noopener"; return; }
+      if (u.pathname === "/") { ev.preventDefault(); closeSlide(); if (u.hash) location.hash = u.hash; }
+    });
+  } catch (err) {}
+}
+function openSlide(kind, url){
+  var p = slidePanelEl();
+  var titles = { tools: t("footer_tools"), blog: t("footer_blog"), terms: t("footer_terms"), privacy: t("footer_privacy") };
+  p.querySelector(".slide-title").textContent = titles[kind] || "";
+  p.querySelector(".slide-back span").textContent = t("slide_back");
+  var body = p.querySelector(".slide-body");
+  body.innerHTML = "";
+  body.scrollTop = 0;
+  if (kind === "terms" || kind === "privacy") {
+    var box = document.createElement("div");
+    box.className = "slide-legal";
+    body.appendChild(box);
+    if (kind === "terms") renderTerms(box); else renderPrivacy(box);
+  } else {
+    var f = document.createElement("iframe");
+    f.className = "slide-frame";
+    f.title = titles[kind] || "";
+    f.addEventListener("load", slideFrameReady);
+    f.src = url || (kind === "tools" ? (currentLang === "en" ? "/en/tools" : "/tools") : "/blog");
+    body.appendChild(f);
+  }
+  if (!slideOpen) { history.pushState({ slide: kind }, ""); slideOpen = true; }
+  p.style.display = "flex";
+  void p.offsetWidth;
+  p.classList.add("open");
+}
+function closeSlide(){
+  if (!slideOpen) return;
+  slideOpen = false;
+  var p = document.getElementById("slidePanel");
+  if (!p) return;
+  p.classList.remove("open");
+  setTimeout(function(){
+    if (slideOpen) return;
+    p.style.display = "none";
+    p.querySelector(".slide-body").innerHTML = "";
+  }, 420);
+}
+window.addEventListener("popstate", function(){ if (slideOpen) closeSlide(); });
+document.addEventListener("click", function(e){
+  var el = e.target;
+  if (!el || !el.closest || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return;
+  if (slideOpen && el.closest(".sb")) { closeSlide(); return; }
+  var a = el.closest("a");
+  if (!a || a.target === "_blank") return;
+  var kind = SLIDE_LINKS[a.id], href = a.getAttribute("href") || "";
+  var isCard = a.classList.contains("tool-card") && (href.indexOf("/tools") === 0 || href.indexOf("/en/tools") === 0);
+  if (isCard) kind = "tools";
+  if (!kind) return;
+  e.preventDefault();
+  openSlide(kind, isCard ? href : null);
+}, true);
 
 // ---------- AI ASSISTANT ("Hỏi AI" — sparkle icon in header, dropdown chat panel) ----------
 var aiChatHistory = [];

@@ -13,7 +13,7 @@ export const HTML_SECURITY_HEADERS = {
   ...BASE_SECURITY_HEADERS,
   "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
   "Cross-Origin-Opener-Policy": "same-origin",
-  "X-Frame-Options": "DENY"
+  "X-Frame-Options": "SAMEORIGIN"
 };
 
 export function json(body, status, corsHeaders, extraHeaders) {
