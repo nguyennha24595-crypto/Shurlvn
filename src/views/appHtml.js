@@ -326,6 +326,16 @@ tr:hover td{background:var(--hover-row);}
 .copybox .u{font-family:ui-monospace,monospace;color:var(--link-color);font-weight:700;flex:1;}
 footer{text-align:center;color:var(--muted2);font-size:12px;padding:30px 20px;}
 footer a{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 6px;}
+.site-footer{text-align:left;color:var(--muted);font-size:13px;padding:40px 8px 26px;margin-top:40px;border-top:1px solid var(--border);}
+.ft-grid{display:grid;grid-template-columns:1.7fr repeat(4,1fr);gap:28px;max-width:1100px;margin:0 auto;}
+.ft-logo{display:inline-block;font-size:20px;font-weight:800;background:linear-gradient(135deg,#6366f1,#a855f7);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:8px;}
+.ft-brand p{margin:0 0 10px;line-height:1.6;}
+.ft-col h4{font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text);margin:0 0 10px;}
+.ft-col a,.ft-brand a{display:flex;justify-content:flex-start;min-height:30px;padding:0;color:var(--muted);text-decoration:none;}
+.ft-brand a{display:inline-flex;}
+.ft-col a:hover,.ft-brand a:hover{color:var(--indigo);}
+.ft-bottom{max-width:1100px;margin:26px auto 0;padding-top:16px;border-top:1px solid var(--border);font-size:12px;color:var(--muted2);}
+@media(max-width:900px){.ft-grid{grid-template-columns:1fr 1fr;}.ft-brand{grid-column:1/-1;}}
 @media(max-width:640px){.row > *{min-width:100%;}}
 /* === LANGUAGE SWITCHER === */
 .upgrade-banner{background:var(--upsell-bg);border:1px solid var(--upsell-border);border-radius:12px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
@@ -570,7 +580,7 @@ ${googleAdsGtagHead(env)}
       <div id="app" class="fade-in"></div>
       <div id="sidebarLeft" style="display:none;"></div>
       <div id="sidebarRight" style="display:none;"></div>
-      <footer><span id="footerTagline"></span><br><a href="https://mail.google.com/mail/?view=cm&fs=1&to=support@shurlvn.com&su=SHURL%20Support" target="_blank"><span id="footerContact"></span>: support@shurlvn.com</a><br><a href="/tools" id="footerToolsLink"></a> · <a href="/blog" id="footerBlogLink"></a> · <a href="#/terms" id="footerTermsLink"></a> · <a href="#/privacy" id="footerPrivacyLink"></a><br>🇻🇳 Trường Sa | Hoàng Sa là của Việt Nam</footer>
+      <footer id="siteFooter" class="site-footer"></footer>
     </main>
   </div>
 </div>
@@ -866,7 +876,14 @@ var i18n = {
     role_guest:"Khách", role_free:"Miễn phí", role_pro:"Pro", role_super:"Super", role_admin:"Quản trị viên",
     // ===== MISC =====
     days:"ngày", hours:"giờ", minutes:"phút", loading:"Đang tải...", footer_tagline:"Nền tảng rút gọn link đa tầng · An toàn · Nhanh chóng",
-    footer_contact:"Liên hệ",
+    footer_contact:"Liên hệ", ft_products:"Sản phẩm", ft_tools:"Công cụ miễn phí", ft_support:"Hỗ trợ", ft_legal:"Pháp lý", ft_shorten:"Rút gọn link", ft_qr:"Mã QR", ft_bio:"Link-in-bio", ft_scanner:"Quét mã QR", ft_pricing:"Bảng giá", ft_api:"API cho lập trình viên", ft_report:"Báo cáo lạm dụng", ft_disclaimer:"Miễn trừ trách nhiệm", ft_all_tools:"Tất cả công cụ", ft_compliance:"SHURL là dịch vụ rút gọn link và tạo mã QR, hoạt động theo pháp luật Việt Nam hiện hành. Nghiêm cấm mọi hành vi dùng dịch vụ để lừa đảo, giả mạo hoặc vi phạm pháp luật.", ft_rights:"Bảo lưu mọi quyền.",
+    disclaimer_title:"Miễn trừ trách nhiệm", disclaimer_subtitle:"Những giới hạn trách nhiệm khi sử dụng SHURL.",
+    rp_title:"Báo cáo lạm dụng", rp_sub:"Bạn phát hiện link rút gọn, mã QR hoặc trang do SHURL tạo được dùng để lừa đảo, giả mạo hay vi phạm pháp luật? Hãy báo cho chúng tôi.",
+    rp_target:"Link hoặc nội dung cần báo cáo", rp_target_ph:"Dán link rút gọn (vd: shurlvn.com/abc123) hoặc mô tả mã QR / tài khoản đáng ngờ", rp_category:"Loại vi phạm",
+    rp_cat_scam:"Lừa đảo / chiếm đoạt tiền", rp_cat_phishing:"Giả mạo trang đăng nhập / đánh cắp thông tin", rp_cat_impersonation:"Giả mạo cá nhân, thương hiệu, tổ chức", rp_cat_malware:"Mã độc / phần mềm độc hại", rp_cat_illegal:"Nội dung vi phạm pháp luật", rp_cat_spam:"Spam", rp_cat_other:"Khác",
+    rp_details:"Mô tả thêm (tuỳ chọn)", rp_contact:"Email liên hệ (tuỳ chọn, để chúng tôi hỏi thêm)", rp_submit:"Gửi báo cáo", rp_sending:"Đang gửi...",
+    rp_ok:"Đã nhận báo cáo. Cảm ơn bạn đã giúp cộng đồng an toàn hơn.", rp_err_target:"Vui lòng nhập link hoặc mô tả nội dung cần báo cáo.", rp_err:"Không gửi được báo cáo. Vui lòng thử lại.",
+    rp_note:"Báo cáo được gửi tới quản trị viên SHURL để xem xét. Nếu bạn đã bị mất tiền, hãy liên hệ ngân hàng của bạn và cơ quan công an địa phương ngay.",
     footer_terms:"Điều khoản sử dụng", footer_privacy:"Chính sách bảo mật", footer_blog:"Blog", footer_tools:"Công cụ", slide_back:"Quay lại", legal_last_updated:"Cập nhật lần cuối",
     terms_title:"Điều khoản sử dụng", terms_subtitle:"Quy định sử dụng dịch vụ SHORT URL.",
     privacy_title:"Chính sách bảo mật", privacy_subtitle:"Cách SHORT URL thu thập, sử dụng và bảo vệ thông tin của bạn.",
@@ -1324,7 +1341,14 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     role_guest:"Guest", role_free:"Free", role_pro:"Pro", role_super:"Super", role_admin:"Administrator",
     // ===== MISC =====
     days:"days", hours:"hours", minutes:"minutes", loading:"Loading...", footer_tagline:"Multi-tier link shortening platform · Secure · Fast",
-    footer_contact:"Contact",
+    footer_contact:"Contact", ft_products:"Product", ft_tools:"Free tools", ft_support:"Support", ft_legal:"Legal", ft_shorten:"Link shortener", ft_qr:"QR codes", ft_bio:"Link-in-bio", ft_scanner:"QR scanner", ft_pricing:"Pricing", ft_api:"Developer API", ft_report:"Report abuse", ft_disclaimer:"Disclaimer", ft_all_tools:"All tools", ft_compliance:"SHURL is a link shortening and QR code service operating under applicable Vietnamese law. Using the service for fraud, impersonation or any unlawful purpose is strictly prohibited.", ft_rights:"All rights reserved.",
+    disclaimer_title:"Disclaimer", disclaimer_subtitle:"The limits of our responsibility when you use SHURL.",
+    rp_title:"Report abuse", rp_sub:"Found a short link, QR code or page made with SHURL that is used for fraud, impersonation or anything unlawful? Please tell us.",
+    rp_target:"Link or content to report", rp_target_ph:"Paste the short link (e.g. shurlvn.com/abc123) or describe the suspicious QR code / account", rp_category:"Type of abuse",
+    rp_cat_scam:"Scam / taking money", rp_cat_phishing:"Fake login page / stealing information", rp_cat_impersonation:"Impersonating a person, brand or organization", rp_cat_malware:"Malware", rp_cat_illegal:"Unlawful content", rp_cat_spam:"Spam", rp_cat_other:"Other",
+    rp_details:"More details (optional)", rp_contact:"Contact email (optional, so we can follow up)", rp_submit:"Send report", rp_sending:"Sending...",
+    rp_ok:"Report received. Thank you for helping keep everyone safe.", rp_err_target:"Please enter the link or describe what you are reporting.", rp_err:"Could not send the report. Please try again.",
+    rp_note:"Reports go to the SHURL administrators for review. If you have lost money, contact your bank and your local police right away.",
     footer_terms:"Terms of Service", footer_privacy:"Privacy Policy", footer_blog:"Blog", footer_tools:"Free tools", slide_back:"Back", legal_last_updated:"Last updated",
     terms_title:"Terms of Service", terms_subtitle:"Rules for using the SHORT URL service.",
     privacy_title:"Privacy Policy", privacy_subtitle:"How SHORT URL collects, uses, and protects your information.",
@@ -4341,7 +4365,7 @@ function render(){
   var app = document.getElementById("app");
   var authRoutes = ["dashboard","team","campaigns","admin","account","linkinbio"];
   if (authRoutes.indexOf(route) !== -1 && !state.user){ navigate("login"); return; }
-  var majorRoutes = ["home","bulkqr","scanner","login","register","forgot-password","dashboard","bulk","api","webhooks","export","team","campaigns","account","pricing","admin","terms","privacy","linkinbio"];
+  var majorRoutes = ["home","bulkqr","scanner","login","register","forgot-password","dashboard","bulk","api","webhooks","export","team","campaigns","account","pricing","admin","terms","privacy","disclaimer","report","linkinbio"];
   var isMajor = majorRoutes.indexOf(route) !== -1 || route.indexOf("reset-password") === 0;
   function doRender(){
     if (route === "home") renderHome(app);
@@ -4364,6 +4388,8 @@ function render(){
     else if (route === "admin") renderAdmin(app);
     else if (route === "terms") renderTerms(app);
     else if (route === "privacy") renderPrivacy(app);
+    else if (route === "disclaimer") renderDisclaimer(app);
+    else if (route === "report") renderReport(app);
     else if (route.indexOf("analytics/") === 0) renderAnalytics(app, decodeURIComponent(route.slice(10)));
     else app.innerHTML = '<div class="card"><p class="sub">Không tìm thấy trang.</p></div>';
     app.style.opacity = "1";
@@ -8957,7 +8983,7 @@ function loadAdminReports(body){
     if (data.reports.length === 0){ body.innerHTML = '<p class="hint">' + t("admin_no_reports") + '</p>'; return; }
     body.innerHTML = '<div style="overflow-x:auto;"><table><thead><tr><th>' + t("title_field") + '</th><th>' + t("admin_reason") + '</th><th>' + t("analytics_time") + '</th><th>' + t("admin_status") + '</th><th></th></tr></thead><tbody>' +
       data.reports.map(function(r){
-        return '<tr data-id="' + esc(r.id) + '"><td class="mono">/' + esc(r.code) + '</td><td>' + esc(r.reason) + '</td>' +
+        return '<tr data-id="' + esc(r.id) + '"><td class="mono">' + (r.code ? '/' + esc(r.code) : esc(r.target || r.url || "")) + '</td><td>' + esc(r.reason) + (r.contact ? '<br><span style="font-size:12px;color:var(--muted);">' + esc(r.contact) + '</span>' : '') + '</td>' +
         '<td style="font-size:12px;color:var(--muted);">' + fmtDate(r.reportedAt) + '</td><td>' + esc(r.status) + '</td>' +
         '<td><button class="btn btn-ghost btn-sm dismissBtn">' + t("admin_dismiss") + '</button></td></tr>';
       }).join("") + '</tbody></table></div>';
@@ -9618,21 +9644,87 @@ function exportPayCSV() {
     a.click();
   });
 }
+// ---------- DISCLAIMER + REPORT ABUSE ----------
+// Nội dung mang tính mẫu, nên được luật sư rà soát trước khi coi là văn bản pháp lý chính thức.
+function renderDisclaimer(app){
+  var isEn = currentLang === "en";
+  renderLegalPage(app, t("disclaimer_title"), t("disclaimer_subtitle"), isEn ? [
+    { h: "Service provided as-is", p: "SHURL is provided as-is and as-available. We work to keep it accurate and running, but we do not guarantee that it will be uninterrupted or error-free, and statistics (clicks, countries, devices) are approximate." },
+    { h: "User-created content", p: "Short links, QR codes, Link-in-bio pages and the content they point to are created by users. SHURL does not review destinations in advance and is not responsible for them. Creators are solely responsible for what they publish and share." },
+    { h: "Third-party links and sites", p: "Links may lead to websites we do not own or control. We are not responsible for their content, availability, products, services or privacy practices. Check a destination before you enter personal or payment information." },
+    { h: "Bank transfer (VietQR) codes", p: "For VietQR codes, the account holder name shown on a card or sign is typed in by the creator and is not verified by SHURL. SHURL does not take part in, hold, or guarantee any transfer. Before you confirm a transfer, always check the recipient name shown by your own banking app. SHURL is not liable for losses caused by transfers to the wrong or fraudulent account." },
+    { h: "Preventing and handling abuse", p: "Using SHURL for fraud, impersonation, phishing, malware or unlawful content is prohibited. We may disable links or QR codes and suspend accounts without notice. To report abuse, use the Report abuse page or email support@shurlvn.com." },
+    { h: "Limitation of liability", p: "To the fullest extent permitted by law, SHURL is not liable for indirect, incidental or consequential damages arising from the use of, or inability to use, the service." },
+    { h: "Changes", p: "We may update this disclaimer from time to time. The updated version applies from the moment it is posted on this page." }
+  ] : [
+    { h: "Dịch vụ cung cấp nguyên trạng", p: "SHURL được cung cấp trên cơ sở nguyên trạng và theo khả năng đáp ứng. Chúng tôi cố gắng giữ dịch vụ chính xác và ổn định nhưng không cam kết dịch vụ luôn liên tục hay không có lỗi; số liệu thống kê (lượt click, quốc gia, thiết bị) chỉ mang tính tham khảo." },
+    { h: "Nội dung do người dùng tạo", p: "Link rút gọn, mã QR, trang Link-in-bio và nội dung mà chúng trỏ tới do người dùng tạo ra. SHURL không kiểm duyệt trước đích đến và không chịu trách nhiệm về nội dung đó. Người tạo hoàn toàn chịu trách nhiệm về những gì họ đăng tải và chia sẻ." },
+    { h: "Liên kết và trang web bên thứ ba", p: "Liên kết có thể dẫn tới website không thuộc sở hữu hay kiểm soát của SHURL. Chúng tôi không chịu trách nhiệm về nội dung, tính sẵn sàng, sản phẩm, dịch vụ hay chính sách quyền riêng tư của các trang đó. Hãy kiểm tra kỹ trước khi nhập thông tin cá nhân hoặc thanh toán." },
+    { h: "Mã QR chuyển khoản (VietQR)", p: "Với mã VietQR, tên chủ tài khoản hiển thị trên thẻ hoặc bảng do người tạo tự nhập và không được SHURL xác minh. SHURL không tham gia, không giữ hộ và không bảo đảm bất kỳ giao dịch chuyển tiền nào. Trước khi xác nhận chuyển tiền, hãy luôn đối chiếu tên người nhận hiển thị trong app ngân hàng của bạn. SHURL không chịu trách nhiệm về thiệt hại do chuyển nhầm hoặc chuyển vào tài khoản lừa đảo." },
+    { h: "Ngăn chặn và xử lý lạm dụng", p: "Nghiêm cấm dùng SHURL để lừa đảo, giả mạo, đánh cắp thông tin, phát tán mã độc hoặc đăng tải nội dung vi phạm pháp luật. Chúng tôi có thể vô hiệu hoá link, mã QR và tạm ngưng tài khoản mà không cần báo trước. Để báo cáo vi phạm, hãy dùng trang Báo cáo lạm dụng hoặc gửi email tới support@shurlvn.com." },
+    { h: "Giới hạn trách nhiệm", p: "Trong phạm vi pháp luật cho phép, SHURL không chịu trách nhiệm về các thiệt hại gián tiếp, ngẫu nhiên hoặc hệ quả phát sinh từ việc sử dụng hoặc không thể sử dụng dịch vụ." },
+    { h: "Thay đổi", p: "Chúng tôi có thể cập nhật nội dung miễn trừ trách nhiệm này theo thời gian. Phiên bản cập nhật có hiệu lực kể từ khi được đăng tải trên trang này." }
+  ]);
+}
+
+// Trang báo cáo công khai (không cần đăng nhập): gửi tới POST /api/reports, quản trị viên xem ở tab Báo cáo.
+function renderReport(app){
+  var cats = ["scam", "phishing", "impersonation", "malware", "illegal", "spam", "other"];
+  var opts = cats.map(function(c){ return '<option value="' + c + '">' + t("rp_cat_" + c) + '</option>'; }).join("");
+  app.innerHTML =
+    '<div class="page-head"><h1>' + t("rp_title") + '</h1></div>' +
+    '<p class="sub">' + t("rp_sub") + '</p>' +
+    '<div class="card" style="max-width:720px;">' +
+    '<label for="rpTarget">' + t("rp_target") + '</label><input type="text" id="rpTarget" maxlength="500" placeholder="' + t("rp_target_ph") + '">' +
+    '<label for="rpCat">' + t("rp_category") + '</label><select id="rpCat" class="qr-existing-select" style="margin-top:0;">' + opts + '</select>' +
+    '<label for="rpDetails">' + t("rp_details") + '</label><textarea id="rpDetails" rows="4" maxlength="1000" class="qr-existing-select" style="resize:vertical;font-family:inherit;margin-top:0;"></textarea>' +
+    '<label for="rpContact">' + t("rp_contact") + '</label><input type="email" id="rpContact" maxlength="120">' +
+    '<button type="button" class="btn btn-primary" id="rpSubmit" style="margin-top:14px;">' + t("rp_submit") + '</button>' +
+    '<div id="rpMsg" style="margin-top:12px;"></div>' +
+    '<p class="hint" style="margin-top:12px;">' + t("rp_note") + '</p></div>';
+  var btn = document.getElementById("rpSubmit"), msg = document.getElementById("rpMsg");
+  btn.onclick = function(){
+    var target = document.getElementById("rpTarget").value.replace(/^\\s+|\\s+$/g, "");
+    if (!target) { msg.innerHTML = '<div class="msg msg-error">' + t("rp_err_target") + '</div>'; return; }
+    btn.disabled = true; btn.textContent = t("rp_sending"); msg.innerHTML = "";
+    api("/api/reports", "POST", {
+      target: target, category: document.getElementById("rpCat").value,
+      details: document.getElementById("rpDetails").value, contact: document.getElementById("rpContact").value
+    }).then(function(){
+      msg.innerHTML = '<div class="msg msg-ok">' + t("rp_ok") + '</div>';
+      document.getElementById("rpTarget").value = ""; document.getElementById("rpDetails").value = "";
+      btn.disabled = false; btn.textContent = t("rp_submit");
+    }).catch(function(err){
+      msg.innerHTML = '<div class="msg msg-error">' + esc((err && err.message) || t("rp_err")) + '</div>';
+      btn.disabled = false; btn.textContent = t("rp_submit");
+    });
+  };
+}
+
 // ---------- FOOTER I18N ----------
 function renderFooter(){
-  var ft = document.getElementById("footerTagline");
-  var fc = document.getElementById("footerContact");
-  var fTerms = document.getElementById("footerTermsLink");
-  var fPrivacy = document.getElementById("footerPrivacyLink");
-  var fTools = document.getElementById("footerToolsLink");
-  if (fTools) fTools.textContent = t("footer_tools");
-  var fBlog = document.getElementById("footerBlogLink");
-  if (ft) ft.textContent = "SHURL — " + t("footer_tagline");
-  if (fc) fc.textContent = t("footer_contact");
-  if (fTerms) fTerms.textContent = t("footer_terms");
-  if (fPrivacy) fPrivacy.textContent = t("footer_privacy");
-  if (fBlog) fBlog.textContent = t("footer_blog");
+  var el = document.getElementById("siteFooter");
+  if (!el) return;
+  var vi = currentLang === "vi";
+  var tb = vi ? "/tools/" : "/en/tools/";
+  var tools = vi ? [["dem-ky-tu", "Đếm ký tự"], ["tao-link-utm", "Tạo link UTM"], ["bo-dau-tieng-viet", "Bỏ dấu / tạo slug"]]
+                 : [["character-counter", "Character counter"], ["utm-link-builder", "UTM link builder"], ["slug-generator", "Accent remover / slug"]];
+  function col(title, links){ return '<div class="ft-col"><h4>' + title + '</h4>' + links.join("") + '</div>'; }
+  function lnk(href, text, slide){ return '<a href="' + href + '"' + (slide ? ' data-slide="' + slide + '"' : "") + '>' + text + '</a>'; }
+  var toolLinks = tools.map(function(x){ return lnk(tb + x[0], x[1], "tools"); });
+  toolLinks.push(lnk(vi ? "/tools" : "/en/tools", t("ft_all_tools"), "tools"));
+  el.innerHTML =
+    '<div class="ft-grid">' +
+      '<div class="ft-brand"><span class="ft-logo">SHURL</span><p>' + t("footer_tagline") + '</p><p>' + t("ft_compliance") + '</p>' +
+      '<a href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=support@shurlvn.com&amp;su=SHURL%20Support" target="_blank" rel="noopener">' + t("footer_contact") + ': support@shurlvn.com</a></div>' +
+      col(t("ft_products"), [lnk("#/home", t("ft_shorten")), lnk("#/bulkqr", t("ft_qr")), lnk("#/linkinbio", t("ft_bio")), lnk("#/scanner", t("ft_scanner"))]) +
+      col(t("ft_tools"), toolLinks) +
+      col(t("ft_support"), [lnk("#/pricing", t("ft_pricing")), lnk("#/api", t("ft_api")), lnk("/blog", t("footer_blog"), "blog"), lnk("#/report", t("ft_report"), "report")]) +
+      col(t("ft_legal"), [lnk("#/terms", t("footer_terms"), "terms"), lnk("#/privacy", t("footer_privacy"), "privacy"), lnk("#/disclaimer", t("ft_disclaimer"), "disclaimer")]) +
+    '</div>' +
+    '<div class="ft-bottom">© ' + new Date().getFullYear() + ' SHURL (shurlvn.com). ' + t("ft_rights") + '</div>';
 }
+
 
 // ---------- SLIDE PANEL: Công cụ · Blog · Điều khoản · Chính sách ----------
 // Trang trượt từ phải sang và dừng sát thanh công cụ (thanh này vẫn bấm được để quay lại tính năng).
@@ -9640,7 +9732,6 @@ function renderFooter(){
 // Điều khoản/Chính sách được vẽ thẳng vào panel bằng renderTerms/renderPrivacy. Không đổi URL, chỉ thêm 1 mục lịch sử để nút Back đóng panel.
 var slideOpen = false;
 var slidePath = "/";
-var SLIDE_LINKS = { footerToolsLink: "tools", footerBlogLink: "blog", footerTermsLink: "terms", footerPrivacyLink: "privacy" };
 function slidePanelEl(){
   var p = document.getElementById("slidePanel");
   if (p) return p;
@@ -9688,7 +9779,8 @@ function slideFrameReady(e){
 }
 function openSlide(kind, url){
   var p = slidePanelEl();
-  var titles = { tools: t("footer_tools"), blog: t("footer_blog"), terms: t("footer_terms"), privacy: t("footer_privacy") };
+  var titles = { tools: t("footer_tools"), blog: t("footer_blog"), terms: t("footer_terms"), privacy: t("footer_privacy"), disclaimer: t("ft_disclaimer"), report: t("ft_report") };
+  var inline = { terms: renderTerms, privacy: renderPrivacy, disclaimer: renderDisclaimer, report: renderReport };
   p.querySelector(".slide-title").textContent = titles[kind] || "";
   p.querySelector(".slide-back span").textContent = t("slide_back");
   var body = p.querySelector(".slide-body");
@@ -9696,11 +9788,11 @@ function openSlide(kind, url){
   body.scrollTop = 0;
   var startPath = url || (kind === "tools" ? (currentLang === "en" ? "/en/tools" : "/tools") : kind === "blog" ? "/blog" : "/#/" + kind);
   slideSetPath(startPath);
-  if (kind === "terms" || kind === "privacy") {
+  if (inline[kind]) {
     var box = document.createElement("div");
     box.className = "slide-legal";
     body.appendChild(box);
-    if (kind === "terms") renderTerms(box); else renderPrivacy(box);
+    inline[kind](box);
   } else {
     var f = document.createElement("iframe");
     f.className = "slide-frame";
@@ -9733,12 +9825,13 @@ document.addEventListener("click", function(e){
   if (slideOpen && el.closest(".sb")) { closeSlide(); return; }
   var a = el.closest("a");
   if (!a || a.target === "_blank") return;
-  var kind = SLIDE_LINKS[a.id], href = a.getAttribute("href") || "";
+  var kind = a.getAttribute("data-slide"), href = a.getAttribute("href") || "";
   var isCard = a.classList.contains("tool-card") && (href.indexOf("/tools") === 0 || href.indexOf("/en/tools") === 0);
   if (isCard) kind = "tools";
   if (!kind) return;
   e.preventDefault();
-  openSlide(kind, isCard ? href : null);
+  // Chỉ trang server (/tools, /blog) cần đường dẫn riêng; các trang còn lại vẽ thẳng vào panel.
+  openSlide(kind, href.charAt(0) === "/" && (kind === "tools" || kind === "blog") ? href : null);
 }, true);
 
 // ---------- AI ASSISTANT ("Hỏi AI" — sparkle icon in header, dropdown chat panel) ----------
