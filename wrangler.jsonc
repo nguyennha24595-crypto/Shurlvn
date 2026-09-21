@@ -6,6 +6,7 @@
     { "binding": "LINKS_KV", "id": "c9b55fe1b2574330923003a5d68f4591" }
   ],
   "ai": { "binding": "AI" },
+  "assets": { "directory": "./public" },
   "triggers": {
     "crons": ["0 * * * *"]
   },

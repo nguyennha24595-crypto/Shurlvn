@@ -1038,7 +1038,7 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     guide_scanner_step1:"Bật camera hoặc tải ảnh QR lên.",
     guide_scanner_step2:"Xem nội dung đã giải mã — link, văn bản, v.v.",
     guide_scanner_step3:"Đọc cảnh báo an toàn trước khi mở link.",
-    scanner_page_title:"Quét & Kiểm tra QR",
+    scanner_page_title:"Quét & Kiểm tra QR", scanner_help_title:"Scanner QR là gì? Xem hướng dẫn sử dụng",
     scanner_camera_start:"Bắt Đầu Quét",
     scanner_camera_stop:"Dừng Quét",
     scanner_upload_label:"hoặc tải ảnh QR lên",
@@ -1367,7 +1367,7 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     team_created_on:"Created:", team_members_count:"members", team_err_username:"Enter a username.", team_adding:"Adding...", team_added:"Added!", err_prefix:"Error:",
     link_expired_badge:"Expired", guide_scanner_title:"Scan & check QR codes", guide_scanner_desc:"Scan a QR code with your camera or an uploaded image, see the decoded content and check its safety before you open it.",
     guide_scanner_step1:"Turn on the camera or upload a QR image.", guide_scanner_step2:"See the decoded content: link, text, etc.", guide_scanner_step3:"Read the safety warning before opening the link.",
-    scanner_page_title:"Scan & check QR codes", scanner_camera_start:"Start scanning", scanner_camera_stop:"Stop scanning", scanner_upload_label:"or upload a QR image", scanner_scan_again:"Scan another code",
+    scanner_page_title:"Scan & check QR codes", scanner_help_title:"What is the QR Scanner? See the guide", scanner_camera_start:"Start scanning", scanner_camera_stop:"Stop scanning", scanner_upload_label:"or upload a QR image", scanner_scan_again:"Scan another code",
     scanner_mode_title:"Choose scan mode", scanner_mode_camera:"Scan with camera", scanner_mode_file:"Scan from file",
     scanner_camera_permission_hint:"Allow camera access and point it at the QR code to scan.", scanner_file_dropzone:"Choose a QR image to upload",
     scanner_result_title:"Result", scanner_result_empty_title:"No QR code found", scanner_result_empty_desc:"Choose a scan mode and start scanning to see the result here.",
@@ -3706,7 +3706,7 @@ function openEditModal(link){
 // ---------- SCANNER QR (Quét & Kiểm tra QR) ----------
 function renderScanner(app){
   app.innerHTML = guideCard("scanner") +
-    '<div class="page-head"><h1>' + li('scan', 24) + ' ' + t("scanner_page_title") + '</h1></div>' +
+    '<div class="page-head"><h1>' + li('scan', 24) + ' ' + t("scanner_page_title") + helpLinkHtml('scanner-qr-la-gi-huong-dan-quet-va-kiem-tra-ma-qr', t("scanner_help_title")) + '</h1></div>' +
     '<div class="qr-workspace">' +
     '<div>' +
       '<div class="card">' +
