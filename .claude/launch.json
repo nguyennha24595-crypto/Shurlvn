@@ -7,6 +7,12 @@
       "runtimeArgs": ["dev", "--port", "8788", "--compatibility-date", "2026-08-18", "--local-protocol", "https"],
       "port": 8788,
       "url": "https://localhost:8788"
+    },
+    {
+      "name": "extension-static",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8790", "--directory", "extension"],
+      "port": 8790
     }
   ]
 }
