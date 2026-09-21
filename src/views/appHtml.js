@@ -330,6 +330,7 @@ footer a{display:inline-flex;align-items:center;justify-content:center;min-heigh
 .ft-grid{display:grid;grid-template-columns:minmax(260px,1.8fr) repeat(4,minmax(120px,1fr));gap:36px;}
 .ft-logo{display:inline-block;font-size:20px;font-weight:800;letter-spacing:0.02em;background:linear-gradient(135deg,#6366f1,#a855f7);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:8px;}
 .ft-brand p{margin:0 0 10px;line-height:1.6;}
+.ft-brand .ft-biz{margin:12px 0 0;font-size:12px;line-height:1.8;}
 .ft-col h4{font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text);margin:0 0 10px;}
 .ft-col a,.ft-brand a{display:flex;justify-content:flex-start;min-height:30px;padding:0;color:var(--muted);text-decoration:none;}
 .ft-brand a{display:inline-flex;}
@@ -586,14 +587,16 @@ ${googleAdsGtagHead(env)}
 </div>
 <script src="/assets/qr-scanner.umd.min.js"></script>
 <script>
-var LANGS = ["vi", "en", "ko", "zh", "hi", "ja", "fr", "es"];
+// Chỉ giữ tiếng Việt và tiếng Anh: 6 ngôn ngữ còn lại thiếu ~26% khóa (giao diện bị lẫn tiếng Việt) và chiếm ~23% dung lượng trang. Bản đầy đủ nằm trong lịch sử git.
+var LANGS = ["vi", "en"];
 
-var LANG_LABELS = {vi:"Tiếng Việt",en:"English",ko:"한국어",zh:"中文",hi:"हिन्दी",ja:"日本語",fr:"Français",es:"Español"};
+var LANG_LABELS = {vi:"Tiếng Việt",en:"English"};
 var currentLang = "vi";
 var langDropdownOpen = false;
 var langSubmenuOpen = false;
 
 try { currentLang = localStorage.getItem("shurl_lang") || "vi"; } catch(e) {}
+if (LANGS.indexOf(currentLang) < 0) currentLang = "vi"; // người dùng cũ từng chọn ngôn ngữ đã bỏ
 
 var i18n = {
   vi: {
@@ -877,6 +880,17 @@ var i18n = {
     // ===== MISC =====
     days:"ngày", hours:"giờ", minutes:"phút", loading:"Đang tải...", footer_tagline:"Nền tảng rút gọn link đa tầng · An toàn · Nhanh chóng",
     footer_contact:"Liên hệ", ft_products:"Sản phẩm", ft_tools:"Công cụ miễn phí", ft_support:"Hỗ trợ", ft_legal:"Pháp lý", ft_shorten:"Rút gọn link", ft_qr:"Mã QR", ft_bio:"Link-in-bio", ft_scanner:"Quét mã QR", ft_pricing:"Bảng giá", ft_api:"API cho lập trình viên", ft_report:"Báo cáo lạm dụng", ft_disclaimer:"Miễn trừ trách nhiệm", ft_all_tools:"Tất cả công cụ", ft_compliance:"SHURL là dịch vụ rút gọn link và tạo mã QR, hoạt động theo pháp luật Việt Nam hiện hành. Nghiêm cấm mọi hành vi dùng dịch vụ để lừa đảo, giả mạo hoặc vi phạm pháp luật.", ft_rights:"Bảo lưu mọi quyền.",
+    bio_locked_desc:"Link-in-bio là trang mini gom nhiều liên kết (Facebook, Zalo, Shop, v.v...) vào 1 short URL duy nhất — giống Linktree. Tính năng dành cho gói Plus trở lên.",
+    bio_help_title:"Link-in-bio là gì? Xem hướng dẫn sử dụng", bio_create_title:"Tạo trang mới", bio_create_hint:"Gom nhiều liên kết vào 1 short URL duy nhất, kiểu Linktree.",
+    bio_display_name:"Tên hiển thị", bio_display_ph:"VD: Cửa hàng ABC", bio_desc_label:"Mô tả ngắn (tuỳ chọn)", bio_links_label:"Các liên kết", bio_add_link:"Thêm liên kết",
+    bio_code_label:"Mã tuỳ chỉnh (tuỳ chọn)", bio_code_ph:"vd: cua-hang-abc", bio_create_btn:"Tạo trang", bio_list_title:"Trang đã tạo",
+    bio_err_name:"Vui lòng nhập tên hiển thị.", bio_err_links:"Cần ít nhất 1 liên kết hợp lệ.", bio_creating:"Đang tạo...", bio_created:"Đã tạo:",
+    bio_row_title_ph:"Tiêu đề (VD: Fanpage Facebook)", bio_empty:"Bạn chưa tạo trang Link-in-bio nào.", bio_views:"lượt xem", bio_clicks:"click",
+    home_title_ph:"Ghi chú cho link này", home_pw_ph:"Để trống = không bảo vệ", home_ab_suffix:" — thêm URL đích (Pro/Super)", home_ab_a_ph:"URL đích A (thêm vào)", home_ab_b_ph:"URL đích B (thêm vào)", home_your_link:"Link rút gọn của bạn:",
+    dash_links_title:"Danh sách link", dash_empty:"Chưa có link nào.", dash_empty_cta:"Tạo link đầu tiên ở trang chủ", export_help_title:"Xuất CSV là gì? Xem hướng dẫn sử dụng",
+    team_created_on:"Tạo:", team_members_count:"thành viên", team_err_username:"Nhập username.", team_adding:"Đang thêm...", team_added:"Đã thêm!", err_prefix:"Lỗi:",
+    admin_access:"Bạn có quyền quản trị hệ thống.", admin_go:"Vào trang quản trị", twofa_not_enabled_warning:"Tài khoản admin chưa bật xác thực 2 lớp (2FA). Hãy bật ngay để bảo vệ hệ thống.",
+    ft_biz_name:"Đơn vị vận hành", ft_biz_tax:"Mã số thuế", ft_biz_addr:"Địa chỉ", ft_biz_phone:"Hotline",
     disclaimer_title:"Miễn trừ trách nhiệm", disclaimer_subtitle:"Những giới hạn trách nhiệm khi sử dụng SHURL.",
     rp_title:"Báo cáo lạm dụng", rp_sub:"Bạn phát hiện link rút gọn, mã QR hoặc trang do SHURL tạo được dùng để lừa đảo, giả mạo hay vi phạm pháp luật? Hãy báo cho chúng tôi.",
     rp_target:"Link hoặc nội dung cần báo cáo", rp_target_ph:"Dán link rút gọn (vd: shurlvn.com/abc123) hoặc mô tả mã QR / tài khoản đáng ngờ", rp_category:"Loại vi phạm",
@@ -1342,6 +1356,30 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     // ===== MISC =====
     days:"days", hours:"hours", minutes:"minutes", loading:"Loading...", footer_tagline:"Multi-tier link shortening platform · Secure · Fast",
     footer_contact:"Contact", ft_products:"Product", ft_tools:"Free tools", ft_support:"Support", ft_legal:"Legal", ft_shorten:"Link shortener", ft_qr:"QR codes", ft_bio:"Link-in-bio", ft_scanner:"QR scanner", ft_pricing:"Pricing", ft_api:"Developer API", ft_report:"Report abuse", ft_disclaimer:"Disclaimer", ft_all_tools:"All tools", ft_compliance:"SHURL is a link shortening and QR code service operating under applicable Vietnamese law. Using the service for fraud, impersonation or any unlawful purpose is strictly prohibited.", ft_rights:"All rights reserved.",
+    bio_locked_desc:"Link-in-bio is a mini page that groups many links (Facebook, Zalo, your shop, etc.) behind a single short URL, like Linktree. Available on the Plus plan and above.",
+    bio_help_title:"What is Link-in-bio? See the guide", bio_create_title:"Create a new page", bio_create_hint:"Group many links behind one short URL, Linktree-style.",
+    bio_display_name:"Display name", bio_display_ph:"E.g. ABC Store", bio_desc_label:"Short description (optional)", bio_links_label:"Links", bio_add_link:"Add link",
+    bio_code_label:"Custom code (optional)", bio_code_ph:"e.g. abc-store", bio_create_btn:"Create page", bio_list_title:"Your pages",
+    bio_err_name:"Please enter a display name.", bio_err_links:"At least 1 valid link is required.", bio_creating:"Creating...", bio_created:"Created:",
+    bio_row_title_ph:"Title (e.g. Facebook page)", bio_empty:"You haven't created any Link-in-bio pages yet.", bio_views:"views", bio_clicks:"clicks",
+    home_title_ph:"A note for this link", home_pw_ph:"Leave empty = no protection", home_ab_suffix:" — add target URLs (Pro/Super)", home_ab_a_ph:"Target URL A (add)", home_ab_b_ph:"Target URL B (add)", home_your_link:"Your short link:",
+    dash_links_title:"Link list", dash_empty:"No links yet.", dash_empty_cta:"Create your first link on the home page", export_help_title:"What is CSV export? See the guide",
+    team_created_on:"Created:", team_members_count:"members", team_err_username:"Enter a username.", team_adding:"Adding...", team_added:"Added!", err_prefix:"Error:",
+    link_expired_badge:"Expired", guide_scanner_title:"Scan & check QR codes", guide_scanner_desc:"Scan a QR code with your camera or an uploaded image, see the decoded content and check its safety before you open it.",
+    guide_scanner_step1:"Turn on the camera or upload a QR image.", guide_scanner_step2:"See the decoded content: link, text, etc.", guide_scanner_step3:"Read the safety warning before opening the link.",
+    scanner_page_title:"Scan & check QR codes", scanner_camera_start:"Start scanning", scanner_camera_stop:"Stop scanning", scanner_upload_label:"or upload a QR image", scanner_scan_again:"Scan another code",
+    scanner_mode_title:"Choose scan mode", scanner_mode_camera:"Scan with camera", scanner_mode_file:"Scan from file",
+    scanner_camera_permission_hint:"Allow camera access and point it at the QR code to scan.", scanner_file_dropzone:"Choose a QR image to upload",
+    scanner_result_title:"Result", scanner_result_empty_title:"No QR code found", scanner_result_empty_desc:"Choose a scan mode and start scanning to see the result here.",
+    scanner_flash_on:"Turn on light", scanner_flash_off:"Turn off light", scanner_switch_camera:"Switch camera", scanner_result_raw:"Decoded content", scanner_result_domain:"Domain",
+    scanner_safety_ok:"Safe — no suspicious signs found.", scanner_safety_warning:"Warning — this link looks payment-related or is on the block list. Be careful before opening it.",
+    scanner_shurl_link_title:"This is a SHURL short URL", scanner_shurl_link_dest:"Current destination", scanner_shurl_link_type_dynamic:"Dynamic QR — the destination may have changed after printing",
+    scanner_shurl_link_type_static:"Regular link", scanner_shurl_link_disabled:"This link has been disabled.", scanner_shurl_link_expired:"This link has expired.", scanner_shurl_link_password:"This link is password protected.",
+    scanner_no_camera:"Your browser does not support the camera, or you have not granted access.", scanner_scanning_hint:"Put the QR code inside the frame...", scanner_decode_fail:"Could not read a QR code in this image. Try a sharper one.",
+    qr_print_check_title:"Check before printing", qr_print_check_ok:"Checked: this QR code scans.", qr_print_check_fail:"This QR code may be hard to scan — try a smaller logo, a larger size or higher color contrast.",
+    qr_print_check_size_hint:"We recommend printing at least 2×2 cm for close phone scans, and 5×5 cm or larger if scanned from more than 30 cm away.",
+    admin_access:"You have system administration access.", admin_go:"Go to admin", twofa_not_enabled_warning:"2FA is not enabled on this admin account. Turn it on now to protect the system.",
+    ft_biz_name:"Operated by", ft_biz_tax:"Tax code", ft_biz_addr:"Address", ft_biz_phone:"Hotline",
     disclaimer_title:"Disclaimer", disclaimer_subtitle:"The limits of our responsibility when you use SHURL.",
     rp_title:"Report abuse", rp_sub:"Found a short link, QR code or page made with SHURL that is used for fraud, impersonation or anything unlawful? Please tell us.",
     rp_target:"Link or content to report", rp_target_ph:"Paste the short link (e.g. shurlvn.com/abc123) or describe the suspicious QR code / account", rp_category:"Type of abuse",
@@ -1503,1660 +1541,6 @@ pricing_popular:"Phổ biến nhất", pay_vn_btn:"Thanh toán VN (MoMo/Napas)"
     notif_title:"Notifications", notif_empty:"No notifications", notif_from:"From:", notif_new:"New", notif_ok:"Got it", crown_hint:"View feature guide", crown_upgrade_to_unlock:"Upgrade to unlock this feature", demo_bulkqr_title:"Bulk QR — Create QR in bulk", demo_webhooks_title:"Webhooks — Auto-send events", demo_campaigns_title:"Campaigns — Manage link groups", demo_export_title:"Export — Export data", demo_api_title:"API — Integrate external systems", demo_dashboard_title:"Dashboard — Manage Short URLs", demo_bulkqr_s1_t:"Enter multiple URLs in text box", demo_bulkqr_s1_d:"One URL per line", demo_bulkqr_s2_t:"Click Generate QR", demo_bulkqr_s2_d:"System creates QR for each URL", demo_bulkqr_s3_t:"Download all QR", demo_bulkqr_s3_d:"ZIP file with all QR Codes", demo_webhooks_s1_t:"Add webhook destination URL", demo_webhooks_s1_d:"URL receives event notifications", demo_webhooks_s2_t:"When someone clicks link", demo_webhooks_s2_d:"Webhook auto-POSTs event to URL", demo_webhooks_s3_t:"External system receives data", demo_webhooks_s3_d:"IP, country, device, time", demo_campaigns_s1_t:"Create new Campaign", demo_campaigns_s1_d:"Name and describe your campaign", demo_campaigns_s2_t:"Add Short URLs to Campaign", demo_campaigns_s2_d:"Multiple links in one group", demo_campaigns_s3_t:"View aggregate Analytics", demo_campaigns_s3_d:"Stats for all links in Campaign", demo_export_s1_t:"Choose CSV or JSON format", demo_export_s1_d:"Export all links and stats", demo_export_s2_t:"Click Export button", demo_export_s2_d:"System compiles data", demo_export_s3_t:"Download file", demo_export_s3_d:"File with all links + clicks + dates", demo_api_s1_t:"Create API Token", demo_api_s1_d:"Token for API authentication", demo_api_s2_t:"Send POST /api/v1/shorten", demo_api_s2_d:"Create Short URL from external system", demo_api_s3_t:"Receive JSON result", demo_api_s3_d:"Short URL code + full link", demo_dashboard_s1_t:"Create Short URL", demo_dashboard_s1_d:"Paste long URL → get short link", demo_dashboard_s2_t:"Manage links", demo_dashboard_s2_d:"Copy, QR, Analytics, Edit, Delete", demo_dashboard_s3_t:"View stats", demo_dashboard_s3_d:"Link count, total clicks", demo_anim_url:"URL", demo_anim_qr:"QR", demo_anim_ok:"✓", demo_anim_link_click:"Link click", demo_anim_event:"Event", demo_anim_post:"POST → URL", demo_anim_external:"External System", demo_anim_campaign:"Campaign", demo_anim_analytics:"Analytics", demo_anim_data:"Data", demo_anim_export:"Export", demo_anim_csv:"CSV/JSON", demo_anim_app:"App", demo_anim_url_long:"Long URL", demo_anim_clicks:"Clicks", api_tier_expired:"Your plan has expired. Please upgrade to continue using the API.", api_not_available:"Current plan does not support API. Upgrade to PRO or SUPER.", api_quota_exceeded:"You have exhausted your API quota", api_upgrade_to_continue:"Please upgrade to continue.", api_upgrade_to_increase:"Please upgrade to increase limits.",
     feedback_title:"Feedback & Support", feedback_btn:"Feedback", feedback_type_bug:"Report bug", feedback_type_feature:"Request feature", feedback_type_question:"Ask question", feedback_type_other:"Other", feedback_label_message:"Message", feedback_placeholder:"Describe the issue, suggestion or question...", feedback_label_email:"Email (optional)", feedback_email_placeholder:"email@example.com", feedback_cancel:"Cancel", feedback_submit:"Send", feedback_success_title:"Sent!", feedback_success_desc:"Thank you! We will review and respond soon.", feedback_close:"Close", feedback_error:"Something went wrong, please try again.", admin_feedback_tab:"Feedback", admin_no_feedback:"No feedback yet.", acct_overview:"Account overview", acct_total_clicks:"Total clicks", acct_profile_title:"Account profile", acct_username:"Username", acct_joined:"Joined", acct_plan_title:"Current plan", acct_plan_active:"Active", acct_plan_running:"Running ✓", acct_plan_expired:"Expired", acct_free:"Free", acct_joined_label:"Joined", acct_expiry_label:"Expires", acct_start_label:"Started", acct_upgrade_plan:"Upgrade plan", acct_manage_plan:"Manage plan", acct_pay_plan:"Plan", acct_pay_method:"Method", acct_pay_amount:"Amount", acct_voucher_title:"Activate with Voucher code", acct_voucher_hint:"Enter voucher code to activate offers or service plans.", acct_voucher_placeholder:"Enter voucher code", acct_voucher_btn:"Activate", acct_security_title:"Security", acct_2fa_enabled:"Enabled ✓", acct_2fa_disabled:"Not enabled", acct_session:"Session", acct_current_device:"Current device", acct_browser:"Browser", acct_bank_qr:"Bank QR", acct_pay_method_stripe:"Stripe", adm_notif_sys:"System notifications", adm_notif_empty:"No new notifications", adm_notif_read:"Read", adm_notif_unread:"Unread", adm_notif_delete:"Delete", adm_notif_delete_confirm:"Delete this notification?", adm_notif_deleted:"Notification deleted", adm_notif_not_found:"Notification not found", adm_notif_missing_id:"Missing notification ID", adm_notif_from:"From", adm_notif_to:"Sent to", adm_notif_all_users:"All users", adm_notif_close:"Close", fb_detail_title:"Feedback details", fb_detail_type:"Type", fb_detail_sender:"Sender", fb_detail_anonymous:"Anonymous", fb_detail_page:"Page", fb_detail_time:"Time", fb_detail_status:"Status", fb_status_new:"New", fb_status_replied:"Replied", fb_status_closed:"Closed", fb_type_bug:"Bug report", fb_type_feature:"Feature request", fb_type_question:"Q&A", fb_type_other:"Other", notif_mark_all_read:"Mark all as read", notif_marked_all:"All marked as read",
   },
-
-  ko: {
-    ai_assistant_title:"AI에게 물어보기", ai_assistant_placeholder:"질문을 입력하세요...", ai_assistant_send:"전송",
-    ai_assistant_greeting:"안녕하세요! SHURL의 AI 어시스턴트입니다. 무엇을 도와드릴까요?",
-    ai_assistant_error:"메시지를 보내지 못했습니다. 다시 시도해 주세요.",
-    ext_title:"브라우저 확장 프로그램 연결",
-    ext_desc:"이 코드를 사용해 SHURL Chrome 확장 프로그램을 연결하세요 — 최근 생성한 링크, 클릭 수 확인, 현재 보고 있는 페이지를 팝업에서 바로 단축할 수 있습니다. 모든 요금제에서 무료입니다.",
-    // ===== NAV =====
-    home:"홈", nav_home:"홈", plans:"요금제", login:"로그인", register:"회원가입", logout:"로그아웃", language:"언어",
-    dashboard:"대시보드", account:"계정", api:"API", bulk:"대량 생성", admin:"관리자",
-    // ===== AUTH =====
-    login_sub:"SHURL에 다시 오신 것을 환영합니다.", login_security:"Cloudflare 보호 · 계정을 만들어 시작하세요",
-    no_account:"계정이 없으신가요?", have_account:"이미 계정이 있으신가요?", demo_accounts:" ",
-    register_sub:"무료 계정을 만들어 링크를 관리하세요.", register_free:"무료로 가입",
-    reg_username:"사용자명 (8-25자)", reg_email:"이메일 (선택)", reg_password:"비밀번호 (최소 9자, 대문자 1개 이상 포함)",
-    reg_newpassword:"새 비밀번호",
-    // ===== FORGOT PASSWORD =====
-    forgot_password:"비밀번호 찾기", forgot_sub:"사용자명을 입력하면 복구 코드를 이메일로 보내드립니다.", change_password:"비밀번호 변경", old_password:"현재 비밀번호", new_password:"새 비밀번호", confirm_password:"비밀번호 확인", send_code:"인증 코드 보내기", verify_code:"인증 코드 (6자리)", code_sent_to_email:"인증 코드가 이메일로 발송되었습니다.", code_sent:"인증 코드 발송됨", password_changed:"비밀번호가 성공적으로 변경되었습니다!", password_mismatch:"비밀번호가 일치하지 않습니다", password_too_short:"비밀번호는 최소 9자 이상이어야 합니다", fill_all_fields:"모든 필드를 입력해 주세요", sending:"전송 중...", processing:"처리 중...", send_failed:"전송 실패", change_failed:"비밀번호 변경 실패", cancel:"취소", confirm:"확인", security_password:"비밀번호",
-    forgot_submit:"복구 코드 전송", reset_code:"인증 코드 (6자리)", reset_submit:"비밀번호 변경",
-    back_to_login:"로그인으로 돌아가기",
-    // ===== HOME =====
-    home_title:"무료 단축 URL 서비스", home_sub:"빠르게 단축 링크를 만들고, 클릭수를 추적하고, 사용자를 사기로부터 보호합니다.",
-    home_promo_title:"✨ 계정 생성 — 🎁 매일 10개 링크 무료!",
-    home_promo_sub:"만료 없음 · 커스텀 별칭 · 링크 관리 · 클릭 통계",
-    home_promo_desc:"만료 없음 · 커스텀 별칭 · 링크 관리 · 클릭 통계",
-    home_promo_btn1:"무료로 가입", home_promo_btn2:"이미 계정이 있으신가요?",
-    home_hero_sub:"멀티티어 단축 링크 플랫폼 — 안전, 상세 통계, 캠페인 관리.",
-    home_guest_hint:"로그인하면 커스텀 별칭 설정, 링크 관리, 통계 조회가 가능합니다. 게스트: 하루 5개 링크.",
-    home_url_placeholder:"https://example.com/매우-긴-경로", home_alias_placeholder:"내-커스텀-이름",
-    home_note_placeholder:"이 링크에 대한 메모", home_password_placeholder:"빈 칸 = 보호 없음",
-    home_add_dest:"대상 URL 추가", home_dest_a:"대상 URL A (추가)", home_dest_b:"대상 URL B (추가)",
-    url_to_shorten:"단축할 URL", shorten_now:"지금 단축", processing:"처리 중...",
-    custom_alias:"커스텀 별칭", custom_alias_opt:"커스텀 별칭 (선택)",
-    title_field:"제목", title_opt:"제목 (선택)", campaign:"캠페인", tags:"태그",
-    expiry_date:"만료일 (선택)", password_protect:"보호 비밀번호 (선택)",
-    custom_domain:"커스텀 도메인",
-    pixel_tracking:"픽셀 추적", ab_testing:"A/B 테스트", deep_link:"딥 링크", link_protect:"링크 보호",
-    adv_options:"⚙ 고급 옵션 (픽셀, A/B, 딥 링크)", destination:"대상", result_dest:"대상:",
-    // ===== QR CODE =====
-    qr_title:"QR 코드 생성", qr_guest_title:"QR 코드 생성",
-    qr_guest_desc:"색상 커스텀 · 크기 커스텀", qr_guest_btn:"지금 생성",
-    qr_desc:"任意 URL(단축 여부 무관)를 입력하여 QR 코드를 즉시 생성하세요. QR 생성 1회당 일일 한도에서 1개 차감됩니다.".replace("任意",""),
-    qr_url_label:"QR 생성할 URL", qr_color:"색상", qr_size:"크기", qr_btn:"QR 생성",
-    qr_copy_link:"링크 복사", qr_download:"PNG 다운로드", qr_processing:"QR 생성 중...",
-    qr_quota_error:"오늘의 QR 생성 한도에 도달했습니다",
-    // ===== BULK QR =====
-    bulkqr:"대량 QR", bulkqr_title:"대량 QR 코드", bulkqr_hint:"한 줄에 단축 링크 1개씩. 대량으로 QR을 생성하고 Excel 파일로 다운로드하세요.",
-    bulkqr_generate:"QR 대량 생성", bulkqr_download:"Excel (.xls) 다운로드", bulkqr_color:"QR 색상",
-    bulkqr_empty:"유효한 링크가 없습니다.", bulkqr_max:"1회 최대 1200개 링크.",
-    bulkqr_loading:"QR 생성 중...", bulkqr_done:"QR이 생성되었습니다. 'Excel 다운로드'를 눌러 저장하세요.",
-    bulkqr_super:"Super 플랜 전용 기능입니다.",
-    // ===== DASHBOARD =====
-    my_links:"내 링크", total_clicks:"총 클릭수", daily_limit:"일일 링크 한도",
-    create_new:"새 링크 만들기", create_success:"링크가 생성되었습니다!",
-    col_link:"링크", col_dest:"대상", col_clicks:"클릭수", col_status:"상태", col_created:"생성일",
-    status:"상태", created:"생성일", actions:"작업",
-    copy:"복사", copied:"복사됨 ✓", stats:"통계", edit:"편집", del:"삭제",
-    enabled:"켜짐", disabled:"꺼짐", deleted:"삭제됨", undo_delete:"삭제 취소", force_delete:"영구 삭제",
-    export:"CSV 내보내기", optional:"선택", no_data:"데이터가 없습니다.",
-    delete_confirm:"링크 삭제 /", delete_warning:"? 이 작업은 되돌릴 수 없습니다.",
-    edit_title:"링크 편집 /", edit_dest:"대상 URL", edit_save:"변경 저장", edit_cancel:"취소",
-    edit_enabled:"링크 활성화", edit_tags_placeholder:"쉼표로 구분",
-    // ===== BULK =====
-    bulk_title:"대량 생성", bulk_sub:"한 줄에 URL 1개씩 입력하세요. 최대:",
-    bulk_per_batch:"개 링크/회.", bulk_input_placeholder:"https://example1.com\\nhttps://example2.com",
-    bulk_submit:"대량 생성", bulk_success:"성공", bulk_errors:"오류", bulk_empty:"URL을 1개 이상 입력하세요.",
-    // ===== ANALYTICS =====
-    analytics_title:"통계", analytics_back:"← 대시보드로 돌아가기",
-    analytics_total:"총 클릭수", analytics_24h:"최근 24시간", analytics_7d:"최근 7일", analytics_30d:"최근 30일",
-    analytics_14d:"최근 14일", analytics_by_hour:"시간별 (24h)", analytics_device:"기기",
-    analytics_country:"국가", analytics_browser:"브라우저", analytics_referrer:"유입 경로",
-    analytics_recent:"최근 클릭", analytics_time:"시간", analytics_no_clicks:"아직 클릭이 없습니다.",
-    // ===== ACCOUNT =====
-    account_title:"계정", account_joined:"가입일", account_current_limits:"현재 플랜 한도",
-    account_upgrade:"플랜 업그레이드", account_upgrade_sub:"강력한 모든 기능을 열어 생산성을 높이세요.",
-    account_pro:"Pro", account_pro_desc:"마케터 & 크리에이터용",
-    account_super:"Super", account_super_desc:"기업 & 팀용",
-    account_voucher:"바우처 코드로 활성화", account_voucher_hint:"바우처가 있으신가요? 입력하면 무료로 업그레이드됩니다.",
-    account_voucher_btn:"바우처 코드 입력", account_enter_voucher:"바우처 코드 입력:",
-    acct_links_day:"링크/일", acct_detailed:"상세", acct_max:"최대", yes:"예", no:"아니요",
-    joined:"가입일", plan:"플랜",
-    // ===== UPGRADE =====
-    upgrade_pro:"Pro 업그레이드", upgrade_super:"Super 업그레이드", upgrade_plus:"Plus 업그레이드",
-    upgrade_to_unlock:"이 기능을 사용하려면 업그레이드하세요",
-    upgrade_banner_title:"업그레이드하여 이 기능 열기",
-    upgrade_banner_desc:"Pro: 200 링크/일, 대량 생성, API · Super: 600 링크/일, 커스텀 도메인",
-    upgrade_banner_btn:"업그레이드 →",
-    enter_voucher:"바우처 코드 입력", activate_voucher:"바우처 코드로 활성화",
-    // ===== VOUCHER =====
-    pricing_voucher_title:"바우처 활성화", pricing_voucher_placeholder:"바우처 코드 입력",
-    pricing_voucher_activate:"활성화", pricing_voucher_buy_link:"할인 바우처 구매",
-    pricing_voucher_select_prompt:"먼저 플랜과 기간을 선택하여 바우처를 구매하세요 (프로모션 시 적용).",
-    pricing_voucher_choose_plan:"플랜 선택:", pricing_voucher_choose_time:"기간 선택:",
-    pricing_voucher_week:"1주", pricing_voucher_month:"1개월 (-5%)", pricing_voucher_year:"1년",
-    pricing_voucher_pay:"결제", pricing_voucher_save:"할인", vn_pay_title:"🇻🇳 결제", vn_pay_select_period:"기간 선택:", vn_pay_bank:"은행:", vn_pay_acct_no:"계좌번호:", vn_pay_acct_name:"예금주:", vn_pay_amount:"금액:", vn_pay_transfer_content:"이체 내용:", vn_pay_security:"은행에 의해 보안 처리됩니다. 관리자가 1시간 내 승인합니다.", vn_pay_confirm:"이체 완료", vn_pay_processing:"처리 중...", vn_pay_success:"요청이 접수되었습니다. 관리자가 1시간 내 승인합니다.",
-    pricing_voucher_select_alert:"플랜과 기간을 선택해 주세요", pricing_voucher_enter_code:"코드를 입력해 주세요",
-    pricing_voucher_invalid:"유효하지 않은 바우처입니다",
-    // ===== PRICING =====
-    pricing_title:"요금제 & 비교", pricing_hero_title:"투명한 요금제",
-    pricing_hero_desc:"자신에게 맞는 플랜을 선택하세요. 언제든 업그레이드·해지 가능. 숨은 요금 없음.",
-    pricing_per_month:"/월", pricing_free_desc:"기본으로 시작",
-    pricing_f_10links:"10 링크/일", pricing_f_manage:"링크 관리", pricing_f_clickstats:"클릭 통계",
-    pricing_plus_desc:"150 링크/일", pricing_plus_btn:"Plus 업그레이드",pricing_per_week:"/周",
-    pricing_plus_f1:"150 링크/일", pricing_plus_f2:"링크 만료 없음", pricing_plus_f3:"대량 단축 — 150 링크/회",
-    pricing_popular:"가장 인기", pay_vn_btn:"VN 결제 (MoMo/Napas)", pricing_per_batch:"회", pricing_per_link:"링크", pricing_links:"링크",
-    pricing_day:"일", pricing_month:"개월", pricing_req_month:"요청/월", pricing_custom:"커스텀",
-    pricing_advanced_mgmt:"고급 관리", pricing_compare_title:"상세 비교", pricing_compare_feature:"기능",
-    pricing_expiry:"링크 유효기간", pricing_unlimited_short:"∞", pricing_7days:"7일",
-    pricing_support:"지원", pricing_support_247:"24/7 + SLA",
-    pricing_cta_title:"업그레이드할 준비되셨나요?", pricing_cta_desc:"지금 업그레이드하여 모든 기능을 여세요.",
-    pricing_cta_btn:"시작하기",
-    pricing_checkout_error:"결제 오류", pricing_connection_error:"연결 오류",
-    pricing_error_notice:"결제에 실패하거나 결제 후 플랜/바우처가 전달되지 않은 경우, 성공한 거래 스크린샷(날짜·시간 포함)을 첨부하여 아래 이메일로 보내주세요:",
-    pricing_error_subject:"SHURL 결제 문제", pricing_error_body:"문제 설명:\\n\\n플랜:\\n거래시:\\n\\n거래 스크린샷 첨부",
-    pricing_error_desc:"검토 팀이 최대한 빨리 동일한 바우처로 환불해 드립니다.",
-    pricing_footer:"SHURL — 멀티티어 단축 링크 플랫폼 · 안전 · 빠름",
-    // ===== PLAN FEATURES =====
-    plan_pro_f1:"200 링크/일", plan_pro_f2:"300 링크/회", plan_pro_f3:"고급 관리",
-    plan_pro_f4:"상세", plan_pro_f5:"QR 코드", plan_pro_f6:"5,000 요청/월",
-    plan_pro_f7:"픽셀 1개/링크, 50 링크", plan_pro_f8:"2 URL 20 링크", plan_pro_f9:"iOS/Android",
-    plan_pro_f10:"딥 링크", plan_pro_f11:"비밀번호 보호 (선택)",
-    plan_super_f1:"600 링크/일", plan_super_f2:"600 링크/회", plan_super_f3:"Pro의 모든 기능",
-    plan_super_f4:"고급 (히트맵)", plan_super_f5:"QR 코드 + 대량 QR", plan_super_f6:"10,000 요청/월",
-    plan_super_f7:"커스텀 도메인", plan_super_f8:"픽셀 3개/링크, ∞", plan_super_f9:"3 URL, 커스텀 %, ∞",
-    plan_super_f10:"스마트 폴백", plan_super_f11:"무차별 대입 방지",
-    plan_ps_f1:"600 링크/일 (Pro×6)", plan_ps_f2:"600 링크/회", plan_ps_f5:"10,000 요청/월 (×10)",
-    plan_ps_f8:"3 URL, 커스텀 %, ∞", plan_ps_f9:"스마트 폴백",
-    plan_unlimited:"무제한", plan_advanced:"고급", plan_priority_support:"우선 지원",
-    // ===== FAQ =====
-    pricing_faq_title:"자주 묻는 질문",
-    pricing_faq1_q:"언제든 해지할 수 있나요?", pricing_faq1_a:"네. 언제든 플랜을 해지할 수 있습니다. 해지 후 계정은 Free 플랜으로 돌아가지만 기존 링크는 그대로 유지됩니다.",
-    pricing_faq2_q:"바우처로 결제할 수 있나요?", pricing_faq2_a:"네. 바우처 코드가 있다면 계정 → 바우처 코드 입력에서 무료로 업그레이드할 수 있습니다.",
-    pricing_faq3_q:"다운그레이드하면 기존 링크가 사라지나요?", pricing_faq3_a:"아니요. 생성된 모든 링크는 유지됩니다. 다운그레이드 시 잠기는 것은 고급 기능뿐입니다.",
-    pricing_faq4_q:"커스텀 도메인을 사용할 수 있나요?", pricing_faq4_a:"커스텀 도메인은 Super 플랜에서만 가능합니다. DNS를 SHURL로 연결해야 합니다.",
-    pricing_faq5_q:"API에 속도 제한이 있나요?", pricing_faq5_a:"Pro: 월 5,000 요청. Super: 월 10,000.",
-    pricing_faq6_q:"Plus 플랜의 차이점은?", pricing_faq6_a:"Plus는 150 링크/일 및 회당 150개 대량 단축이 가능합니다. 링크 만료 없이 모든 캠페인에 적합합니다.",
-    pricing_faq7_q:"바우처 구매가 직접 업그레이드보다 저렴할 수 있나요?", pricing_faq7_a:"프로모션 기간(관리자 설정)에만 가능합니다. 프로모션 외에는 바우처 가격이 직접 업그레이드와 동일합니다.",
-    // ===== PAYMENT =====
-    pay_history_title:"결제 내역", pay_type:"유형", pay_date:"결제일", pay_status:"상태",
-    pay_voucher:"바우처", pay_upgrade:"업그레이드", pay_success:"성공", pay_failed:"실패", pay_no:"거래 내역이 없습니다.",
-    // ===== TIER LIMITS =====
-    tier_limits_title:"현재 플랜 한도", links_per_day:"링크/일", advanced_mgmt:"고급 관리",
-    detailed_stats:"상세 통계", max:"최대",
-    // ===== API =====
-    api_title:"API 토큰", api_no_token:"아직 API 토큰이 없습니다.", api_gen_token:"토큰 생성",
-    api_regen_token:"토큰 재생성", api_monthly_limit:"한도:", api_requests_month:"요청/월.",
-    api_example:"사용 예시 (cURL)", api_other:"기타 엔드포인트: GET /api/v1/links · GET /api/v1/analytics/:code",
-    api_no_access:"현재 플랜에서는 API를 사용할 수 없습니다. PRO 또는 SUPER로 업그레이드하세요.",
-    // ===== ADMIN =====
-    admin_title:"시스템 관리", admin_users:"사용자", admin_reports:"위반 신고",
-    admin_blacklist:"블랙리스트", admin_vouchers:"바우처",
-    admin_username:"사용자명", admin_email:"이메일", admin_role:"역할", admin_created:"생성일",
-    admin_save:"저장", admin_reason:"사유", admin_status:"상태", admin_dismiss:"기각",
-    admin_no_reports:"신고가 없습니다.", admin_add_domain:"추가", admin_add_keyword:"추가",
-    admin_new_domain:"bad-example.com", admin_new_keyword:"키워드",
-    admin_bl_domains:"차단된 도메인", admin_bl_keywords:"민감한 키워드 (추가)",
-    admin_bl_defaults:"기본 키워드 (삭제 불가):", admin_create_voucher:"+ 새 바우처 생성",
-    admin_voucher_code:"바우처 코드", admin_tier:"플랜", admin_used:"사용됨", admin_limit:"한도",
-    admin_expires:"만료", admin_active:"상태", admin_delete:"삭제",
-    admin_panel_title:"관리자 패널", admin_promo_title:"프로모션 설정", admin_promo_enable:"프로모션 활성화",
-    admin_promo_from:"시작일", admin_promo_to:"종료일", admin_promo_month_disc:"월간 할인 (%)", admin_promo_year_disc:"연간 할인 (%)",
-    admin_promo_saved:"프로모션 설정이 저장되었습니다", admin_promo_save_error:"저장 오류",
-    admin_promo_ended:"프로모션이 종료되었습니다", admin_promo_starts:"프로모션 시작 예정", admin_promo_remaining:"남음",
-    admin_pay_report_title:"결제 리포트", admin_customer:"고객", admin_amount:"금액", admin_total_revenue:"총 수익",
-    admin_export_csv:"CSV 내보내기", admin_no_data:"데이터 없음", admin_report_error:"리포트 로딩 오류",
-    // ===== SIDEBAR =====
-    sidebar_recent:"최근", sidebar_ad_placeholder:"광고 — 곧 공개", sidebar_ad_outside:"외부 광고 자리",
-    sidebar_ad:"광고",
-    sidebar_guest_title:"✨ 무료 계정 만들기", sidebar_guest_desc:"가입하면 하루 10개 링크, 링크 관리, 통계를 이용할 수 있습니다.",
-    sidebar_guest_feat1:"커스텀 별칭", sidebar_guest_feat2:"링크 관리 & 통계", sidebar_guest_btn:"지금 가입 →",
-    sidebar_pro_title:"⭐ Pro 업그레이드", sidebar_pro:"강력한 기능을 여세요.",
-    sidebar_super_title:"🚀 Super 업그레이드", sidebar_super_desc:"기업용.",
-    sidebar_upgrade_now:"지금 업그레이드 →", sidebar_view_super:"Super 플랜 보기",
-    sidebar_pro_current:"현재 Pro 이용 중 — Super가 되면 더 많이:",
-    sidebar_register_title:"✨ 무료 가입", sidebar_register_desc:"계정을 만들고 더 많은 혜택을 받으세요.",
-    sidebar_register_feat1:"10 링크/일", sidebar_register_feat2:"커스텀 별칭",
-    sidebar_register_feat3:"링크 관리", sidebar_register_feat4:"클릭 통계",
-    sidebar_register_btn:"요금제 보기 →",
-    // ===== SUPPORT =====
- support_subject:"SHURL — 결제 지원", support_body_greeting:"SHURL 팀에게,",
-    support_body_issue:"플랜 결제 중 문제가 발생했습니다:", support_body_plan:"신청 플랜:",
-    support_body_amount:"금액:",_body_date:"결제일:",
-    support_body_screenshot:"결제 성공 스크린샷을 첨부합니다.",
-    support_body_thanks:"지원에 감사드립니다.", support_body_name:"계정 이름:",
-    support_title:"결제에 문가 있으신가요?", support_desc:"결제 실패 또는 플랜 미활성화 시 지원팀에 문의해 주세요. 신속한 처리를 위해 결제 성공 스크린샷을 첨부해 주세요.",
-    support_btn:"지원팀 문의",
-    // ===== EMAIL =====
-    email_brand:"Short URL", email_voucher_subject:"SHURL 바우처 — 플랜 활성화 코드",
-    email_voucher_thanks_1:"다음 플랜을 이용해 주서 감사합니다:", email_voucher_thanks_2:"",
-    email_voucher_instruction:"이 바우처를 복사하여 계정 섹션의 바우처 입력란에 붙여넣어 활성화하세요:",
-    email_voucher_activate_note:"바우 플랜", email_voucher_activate_note_2:"은 코드 입력 후 즉시 활성화됩니다.",
-    email_voucher_warning:"분실 방지를 위해 이 바우처 코드를 타인과 공유하지 마세요.",
-    email_voucher_closing:"플랫폼 발전에 기여해 주셔서 감사합니다.", email_signature:"감사합니다,",
-    // ===== ROLES =====
-    role_guest:"게스트", role_free:"무료", role_pro:"Pro", role_super:"Super", role_admin:"관자",
-    // ===== MISC =====
-    days:"일", hours:"시간", minutes:"분", loading:"불러오는 중...", footer_tagline:"멀티티어 단축 링크 플랫폼 · 안전 · 빠름",
-    footer_contact:"문의",
-    // ===== ERROR CODES =====
-    err_url_invalid:"잘못된 URL입니다 (http:// 또는 https://로 시작해야 합니다)",
-    err_domain_blacklisted:"대상 도메인이 보안 블랙리스트에 있습니다.",
-   _keyword_blocked:'커스텀 별칭에 브랜드 또는 민감한 키워드가 포함되어 있습니다.',
-    err_code_taken:'이미 사용 중인 코드입니다. 다른 코드를 선택해 주세요.',
-    err_pixel_limit_re:"플랜의 픽셀 링크 한도에 도달했습니다.",
-    err_ab_limit_reached:"플랜의 A/B 테스트 한도에 도달했습니다.",
-    err_ab_percent_invalid:"A/B 비율의 합계는 100%여 합니다.",
-    err_pw_wrong:"비밀번호가 올바르지 않습니다",
-    err_pw_bruteforce:"시도 횟수가 너무 많습니다. 15분 후 다시 시도해 주세요.",
-    err_link_not_found:"링크를 찾을 수 없습니다",
-    err_quota_exceeded:"일일 링크 한도를 초과했습니다."
-,
-    mt_title:"🛠️ 기능 유지보수", mt_desc:"유지보수를 활성화하면 기능이 일시적으로 비활성화됩니다. 사용자에게 유지보수 리본이 표시됩니다.", mt_stripe:"Stripe (카드 결제)", mt_qr:"QR 은행 (VietQR)", mt_voucher:"바우처", mt_bulk:"대량 단축", mt_api:"API", mt_analytics:"분석", mt_note_ph:"유지보수 사유 (선택)", mt_ribbon:"유지보수", mt_alert:"기능이 유지보수 중입니다", mt_loading:"로딩 중...", mt_error:"오류", mt_confirm:"확인", mt_cancel:"취소", mt_save:"💾 저장", mt_success:"성공!", mt_payment_success:"결제 성공!", mt_payment_cancel:"결제 취소됨", mt_voucher_success:"바우처 구매 완료!", mt_voucher_cancel:"바우처 구매 취소", mt_expired_30:"30일 후 만료됩니다. 언제든 갱신할 수 있습니다.", mt_no_notif:"새 알림 없음", mt_notif_title:"🔔 알림", mt_pending_payments:"대기 중인 결제", mt_pending_reports:"신고", mt_downgrade_err:"더 높은 플랜을 사용 중이어서 낮은 플랜을 구매할 수 없습니다!", mt_pay_method:"방법", mt_no_history:"거래 내역 없음.",
-    totp_code:"TOTP 코드 (6자리)",
-    totp_required:"비밀번호 확인! Google Authenticator에서 TOTP 코드를 입력하세요.",
-    webhooks:"웹훅",
-    data_export:"데이터 내보내기",
-    campaign_history:"캠페인 기록",
-    team_management:"팀 관리",
-    wh_tab_title:"웹훅",
-    wh_requires:"웹훅은 Pro 또는 Super 플랜이 필요합니다.",
-    wh_loading:"로딩 중...",
-    wh_add_title:"웹훅 추가",
-    wh_url_label:"웹훅 URL (HTTPS)",
-    wh_name_label:"이름 (선택)",
-    wh_add_btn:"웹훅 추가",
-    wh_guide_title:"안내",
-    wh_guide_desc:"웹훅은 링크 클릭 시마다 URL로 POST 요청을 보냅니다.",
-    wh_empty:"웹훅이 없습니다.",
-    wh_col_name:"이름",
-    wh_col_url:"URL",
-    wh_col_event:"이벤트",
-    wh_col_created:"생성일",
-    wh_col_delete:"삭제",
-    wh_err_url:"웹훅 URL을 입력하세요.",
-    wh_err_https:"URL은 HTTPS를 사용해야 합니다.",
-    pay_no_history:"거래 내역이 없습니다.",
-    sidebar_pro_desc:"강력한 기능을 잠금 해제하세요.",
-    support_body_date:"결제일:",
-    support_contact_btn:"지원 문의",
-    err_pixel_limit_reached:"플랜의 픽셀 링크 한도에 도달했습니다.",
-    wh_adding:"추가 중...", wh_added:"웹훅이 추가되었습니다!", wh_delete_confirm:"이 웹훅을 삭제하시겠습니까?",
-    export_tab_title:"데이터 내보내기", export_requires:"데이터 내보내기는 Pro 또는 Super 플랜이 필요합니다.",
-    export_csv_btn:"CSV 내보내기", export_json_btn:"JSON 내보내기", export_csv_done:"CSV 내보내기 완료!", export_json_done:"JSON 내보내기 완료!",
-    export_desc:"내보내기에는 모든 링크가 포함됩니다: 코드, 대상 URL, 클릭수, 상태, 생성일, 만료일.",
-    export_csv_hint:"CSV — Excel/Google Sheets로 열기. JSON — API 또는 백업용.",
-    team_tab_title:"팀", team_requires:"팀은 Super 플랜이 필요합니다.", team_loading:"로딩 중...",
-    team_create_title:"팀 생성", team_name_label:"팀 이름", team_create_btn:"팀 생성",
-    team_guide_title:"안내", team_guide_desc:"팀을 통해 여러 사용자가 함께 링크를 관리할 수 있습니다. 팀원은 서로의 링크를 조회, 수정, 삭제할 수 있습니다.",
-    team_guide_limit:"Super: 팀당 최대 10명.", team_empty:"팀이 없습니다. 아래에서 생성하세요.",
-    team_col_member:"팀원", team_col_role:"역할", team_col_joined:"참여일", team_role_owner:"소유자", team_role_member:"멤버",
-    team_delete_btn:"팀 삭제", team_delete_confirm:"이 팀을 삭제하시겠습니까? 모든 팀원이 제거됩니다.",
-    team_add_placeholder:"사용자명", team_add_btn:"추가", team_remove_confirm:"이 팀원을 제거하시겠습니까?",
-    team_err_name:"팀 이름을 입력하세요.", team_creating:"생성 중...", team_created:"팀이 생성되었습니다!",
-    campaigns_tab_title:"캠페인", campaigns_requires:"캠페인 기록은 Plus 플랜 이상이 필요합니다.",
-    campaigns_loading:"로딩 중...", campaigns_guide_title:"안내",
-    campaigns_guide_desc:"캠페인은 마케팅 캠페인별로 링크를 그룹화합니다. 링크의 캠페인을 변경하면 이전 캠페인 기록이 자동으로 저장됩니다.",
-    campaigns_guide_desc2:"개요를 볼 수 있습니다: 캠페인당 링크수, 총 클릭수, 변경 기록.",
-    campaigns_empty:"캠페인이 없습니다. 캠페인과 함께 링크를 생성하여 시작하세요.",
-    campaigns_col_name:"캠페인", campaigns_col_links:"링크", campaigns_col_clicks:"총 클릭", campaigns_col_history:"기록",
-    campaigns_back:"← 뒤로", campaigns_history_title:"캠페인 기록:", campaigns_no_links:"링크가 없습니다.",
-    admin_ban:"차단", admin_unban:"차단 해제", admin_banned:"차단됨", admin_active:"정상", admin_expires:"만료:", admin_notify:"알림 보내기", admin_delete_user:"사용자 삭제", admin_ban_user:"사용자 차단", admin_unban_user:"차단 해제",
-    bulkqr:"대량 QR", bulkqr_title:"대량 QR 코드", bulkqr_hint:"한 줄에 하나의 단축 링크. 대량 QR 코드를 생성하고 Excel 파일로 다운로드.", bulkqr_generate:"대량 QR 생성", bulkqr_download:"Excel 다운로드 (.xls)", bulkqr_color:"QR 색상", bulkqr_empty:"유효한 링크가 없습니다.", bulkqr_max:"최대 1200개 링크/배치.", bulkqr_loading:"QR 생성 중...", bulkqr_done:"QR 코드가 생성되었습니다. 'Excel 다운로드'를 클릭하여 저장하세요.", bulkqr_super:"Super 플랜 전용 기능.",
-    guide_close:"가이드 닫기",
-    guide_home_title:"SHORT URL 시작하기", guide_home_desc:"짧은 링크, QR 코드를 만들고 활동을 한 곳에서 관리하세요.", guide_home_step1:"Short URL 만들기 — 긴 URL을 공유하기 쉬운 링크로 단축하세요.", guide_home_step2:"QR 코드 만들기 — 링크를 QR 코드로 변환하여 제품, 문서 또는 홍보에 사용하세요.", guide_home_step3:"활동 추적 — Analytics에서 클릭 수와 사용 데이터를 확인하세요.", guide_home_cta:"Short URL 만들기",
-    guide_shorturls_title:"Short URL 만들고 관리하기", guide_shorturls_desc:"긴 URL을 짧고 공유하기 쉬운 링크로 변환하세요.", guide_shorturls_step1:"원본 URL 붙여넣기 — 단축할 URL을 입력하세요.", guide_shorturls_step2:"필요시 사용자 정의 — 시스템의 기존 옵션을 사용하세요.", guide_shorturls_step3:"만들고 공유하기 — Short URL을 만든 후 채널에 사용하세요.", guide_shorturls_cta:"Short URL 만들기",
-    guide_dashboard_title:"활동 개요", guide_dashboard_desc:"Short URL 상태와 계정 활동을 한 곳에서 빠르게 확인하세요.", guide_dashboard_step1:"개요 보기 — 주요 지표를 확인하세요.", guide_dashboard_step2:"활동 추적 — 시스템의 최근 활동을 확인하세요.", guide_dashboard_step3:"Analytics 심화 — 더 자세한 분석이 필요할 때 Analytics를 여세요.", guide_dashboard_cta:"Analytics 보기",
-    guide_bulkqr_title:"하나 이상의 URL에 QR 코드 만들기", guide_bulkqr_desc:"하나의 QR 코드를 빠르게 만들거나 여러 링크를 한 번에 처리하세요.", guide_bulkqr_step1:"만들기 방법 선택 — 하나의 QR 코드 또는 대량 QR 도구를 사용하세요.", guide_bulkqr_step2:"QR 사용자 정의 — 필요에 따라 색상과 크기를 선택하세요.", guide_bulkqr_step3:"만들고 다운로드 — QR 코드를 만들어 문서, 제품 또는 캠페인에 사용하세요.",
-    guide_analytics_title:"각 링크의 성과 이해하기", guide_analytics_desc:"클릭 수를 추적하고 사용자가 링크와 상호작용하는 방식을 확인하세요.", guide_analytics_step1:"클릭 수 보기 — 시간별 트래픽을 추적하세요.", guide_analytics_step2:"방문자 분석 — 시스템에서 제공하는 Analytics 데이터를 확인하세요.", guide_analytics_step3:"성과 비교 — 기존 데이터로 어떤 Short URL이 더 잘 작동하는지 평가하세요.",
-    guide_webhooks_title:"웹훅이란?", guide_webhooks_desc:"SHORT URL을 다른 시스템과 연결하여 링크 관련 이벤트 발생 시 자동 알림을 받으세요.", guide_webhooks_step1:"웹훅 만들기 — 알림을 받을 대상 URL을 추가하세요.", guide_webhooks_step2:"추적할 이벤트 선택 — 시스템은 현재 클릭 이벤트를 지원합니다.", guide_webhooks_step3:"연결 및 데이터 확인 — URL로 오는 요청을 모니터링하여 웹훅이 작동하는지 확인하세요.", guide_webhooks_cta:"웹훅 추가",
-    guide_export_title:"데이터 내보내기", guide_export_desc:"Short URL 데이터와 관련 활동을 다운로드하여 저장, 분석 또는 다른 시스템에서 사용하세요.", guide_export_step1:"내보낼 데이터 선택 — 다운로드할 링크와 활동을 선택하세요.", guide_export_step2:"형식 선택 — 시스템은 현재 CSV와 JSON 내보내기를 지원합니다.", guide_export_step3:"내보내고 저장 — 파일을 기기에 다운로드하세요.", guide_export_cta:"데이터 내보내기",
-    guide_campaigns_title:"캠페인별로 링크 정리", guide_campaigns_desc:"Short URL과 관련 활동을 그룹화하여 쉽게 관리, 추적 및 성과 비교를 하세요.", guide_campaigns_step1:"캠페인 만들기 — 링크를 만들거나 편집할 때 캠페인을 지정하세요.", guide_campaigns_step2:"관련 링크 연결 — 같은 캠페인의 링크가 그룹화됩니다.", guide_campaigns_step3:"성과 추적 및 비교 — 개요 확인: 링크 수, 총 클릭 수, 변경 이력.", guide_campaigns_cta:"캠페인 보기",
-    guide_team_title:"팀과 함께 작업하기", guide_team_desc:"멤버를 관리하고 권한을 설정하여 여러 사람이 SHORT URL에서 협업할 수 있게 하세요.", guide_team_step1:"멤버 초대 — 팀에 멤버의 사용자 이름을 추가하세요.", guide_team_step2:"접근 권한 설정 — Owner와 Member는 팀 내에서 다른 권한을 가집니다.", guide_team_step3:"함께 관리하고 추적 — 팀 멤버는 서로의 링크를 조회, 수정, 삭제할 수 있습니다.", guide_team_cta:"팀 만들기",
-    guide_api_title:"API로 SHORT URL 통합하기", guide_api_desc:"API를 사용하여 SHORT URL을 웹사이트, 앱 또는 내부 시스템과 연결하세요.", guide_api_step1:"API 키 만들기 또는 가져오기 — 이 페이지에서 API 토큰을 생성하세요.", guide_api_step2:"API에 요청 보내기 — API 키와 함께 /api/v1/shorten 엔드포인트를 사용하세요.", guide_api_step3:"결과 수신 및 처리 — API가 짧은 링크와 관련 데이터를 반환합니다.", guide_api_cta:"API 키 만들기",
-    guide_pricing_title:"요구에 맞는 플랜 선택", guide_pricing_desc:"서비스 플랜을 비교하고 Short URL 생성, 관리 및 추적 요구에 맞는 수준을 선택하세요.", guide_pricing_step1:"각 플랜의 한도 보기 — Free, Plus, Pro, Super.", guide_pricing_step2:"기능 비교 — 각 플랜은 링크 한도, API, 분석 및 기능이 다릅니다.", guide_pricing_step3:"적합한 플랜 선택 — 더 많은 용량이 필요할 때 업그레이드하세요.", guide_pricing_cta:"요금제 보기",
-    guide_account_title:"계정 관리", guide_account_desc:"계정 정보, 개인 설정 및 SHORT URL 경험과 관련된 설정을 관리하세요.", guide_account_step1:"계정 정보 확인 — 사용자 이름, 이메일 및 현재 플랜을 확인하세요.", guide_account_step2:"설정 조정 — 정보와 개인 설정을 업데이트하세요.", guide_account_step3:"변경 사항 저장 — 적용하려면 확인하세요.", guide_account_cta:"계정 업데이트",
-    guide_admin_title:"시스템 관리", guide_admin_desc:"관리 영역에서 SHORT URL 구성 요소를 모니터링하고 관리하세요.", guide_admin_step1:"시스템 개요 확인 — 사용자, 링크 및 보고서를 관리하세요.", guide_admin_step2:"데이터 및 사용자 관리 — 보고서, 블랙리스트, 바우처 및 결제를 검토하세요.", guide_admin_step3:"관리 설정 확인 — 유지보수, 보안, 감사 로그 및 알림.", guide_admin_cta:"관리자 열기",
-    notif_title:"알림", notif_empty:"알림이 없습니다", notif_from:"보낸 사람:", notif_new:"새로움", notif_ok:"확인", crown_hint:"기능 가이드 보기", crown_upgrade_to_unlock:"이 기능을 잠금 해제하려면 업그레이드하세요", demo_bulkqr_title:"Bulk QR — QR 일괄 생성", demo_webhooks_title:"Webhooks — 이벤트 자동 전송", demo_campaigns_title:"Campaigns — 링크 그룹 관리", demo_export_title:"Export — 데이터 내보내기", demo_api_title:"API — 외부 시스템 연동", demo_dashboard_title:"Dashboard — Short URL 관리", demo_bulkqr_s1_t:"텍스트 상자에 여러 URL 입력", demo_bulkqr_s1_d:"한 줄에 하나씩 URL", demo_bulkqr_s2_t:"QR 생성 버튼 클릭", demo_bulkqr_s2_d:"각 URL에 대해 QR 생성", demo_bulkqr_s3_t:"모든 QR 다운로드", demo_bulkqr_s3_d:"모든 QR 코드가 포함된 ZIP 파일", demo_webhooks_s1_t:"웹훅 대상 URL 추가", demo_webhooks_s1_d:"이벤트 알림을 받을 URL", demo_webhooks_s2_t:"누군가 링크 클릭 시", demo_webhooks_s2_d:"웹훅이 자동으로 이벤트 POST", demo_webhooks_s3_t:"외부 시스템이 데이터 수신", demo_webhooks_s3_d:"IP, 국가, 기기, 시간", demo_campaigns_s1_t:"새 캠페인 만들기", demo_campaigns_s1_d:"캠페인 이름과 설명 입력", demo_campaigns_s2_t:"캠페인에 Short URL 추가", demo_campaigns_s2_d:"하나의 그룹에 여러 링크", demo_campaigns_s3_t:"통합 분석 보기", demo_campaigns_s3_d:"캠페인 내 모든 링크 통계", demo_export_s1_t:"CSV 또는 JSON 형식 선택", demo_export_s1_d:"모든 링크와 통계 내보내기", demo_export_s2_t:"내보내기 버튼 클릭", demo_export_s2_d:"시스템이 데이터 컴파일", demo_export_s3_t:"파일 다운로드", demo_export_s3_d:"모든 링크 + 클릭 + 날짜 포함", demo_api_s1_t:"API 토큰 생성", demo_api_s1_d:"API 인증용 토큰", demo_api_s2_t:"POST /api/v1/shorten 전송", demo_api_s2_d:"외부 시스템에서 Short URL 생성", demo_api_s3_t:"JSON 결과 수신", demo_api_s3_d:"Short URL 코드 + 전체 링크", demo_dashboard_s1_t:"Short URL 만들기", demo_dashboard_s1_d:"긴 URL 붙여넣기 → 짧은 링크 생성", demo_dashboard_s2_t:"링크 관리", demo_dashboard_s2_d:"복사, QR, 분석, 편집, 삭제", demo_dashboard_s3_t:"통계 보기", demo_dashboard_s3_d:"링크 수, 총 클릭수", demo_anim_url:"URL", demo_anim_qr:"QR", demo_anim_ok:"✓", demo_anim_link_click:"링크 클릭", demo_anim_event:"이벤트", demo_anim_post:"POST → URL", demo_anim_external:"외부 시스템", demo_anim_campaign:"캠페인", demo_anim_analytics:"분석", demo_anim_data:"데이터", demo_anim_export:"내보내기", demo_anim_csv:"CSV/JSON", demo_anim_app:"앱", demo_anim_url_long:"긴 URL", demo_anim_clicks:"클릭수", api_tier_expired:"플랜이 만료되었습니다. API를 계속 사용하려면 업그레이드하세요.", api_not_available:"현재 플랜은 API를 지원하지 않습니다. PRO 또는 SUPER로 업그레이드하세요.", api_quota_exceeded:"API 할당량을 모두 사용했습니다", api_upgrade_to_continue:"계속하려면 업그레이드하세요.", api_upgrade_to_increase:"한도를 늘리려면 업그레이드하세요.",
-    feedback_title:"피드백 및 지원", feedback_btn:"피드백", feedback_type_bug:"버그 신고", feedback_type_feature:"기능 요청", feedback_type_question:"질문하기", feedback_type_other:"기타", feedback_label_message:"내용", feedback_placeholder:"문제, 제안 또는 질문을 설명하세요...", feedback_label_email:"이메일 (선택)", feedback_email_placeholder:"email@example.com", feedback_cancel:"취소", feedback_submit:"보내기", feedback_success_title:"전송 완료!", feedback_success_desc:"감사합니다! 검토 후 곧 답변드리겠습니다.", feedback_close:"닫기", feedback_error:"오류가 발생했습니다. 다시 시도하세요.", admin_feedback_tab:"피드백", admin_no_feedback:"피드백이 없습니다.", acct_overview:"계정 개요", acct_total_clicks:"총 클릭수", acct_profile_title:"계정 프로필", acct_username:"사용자명", acct_joined:"가입일", acct_plan_title:"현재 요금제", acct_plan_active:"사용 중", acct_plan_running:"활성 ✓", acct_plan_expired:"만료됨", acct_free:"무료", acct_joined_label:"가입", acct_expiry_label:"만료", acct_start_label:"시작", acct_upgrade_plan:"요금제 업그레이드", acct_manage_plan:"요금제 관리", acct_pay_plan:"요금제", acct_pay_method:"결제 방법", acct_pay_amount:"금액", acct_voucher_title:"바우처 코드로 활성화", acct_voucher_hint:"바우처 코드를 입력하여 혜택이나 서비스 요금제를 활성화하세요.", acct_voucher_placeholder:"바우처 코드 입력", acct_voucher_btn:"활성화", acct_security_title:"보안", acct_2fa_enabled:"활성화됨 ✓", acct_2fa_disabled:"비활성화", acct_session:"세션", acct_current_device:"현재 기기", acct_browser:"브라우저", acct_bank_qr:"은행 QR", acct_pay_method_stripe:"Stripe", adm_notif_sys:"시스템 알림", adm_notif_empty:"새 알림이 없습니다", adm_notif_read:"읽음", adm_notif_unread:"안 읽음", adm_notif_delete:"삭제", adm_notif_delete_confirm:"이 알림을 삭제하시겠습니까?", adm_notif_deleted:"알림이 삭제되었습니다", adm_notif_not_found:"알림을 찾을 수 없습니다", adm_notif_missing_id:"알림 ID가 누락되었습니다", adm_notif_from:"보낸 사람", adm_notif_to:"받는 사람", adm_notif_all_users:"모든 사용자", adm_notif_close:"닫기", fb_detail_title:"피드백 세부정보", fb_detail_type:"유형", fb_detail_sender:"보낸 사람", fb_detail_anonymous:"익명", fb_detail_page:"페이지", fb_detail_time:"시간", fb_detail_status:"상태", fb_status_new:"새로움", fb_status_replied:"답변됨", fb_status_closed:"종료됨", fb_type_bug:"버그 신고", fb_type_feature:"기능 요청", fb_type_question:"질문답변", fb_type_other:"기타", notif_mark_all_read:"모두 읽음으로 표시", notif_marked_all:"모두 읽음으로 표시됨",
-  },
-
-  zh: {
-    ai_assistant_title:"问AI", ai_assistant_placeholder:"输入您的问题...", ai_assistant_send:"发送",
-    ai_assistant_greeting:"您好！我是 SHURL 的 AI 助手，请问需要什么帮助？",
-    ai_assistant_error:"发送失败，请重试。",
-    ext_title:"连接浏览器扩展程序",
-    ext_desc:"使用此代码连接 SHURL Chrome 扩展程序——在弹出窗口中查看最近创建的链接、点击次数，并快速缩短当前浏览的网址。所有套餐均可免费使用。",
-    // ===== NAV =====
-    home:"首页", nav_home:"首页", plans:"价格", login:"登录", register:"注册", logout:"退出登录", language:"语言",
-    dashboard:"控制面板", account:"账户", api:"API", bulk:"批量创建", admin:"管理",
-    // ===== AUTH =====
-    login_sub:"欢迎回到 SHURL。", login_security:"由 Cloudflare 保护 · 创建账户即可开始",
-    no_account:"还没有账户？", have_account:"已有账户？", demo_accounts:" ",
-    register_sub:"创建免费账户来管理链接。", register_free:"免费注册",
-    reg_username:"用户名（8-25 个字符）", reg_email:"邮箱（可选）", reg_password:"密码（最少 9 个字符，且至少包含 1 个大写字母）",
-    reg_newpassword:"新密码",
-    // ===== FORGOT PASSWORD =====
-    forgot_password:"忘记密码", forgot_sub:"输入用户名，我们将通过邮箱发送恢复码。", change_password:"修改密码", old_password:"当前密码", new_password:"新密码", confirm_password:"确认密码", send_code:"发送验证码", verify_code:"验证码（6位）", code_sent_to_email:"验证码已发送到您的邮箱。", code_sent:"验证码已发送", password_changed:"密码修改成功！", password_mismatch:"两次密码不一致", password_too_short:"密码至少需要9个字符", fill_all_fields:"请填写所有字段", sending:"发送中...", processing:"处理中...", send_failed:"发送失败", change_failed:"修改密码失败", cancel:"取消", confirm:"确认", security_password:"密码",
-    forgot_submit:"发送恢复码", reset_code:"验证码（6 位数字）", reset_submit:"修改密码",
-    back_to_login:"返回登录",
-    // ===== HOME =====
-    home_title:"免费短链接服务", home_sub:"快速创建短链接，追踪点击量，保护用户远离诈骗。",
-    home_promo_title:"✨ 创建账户 — 🎁 每天免费获得 10 条链接！",
-    home_promo_sub:"不限时 · 自定义别名 · 链接管理 · 点击统计",
-    home_promo_desc:"不限时 · 自定义别名 · 链接管理 · 点击统计",
-    home_promo_btn1:"免费注册", home_promo_btn2:"已有账户？",
-    home_hero_sub:"多层级短链接平台 — 安全、详细统计、营销活动管理。",
-    home_guest_hint:"登录后可设置自定义别名、管理链接并查看统计。游客：每天 5 条链接。",
-    home_url_placeholder:"https://example.com/很长的路径", home_alias_placeholder:"你的自定义名称",
-    home_note_placeholder:"此链接的备注", home_password_placeholder:"留空 = 无密码保护",
-    home_add_dest:"添加目标 URL", home_dest_a:"目标 URL A（添加）", home_dest_b:"目标 URL B（添加）",
-    url_to_shorten:"要缩短的 URL", shorten_now:"立即缩短", processing:"处理中...",
-    custom_alias:"自定义别名", custom_alias_opt:"自定义别名（可选）",
-    title_field:"标题", title_opt:"标题（可选）", campaign:"营销活动", tags:"标签",
-    expiry_date:"失效日期（可选）", password_protect:"保护密码（可选）",
-    custom_domain:"自定义域名",
-    pixel_tracking:"Pixel 追踪", ab_testing:"A/B 测试", deep_link:"深度链接", link_protect:"链接保护",
-    adv_options:"⚙ 高级选项（Pixel、A/B、深度链接）", destination:"目标", result_dest:"目标：",
-    // ===== QR CODE =====
-    qr_title:"生成二维码", qr_guest_title:"生成二维码",
-    qr_guest_desc:"自定义颜色 · 自定义尺寸", qr_guest_btn:"立即生成",
-    qr_desc:"输入任意 URL（无论是否已缩短）即可立即生成二维码。每生成一次二维码，将从每日额度中扣除 1 次。",
-    qr_url_label:"要生成二维码的 URL", qr_color:"颜色", qr_size:"尺寸", qr_btn:"生成二维码",
-    qr_copy_link:"复制链接", qr_download:"下载 PNG", qr_processing:"正在生成二维码...",
-    qr_quota_error:"今日二维码生成次数已达上限",
-    // ===== BULK QR =====
-    bulkqr:"批量二维码", bulkqr_title:"批量生成二维码", bulkqr_hint:"每行一条短链接。批量生成二维码并下载为 Excel 文件。",
-    bulkqr_generate:"批量生成二维码", bulkqr_download:"下载 Excel (.xls)", bulkqr_color:"二维码颜色",
-    bulkqr_empty:"没有有效的链接。", bulkqr_max:"每次最多 1200 条链接。",
-    bulkqr_loading:"正在生成二维码...", bulkqr_done:"二维码已生成。点击“下载 Excel”保存。",
-    bulkqr_super:"仅限 Super 套餐功能。",
-    // ===== DASHBOARD =====
-    my_links:"我的链接", total_clicks:"总点击量", daily_limit:"每日链接上限",
-    create_new:"创建新链接", create_success:"链接创建成功！",
-    col_link:"链接", col_dest:"目标", col_clicks:"点击数", col_status:"状态", col_created:"创建日期",
-    status:"状态", created:"创建日期", actions:"操作",
-    copy:"复制", copied:"已复制 ✓", stats:"统计", edit:"编辑", del:"删除",
-    enabled:"启用", disabled:"停用", deleted:"已删除", undo_delete:"撤销删除", force_delete:"永久删除",
-    export:"导出 CSV", optional:"可选", no_data:"暂无数据。",
-    delete_confirm:"删除链接 /", delete_warning:"？此操作无法撤销。",
-    edit_title:"编辑链接 /", edit_dest:"目标 URL", edit_save:"保存更改", edit_cancel:"取消",
-    edit_enabled:"启用链接", edit_tags_placeholder:"以逗号分隔",
-    // ===== BULK =====
-    bulk_title:"批量创建", bulk_sub:"每行输入一个 URL。上限：",
-    bulk_per_batch:"条链接/次。", bulk_input_placeholder:"https://example1.com\\nhttps://example2.com",
-    bulk_submit:"批量创建", bulk_success:"成功", bulk_errors:"错误", bulk_empty:"请至少输入 1 个 URL。",
-    // ===== ANALYTICS =====
-    analytics_title:"统计", analytics_back:"← 返回控制面板",
-    analytics_total:"总点击量", analytics_24h:"过去 24 小时", analytics_7d:"过去 7 天", analytics_30d:"过去 30 天",
-    analytics_14d:"最近 14 天", analytics_by_hour:"按小时（24h）", analytics_device:"设备",
-    analytics_country:"国家/地区", analytics_browser:"浏览器", analytics_referrer:"来源",
-    analytics_recent:"近期点击", analytics_time:"时间", analytics_no_clicks:"还没有点击记录。",
-    // ===== ACCOUNT =====
-    account_title:"账户", account_joined:"注册时间", account_current_limits:"当前套餐限额",
-    account_upgrade:"升级套餐", account_upgrade_sub:"解锁全部强大功能，提升效率。",
-    account_pro:"Pro", account_pro_desc:"适合营销人员与创作者",
-    account_super:"Super", account_super_desc:"适合企业与团队",
-    account_voucher:"使用兑换码激活", account_voucher_hint:"有兑换码？输入即可免费升级。",
-    account_voucher_btn:"输入兑换码", account_enter_voucher:"输入兑换码：",
-    acct_links_day:"链接/天", acct_detailed:"详细", acct_max:"最多", yes:"是", no:"否",
-    joined:"注册时间", plan:"套餐",
-    // ===== UPGRADE =====
-    upgrade_pro:"升级 Pro", upgrade_super:"升级 Super", upgrade_plus:"升级 Plus",
-    upgrade_to_unlock:"升级以解锁此功能",
-    upgrade_banner_title:"升级以解锁此功能",
-    upgrade_banner_desc:"Pro：200 条链接/天、批量创建、API · Super：600 条链接/天、自定义域名",
-    upgrade_banner_btn:"升级 →",
-    enter_voucher:"输入兑换码", activate_voucher:"使用兑换码激活",
-    // ===== VOUCHER =====
-    pricing_voucher_title:"激活兑换码", pricing_voucher_placeholder:"输入兑换码",
-    pricing_voucher_activate:"激活", pricing_voucher_buy_link:"购买优惠兑换码",
-    pricing_voucher_select_prompt:"请先选择套餐和时长来购买兑换码（促销期间适用）。",
-    pricing_voucher_choose_plan:"选择套餐：", pricing_voucher_choose_time:"选择时长：",
-    pricing_voucher_week:"1 周", pricing_voucher_month:"1 个月 (-5%)", pricing_voucher_year:"1 年",
-    pricing_voucher_pay:"支付", pricing_voucher_save:"节省", vn_pay_title:"🇻🇳 付款", vn_pay_select_period:"选择时长:", vn_pay_bank:"银行:", vn_pay_acct_no:"账号:", vn_pay_acct_name:"户名:", vn_pay_amount:"金额:", vn_pay_transfer_content:"转账备注:", vn_pay_security:"交易由银行保护。管理员将在1小时内批准。", vn_pay_confirm:"我已转账", vn_pay_processing:"处理中...", vn_pay_success:"请求已收到。管理员将在1小时内批准。",
-    pricing_voucher_select_alert:"请选择套餐和时长", pricing_voucher_enter_code:"请输入兑换码",
-    pricing_voucher_invalid:"兑换码无效",
-    // ===== PRICING =====
-    pricing_title:"价格与套餐对比", pricing_hero_title:"透明定价",
-    pricing_hero_desc:"选择适合您的套餐。随时可升级或取消。无隐藏费用。",
-    pricing_per_month:"/月", pricing_free_desc:"从基础开始",
-    pricing_f_10links:"10 条链接/天", pricing_f_manage:"链接管理", pricing_f_clickstats:"点击统计",
-    pricing_plus_desc:"150 条链接/天", pricing_plus_btn:"升级 Plus",
-    pricing_plus_f1:"150 条链接/天", pricing_plus_f2:"链接永不过期", pricing_plus_f3:"批量缩短 — 150 条链接/次",
-    pricing_popular:"最受欢迎", pay_vn_btn:"VN 支付 (MoMo/Napas)", pricing_per_batch:"次", pricing_per_link:"条", pricing_links:"条链接",
-    pricing_day:"天", pricing_month:"个月", pricing_req_month:"次请求/月", pricing_custom:"自定义",
-    pricing_advanced_mgmt:"高级管理", pricing_compare_title:"详细对比", pricing_compare_feature:"功能",
-    pricing_expiry:"链接有效期", pricing_unlimited_short:"∞", pricing_7days:"7 天",
-    pricing_support:"支持", pricing_support_247:"24/7 + SLA",
-    pricing_cta_title:"准备好升级了吗？", pricing_cta_desc:"立即升级，解锁全部功能。",
-    pricing_cta_btn:"立即开始",
-    pricing_checkout_error:"支付出错", pricing_connection_error:"连接错误",
-    pricing_error_notice:"如果支付失败或付款后未收到套餐/兑换码，请将成功交易的截图（含具体日期时间）发送邮件至",
-    pricing_error_subject:"SHURL 支付问题", pricing_error_body:"描述问题：\\n\\n套餐：\\n交易日期时间：\\n\\n附上交易截图",
-    pricing_error_desc:"审核团队将尽快以等值兑换码为您退款。",
-    pricing_footer:"SHURL — 多层级短链接平台 · 安全 · 快速",
-    // ===== PLAN FEATURES =====
-    plan_pro_f1:"200 条链接/天", plan_pro_f2:"300 条链接/次", plan_pro_f3:"高级管理",
-    plan_pro_f4:"详细", plan_pro_f5:"二维码", plan_pro_f6:"5,000 次请求/月",
-    plan_pro_f7:"每条链接 1 个 Pixel，50 条链接", plan_pro_f8:"2 个 URL，20 条链接", plan_pro_f9:"iOS/Android",
-    plan_pro_f10:"深度链接", plan_pro_f11:"密码保护（可选）",
-    plan_super_f1:"600 条链接/天", plan_super_f2:"600 条链接/次", plan_super_f3:"包含 Pro 全部功能",
-    plan_super_f4:"高级（热力图）", plan_super_f5:"二维码 + 批量二维码", plan_super_f6:"10,000 次请求/月",
-    plan_super_f7:"自定义域名", plan_super_f8:"每条链接 3 个 Pixel，∞", plan_super_f9:"5 个 URL，自定义百分比，∞",
-    plan_super_f10:"智能回退", plan_super_f11:"防暴力破解",
-    plan_ps_f1:"600 条链接/天 (Pro×6)", plan_ps_f2:"600 条链接/次", plan_ps_f5:"10,000 次请求/月 (×10)",
-    plan_ps_f8:"5 个 URL，自定义百分比，∞", plan_ps_f9:"智能回退",
-    plan_unlimited:"无限制", plan_advanced:"高级", plan_priority_support:"优先支持",
-    // ===== FAQ =====
-    pricing_faq_title:"常见问题",
-    pricing_faq1_q:"我可以随时取消吗？", pricing_faq1_a:"可以。您可以随时取消套餐。取消后，账户恢复为 Free 套餐，但已有链接保持不变。",
-    pricing_faq2_q:"可以使用兑换码支付吗？", pricing_faq2_a:"可以。如果您有兑换码，请前往 账户 → 输入兑换码 即可免费升级。",
-    pricing_faq3_q:"降级后旧链接会丢失吗？", pricing_faq3_a:"不会。所有已创建的链接均保留。降级时只有高级功能会被锁定。",
-    pricing_faq4_q:"可以使用自定义域名吗？", pricing_faq4_a:"自定义域名仅 Super 套餐可用。您需要将 DNS 解析指向 SHURL。",
-    pricing_faq5_q:"API 有速率限制吗？", pricing_faq5_a:"Pro：5,000 次请求/月。Super：10,000 次/月。",
-    pricing_faq6_q:"Plus 套餐有什么不同？", pricing_faq6_a:"Plus 允许每天 150 条链接，每次批量缩短 150 条。链接永不过期，适合任何活动。",
-    pricing_faq7_q:"购买兑换码比直接升级更便宜吗？", pricing_faq7_a:"仅限促销期间（由管理员设置）。非促销期间，兑换码价格与直接升级相同。",
-    // ===== PAYMENT =====
-    pay_history_title:"支付记录", pay_type:"类型", pay_date:"支付日期", pay_status:"状态",
-    pay_voucher:"兑换码", pay_upgrade:"升级", pay_success:"成功", pay_failed:"失败", pay_no_history:"暂无交易记录。",
-    // ===== TIER LIMITS =====
-    tier_limits_title:"当前套餐限额", links_per_day:"链接/天", advanced_mgmt:"高级管理",
-    detailed_stats:"详细统计", max:"最多",
-    // ===== API =====
-    api_title:"API Token", api_no_token:"您还没有 API token。", api_gen_token:"生成 token",
-    api_regen_token:"重新生成 token", api_monthly_limit:"额度：", api_requests_month:"次请求/月。",
-    api_example:"使用示例（cURL）", api_other:"其他端点：GET /api/v1/links · GET /api/v1/analytics/:code",
-    api_no_access:"当前套餐不支持 API。请升级至 PRO 或 SUPER 使用。",
-    // ===== ADMIN =====
-    admin_title:"系统管理", admin_users:"用户", admin_reports:"违规举报",
-    admin_blacklist:"黑名单", admin_vouchers:"兑换码",
-    admin_username:"用户名", admin_email:"邮箱", admin_role:"角色", admin_created:"创建日期",
-    admin_save:"保存", admin_reason:"原因", admin_status:"状态", admin_dismiss:"驳回",
-    admin_no_reports:"暂无举报。", admin_add_domain:"添加", admin_add_keyword:"添加",
-    admin_new_domain:"bad-example.com", admin_new_keyword:"关键词",
-    admin_bl_domains:"被屏蔽的域名", admin_bl_keywords:"敏感关键词（添加）",
-    admin_bl_defaults:"默认关键词（不可删除）：", admin_create_voucher:"+ 创建新兑换码",
-    admin_voucher_code:"兑换码", admin_tier:"套餐", admin_used:"已使用", admin_limit:"限制",
-    admin_expires:"有效期至", admin_active:"状态", admin_delete:"删除",
-    admin_panel_title:"管理员面板", admin_promo_title:"促销设置", admin_promo_enable:"启用促销",
-    admin_promo_from:"开始日期", admin_promo_to:"结束日期", admin_promo_month_disc:"月付折扣 (%)", admin_promo_year_disc:"年付折扣 (%)",
-    admin_promo_saved:"促销设置已保存", admin_promo_save_error:"保存设置出错",
-    admin_promo_ended:"促销已结束", admin_promo_starts:"促销将于以下时间开始", admin_promo_remaining:"剩余",
-    admin_pay_report_title:"支付报告", admin_customer:"客户", admin_amount:"金额", admin_total_revenue:"总收入",
-    admin_export_csv:"导出 CSV", admin_no_data:"暂无数据", admin_report_error:"加载报告出错",
-    // ===== SIDEBAR =====
-    sidebar_recent:"最近", sidebar_ad_placeholder:"广告 — 敬请期待", sidebar_ad_outside:"外部广告位",
-    sidebar_ad:"广告",
-    sidebar_guest_title:"✨ 创建免费账户", sidebar_guest_desc:"注册即可获得每天 10 条链接、链接管理和统计数据。",
-    sidebar_guest_feat1:"自定义别名", sidebar_guest_feat2:"链接管理与统计", sidebar_guest_btn:"立即注册 →",
-    sidebar_pro_title:"⭐ 升级 Pro", sidebar_pro_desc:"解锁强大功能。",
-    sidebar_super_title:"🚀 升级 Super", sidebar_super_desc:"企业专享。",
-    sidebar_upgrade_now:"立即升级 →", sidebar_view_super:"查看 Super 套餐 →",
-    sidebar_pro_current:"您正在使用 Pro — 升级 Super 可额外获得：",
-    sidebar_register_title:"✨ 免费注册", sidebar_register_desc:"创建账户享更多权益。",
-    sidebar_register_feat1:"10 条链接/天", sidebar_register_feat2:"自定义别名",
-    sidebar_register_feat3:"链接管理", sidebar_register_feat4:"点击统计",
-    sidebar_register_btn:"查看价格 →",
-    // ===== SUPPORT =====
-    support_subject:"SHURL — 支付支持", support_body_greeting:"您好 SHURL 团队，",
-    support_body_issue:"我在支付套餐时遇到问题：", support_body_plan:"订阅套餐：",
-    support_body_amount:"金额：", support_body_date:"支付日期：",
-    support_body_screenshot:"我已附上支付成功的截图。",
-    support_body_thanks:"感谢您的支持。", support_body_name:"账户名称：",
-    support_title:"支付遇到问题？", support_desc:"如果支付失败或套餐未激活，请联系支持团队。附上支付成功的截图，以便我们快速处理。",
-    support_contact_btn:"联系支持团队",
-    // ===== EMAIL =====
-    email_brand:"Short URL", email_voucher_subject:"SHURL 兑换码 — 套餐激活码",
-    email_voucher_thanks_1:"感谢您使用以下套餐：", email_voucher_thanks_2:"",
-    email_voucher_instruction:"请复制此兑换码并粘贴到账户页面的兑换码输入框中以激活：",
-    email_voucher_activate_note:"兑换码套餐", email_voucher_activate_note_2:"在输入代码后立即激活。",
-    email_voucher_warning:"为避免丢失，请不要将此兑换码分享给他人。",
-    email_voucher_closing:"感谢您为本平台的发展做出的贡献。", email_signature:"谨致问候，",
-    // ===== ROLES =====
-    role_guest:"游客", role_free:"免费", role_pro:"Pro", role_super:"Super", role_admin:"管理员",
-    // ===== MISC =====
-    days:"天", hours:"小时", minutes:"分钟", loading:"加载中...", footer_tagline:"多层级短链接平台 · 安全 · 快速",
-    footer_contact:"联系我们",
-    // ===== ERROR CODES =====
-    err_url_invalid:"URL 无效（必须以 http:// 或 https:// 开头）",
-    err_domain_blacklisted:"目标域名在安全黑名单中。",
-    err_keyword_blocked:'自定义别名包含品牌或敏感关键词。',
-    err_code_taken:'该代码已被使用。请选择其他代码。',
-    err_pixel_limit_reached:"您已达到套餐的 Pixel 链接数量上限。",
-    err_ab_limit_reached:"您已达到套餐的 A/B 测试数量上限。",
-    err_ab_percent_invalid:"A/B 百分比总和必须等于 100%。",
-    err_pw_wrong:"密码不正确",
-    err_pw_bruteforce:"尝试次数过多。请在 15 分钟后重试。",
-    err_link_not_found:"未找到该链接",
-    err_quota_exceeded:"您已超过每日链接限额。"
-,
-    mt_title:"🛠️ 功能维护", mt_desc:"启用维护可临时禁用功能。用户将看到维护标签且无法使用。", mt_stripe:"Stripe (银行卡支付)", mt_qr:"QR 银行 (VietQR)", mt_voucher:"代金券", mt_bulk:"批量缩短", mt_api:"API", mt_analytics:"分析", mt_note_ph:"维护原因（可选）", mt_ribbon:"维护", mt_alert:"功能维护中", mt_loading:"加载中...", mt_error:"错误", mt_confirm:"确认", mt_cancel:"取消", mt_save:"💾 保存", mt_success:"成功!", mt_payment_success:"支付成功!", mt_payment_cancel:"支付已取消", mt_voucher_success:"代金券购买成功!", mt_voucher_cancel:"代金券购买已取消", mt_expired_30:"套餐30天后到期。可随时续费。", mt_no_notif:"暂无新通知", mt_notif_title:"🔔 通知", mt_pending_payments:"待处理付款", mt_pending_reports:"举报", mt_downgrade_err:"您当前套餐更高，无法购买更低套餐!", mt_pay_method:"方式", mt_no_history:"暂无交易记录.",
-    totp_code:"TOTP 验证码（6位）",
-    totp_required:"密码正确！请输入 Google Authenticator 中的 TOTP 验证码。",
-    webhooks:"Webhooks",
-    data_export:"数据导出",
-    campaign_history:"活动历史",
-    team_management:"团队管理",
-    wh_tab_title:"Webhooks",
-    wh_requires:"Webhooks 需要 Pro 或 Super 套餐。",
-    wh_loading:"加载中...",
-    wh_add_title:"添加 Webhook",
-    wh_url_label:"Webhook URL (HTTPS)",
-    wh_name_label:"名称（可选）",
-    wh_add_btn:"添加 Webhook",
-    wh_guide_title:"指南",
-    wh_guide_desc:"每次有人点击链接时，Webhook 会向您的 URL 发送 POST 请求。",
-    wh_empty:"暂无 Webhook。",
-    wh_col_name:"名称",
-    wh_col_url:"URL",
-    wh_col_event:"事件",
-    wh_col_created:"创建日期",
-    wh_col_delete:"删除",
-    wh_err_url:"请输入 Webhook URL。",
-    wh_err_https:"URL 必须使用 HTTPS。",
-    pricing_per_week:"/周",
-    wh_adding:"添加中...", wh_added:"Webhook 已添加!", wh_delete_confirm:"删除此 Webhook？",
-    export_tab_title:"数据导出", export_requires:"数据导出需要 Pro 或 Super 套餐。",
-    export_csv_btn:"导出 CSV", export_json_btn:"导出 JSON", export_csv_done:"CSV 已导出!", export_json_done:"JSON 已导出!",
-    export_desc:"导出包含您的所有链接：代码、目标 URL、点击数、状态、创建日期、过期日期。",
-    export_csv_hint:"CSV — 用 Excel/Google Sheets 打开。JSON — 用于 API 或备份。",
-    team_tab_title:"团队", team_requires:"团队需要 Super 套餐。", team_loading:"加载中...",
-    team_create_title:"创建团队", team_name_label:"团队名称", team_create_btn:"创建团队",
-    team_guide_title:"指南", team_guide_desc:"团队允许多个用户共同管理链接。团队成员可以查看、编辑、删除彼此的链接。",
-    team_guide_limit:"Super：每个团队最多 10 名成员。", team_empty:"暂无团队。在下方创建。",
-    team_col_member:"成员", team_col_role:"角色", team_col_joined:"加入日期", team_role_owner:"所有者", team_role_member:"成员",
-    team_delete_btn:"删除团队", team_delete_confirm:"删除此团队？所有成员将被移除。",
-    team_add_placeholder:"用户名", team_add_btn:"添加", team_remove_confirm:"移除此成员？",
-    team_err_name:"请输入团队名称。", team_creating:"创建中...", team_created:"团队已创建！",
-    campaigns_tab_title:"活动", campaigns_requires:"活动历史需要 Plus 套餐或更高。",
-    campaigns_loading:"加载中...", campaigns_guide_title:"指南",
-    campaigns_guide_desc:"活动帮助按营销活动分组链接。更改链接的活动时，旧的活动历史会自动保存。",
-    campaigns_guide_desc2:"您可以查看概览：每个活动的链接数、总点击数和变更历史。",
-    campaigns_empty:"暂无活动。创建带活动的链接以开始。",
-    campaigns_col_name:"活动", campaigns_col_links:"链接", campaigns_col_clicks:"总点击", campaigns_col_history:"历史",
-    campaigns_back:"← 返回", campaigns_history_title:"活动历史：", campaigns_no_links:"没有链接。",
-    admin_ban:"封禁", admin_unban:"解封", admin_banned:"已封禁", admin_active:"正常", admin_expires:"到期:", admin_notify:"发送通知", admin_delete_user:"删除用户", admin_ban_user:"封禁用户", admin_unban_user:"解封用户",
-    bulkqr:"批量 QR", bulkqr_title:"批量二维码", bulkqr_hint:"每行一个缩短链接。批量生成二维码并下载为 Excel 文件。", bulkqr_generate:"生成批量 QR", bulkqr_download:"下载 Excel (.xls)", bulkqr_color:"QR 颜色", bulkqr_empty:"没有有效链接。", bulkqr_max:"每批最多 1200 个链接。", bulkqr_loading:"正在生成 QR...", bulkqr_done:"二维码已生成。点击'下载 Excel'保存。", bulkqr_super:"Super 套餐专属功能。",
-    guide_close:"关闭指南",
-    guide_home_title:"开始使用 SHORT URL", guide_home_desc:"创建短链接、QR 码并从一处管理您的活动。", guide_home_step1:"创建 Short URL — 将长 URL 缩短为易于分享的链接。", guide_home_step2:"创建 QR 码 — 将链接转为 QR 码，用于产品、文档或推广。", guide_home_step3:"跟踪活动 — 在 Analytics 中查看点击量和使用数据。", guide_home_cta:"创建 Short URL",
-    guide_shorturls_title:"创建和管理 Short URL", guide_shorturls_desc:"将长 URL 转为简短、易于分享和管理的链接。", guide_shorturls_step1:"粘贴原始 URL — 输入您要缩短的 URL。", guide_shorturls_step2:"按需自定义 — 使用系统现有的选项。", guide_shorturls_step3:"创建并分享 — 创建 Short URL 后在您的渠道中使用。", guide_shorturls_cta:"创建 Short URL",
-    guide_dashboard_title:"活动概览", guide_dashboard_desc:"从一处快速查看 Short URL 状态和账户活动。", guide_dashboard_step1:"查看概览 — 检查关键指标。", guide_dashboard_step2:"跟踪活动 — 查看系统最近的活动。", guide_dashboard_step3:"深入 Analytics — 需要更详细分析时打开 Analytics。", guide_dashboard_cta:"查看 Analytics",
-    guide_bulkqr_title:"为一个或多个 URL 创建 QR 码", guide_bulkqr_desc:"快速创建一个 QR 码或同时处理多个链接。", guide_bulkqr_step1:"选择创建方式 — 创建单个 QR 码或使用批量 QR 工具。", guide_bulkqr_step2:"自定义 QR — 根据需要选择颜色和尺寸。", guide_bulkqr_step3:"创建并下载 — 创建 QR 码用于文档、产品或活动。",
-    guide_analytics_title:"了解每个链接的效果", guide_analytics_desc:"跟踪点击量，了解用户如何与您的链接互动。", guide_analytics_step1:"查看点击量 — 按时间跟踪流量。", guide_analytics_step2:"分析访客 — 查看系统提供的 Analytics 数据。", guide_analytics_step3:"比较效果 — 使用现有数据评估哪个 Short URL 表现更好。",
-    guide_webhooks_title:"什么是 Webhooks？", guide_webhooks_desc:"将 SHORT URL 与其他系统连接，在链接相关事件发生时接收自动通知。", guide_webhooks_step1:"创建 Webhook — 添加目标 URL 以接收通知。", guide_webhooks_step2:"选择要跟踪的事件 — 系统目前支持点击事件。", guide_webhooks_step3:"连接并测试数据 — 监控发送到您 URL 的请求以确认 Webhook 正常工作。", guide_webhooks_cta:"添加 Webhook",
-    guide_export_title:"导出您的数据", guide_export_desc:"下载 Short URL 数据和相关活动，用于存储、分析或在其他系统中使用。", guide_export_step1:"选择要导出的数据 — 选择要下载的链接和活动。", guide_export_step2:"选择格式 — 系统目前支持 CSV 和 JSON 导出。", guide_export_step3:"导出并保存 — 将文件下载到您的设备。", guide_export_cta:"导出数据",
-    guide_campaigns_title:"按 Campaign 组织链接", guide_campaigns_desc:"将 Short URL 和相关活动分组，便于管理、跟踪和效果比较。", guide_campaigns_step1:"创建 Campaign — 在创建或编辑链接时指定 campaign。", guide_campaigns_step2:"关联相关链接 — 同一 campaign 的链接将被分组。", guide_campaigns_step3:"跟踪和比较效果 — 查看概览：链接数、总点击量和变更历史。", guide_campaigns_cta:"查看活动",
-    guide_team_title:"与团队协作", guide_team_desc:"管理成员和权限，让多人共同使用 SHORT URL。", guide_team_step1:"邀请成员 — 将成员的用户名添加到团队。", guide_team_step2:"设置访问权限 — Owner 和 Member 在团队中拥有不同权限。", guide_team_step3:"共同管理和跟踪 — 团队成员可以查看、编辑、删除彼此的链接。", guide_team_cta:"创建团队",
-    guide_api_title:"通过 API 集成 SHORT URL", guide_api_desc:"使用 API 将 SHORT URL 与您的网站、应用或内部系统连接。", guide_api_step1:"创建或获取 API Key — 在此页面生成 API 令牌。", guide_api_step2:"发送 API 请求 — 使用 API Key 调用 /api/v1/shorten 端点。", guide_api_step3:"接收并处理结果 — API 返回短链接和相关数据。", guide_api_cta:"创建 API Key",
-    guide_pricing_title:"选择适合您的套餐", guide_pricing_desc:"比较服务套餐，选择适合您 Short URL 创建、管理和跟踪需求的级别。", guide_pricing_step1:"查看各套餐限制 — Free、Plus、Pro 和 Super。", guide_pricing_step2:"比较功能 — 每个套餐有不同的链接限制、API、分析和功能。", guide_pricing_step3:"选择合适的套餐 — 需要更多容量时升级。", guide_pricing_cta:"查看套餐",
-    guide_account_title:"管理您的账户", guide_account_desc:"管理账户信息、个人偏好和与 SHORT URL 体验相关的设置。", guide_account_step1:"检查账户信息 — 查看用户名、邮箱和当前套餐。", guide_account_step2:"调整设置 — 更新您的信息和个人偏好。", guide_account_step3:"保存更改 — 确认以应用。", guide_account_cta:"更新账户",
-    guide_admin_title:"系统管理", guide_admin_desc:"从管理区域监控和管理 SHORT URL 组件。", guide_admin_step1:"检查系统概览 — 管理用户、链接和报告。", guide_admin_step2:"管理数据和用户 — 审查报告、黑名单、代金券和付款。", guide_admin_step3:"检查管理设置 — 维护、安全、审计日志和通知。", guide_admin_cta:"打开管理",
-    notif_title:"通知", notif_empty:"暂无通知", notif_from:"来自:", notif_new:"新", notif_ok:"知道了", crown_hint:"查看功能指南", crown_upgrade_to_unlock:"升级以解锁此功能", demo_bulkqr_title:"Bulk QR — 批量生成二维码", demo_webhooks_title:"Webhooks — 自动发送事件", demo_campaigns_title:"Campaigns — 管理链接组", demo_export_title:"Export — 导出数据", demo_api_title:"API — 集成外部系统", demo_dashboard_title:"Dashboard — 管理 Short URL", demo_bulkqr_s1_t:"在文本框中输入多个 URL", demo_bulkqr_s1_d:"每行一个 URL", demo_bulkqr_s2_t:"点击生成 QR 按钮", demo_bulkqr_s2_d:"系统为每个 URL 创建 QR", demo_bulkqr_s3_t:"下载所有 QR", demo_bulkqr_s3_d:"包含所有 QR 码的 ZIP 文件", demo_webhooks_s1_t:"添加 Webhook 目标 URL", demo_webhooks_s1_d:"接收事件通知的 URL", demo_webhooks_s2_t:"当有人点击链接时", demo_webhooks_s2_d:"Webhook 自动 POST 事件到 URL", demo_webhooks_s3_t:"外部系统接收数据", demo_webhooks_s3_d:"IP、国家、设备、时间", demo_campaigns_s1_t:"创建新 Campaign", demo_campaigns_s1_d:"命名和描述您的活动", demo_campaigns_s2_t:"添加 Short URL 到 Campaign", demo_campaigns_s2_d:"一个组中包含多个链接", demo_campaigns_s3_t:"查看汇总分析", demo_campaigns_s3_d:"Campaign 中所有链接的统计", demo_export_s1_t:"选择 CSV 或 JSON 格式", demo_export_s1_d:"导出所有链接和统计", demo_export_s2_t:"点击导出按钮", demo_export_s2_d:"系统编译数据", demo_export_s3_t:"下载文件", demo_export_s3_d:"包含所有链接 + 点击 + 日期", demo_api_s1_t:"创建 API Token", demo_api_s1_d:"用于 API 认证的 Token", demo_api_s2_t:"发送 POST /api/v1/shorten", demo_api_s2_d:"从外部系统创建 Short URL", demo_api_s3_t:"接收 JSON 结果", demo_api_s3_d:"Short URL 代码 + 完整链接", demo_dashboard_s1_t:"创建 Short URL", demo_dashboard_s1_d:"粘贴长 URL → 获取短链接", demo_dashboard_s2_t:"管理链接", demo_dashboard_s2_d:"复制、QR、分析、编辑、删除", demo_dashboard_s3_t:"查看统计", demo_dashboard_s3_d:"链接数、总点击数", demo_anim_url:"URL", demo_anim_qr:"QR", demo_anim_ok:"✓", demo_anim_link_click:"链接点击", demo_anim_event:"事件", demo_anim_post:"POST → URL", demo_anim_external:"外部系统", demo_anim_campaign:"活动", demo_anim_analytics:"分析", demo_anim_data:"数据", demo_anim_export:"导出", demo_anim_csv:"CSV/JSON", demo_anim_app:"应用", demo_anim_url_long:"长 URL", demo_anim_clicks:"点击数", api_tier_expired:"您的套餐已过期。请升级以继续使用 API。", api_not_available:"当前套餐不支持 API。升级到 PRO 或 SUPER。", api_quota_exceeded:"您已用完 API 配额", api_upgrade_to_continue:"请升级以继续。", api_upgrade_to_increase:"请升级以增加限额。",
-    feedback_title:"反馈与支持", feedback_btn:"反馈", feedback_type_bug:"报告问题", feedback_type_feature:"功能请求", feedback_type_question:"提问", feedback_type_other:"其他", feedback_label_message:"内容", feedback_placeholder:"描述您的问题、建议或疑问...", feedback_label_email:"邮箱（可选）", feedback_email_placeholder:"email@example.com", feedback_cancel:"取消", feedback_submit:"发送", feedback_success_title:"已发送！", feedback_success_desc:"感谢您的反馈！我们会尽快查看并回复。", feedback_close:"关闭", feedback_error:"出错了，请重试。", admin_feedback_tab:"反馈", admin_no_feedback:"暂无反馈。", acct_overview:"账户概览", acct_total_clicks:"总点击量", acct_profile_title:"账户资料", acct_username:"用户名", acct_joined:"加入日期", acct_plan_title:"当前套餐", acct_plan_active:"使用中", acct_plan_running:"运行中 ✓", acct_plan_expired:"已过期", acct_free:"免费", acct_joined_label:"加入", acct_expiry_label:"到期", acct_start_label:"开始", acct_upgrade_plan:"升级套餐", acct_manage_plan:"管理套餐", acct_pay_plan:"套餐", acct_pay_method:"支付方式", acct_pay_amount:"金额", acct_voucher_title:"使用优惠券激活", acct_voucher_hint:"输入优惠券代码以激活优惠或服务套餐。", acct_voucher_placeholder:"输入优惠券代码", acct_voucher_btn:"激活", acct_security_title:"安全", acct_2fa_enabled:"已启用 ✓", acct_2fa_disabled:"未启用", acct_session:"会话", acct_current_device:"当前设备", acct_browser:"浏览器", acct_bank_qr:"银行QR", acct_pay_method_stripe:"Stripe", adm_notif_sys:"系统通知", adm_notif_empty:"没有新通知", adm_notif_read:"已读", adm_notif_unread:"未读", adm_notif_delete:"删除", adm_notif_delete_confirm:"删除此通知？", adm_notif_deleted:"通知已删除", adm_notif_not_found:"未找到通知", adm_notif_missing_id:"缺少通知ID", adm_notif_from:"来自", adm_notif_to:"发送至", adm_notif_all_users:"所有用户", adm_notif_close:"关闭", fb_detail_title:"反馈详情", fb_detail_type:"类型", fb_detail_sender:"发送者", fb_detail_anonymous:"匿名", fb_detail_page:"页面", fb_detail_time:"时间", fb_detail_status:"状态", fb_status_new:"新", fb_status_replied:"已回复", fb_status_closed:"已关闭", fb_type_bug:"错误报告", fb_type_feature:"功能请求", fb_type_question:"问答", fb_type_other:"其他", notif_mark_all_read:"全部标记为已读", notif_marked_all:"已全部标记为已读",
-  },
-
-  hi: {
-    ai_assistant_title:"AI से पूछें", ai_assistant_placeholder:"अपना सवाल लिखें...", ai_assistant_send:"भेजें",
-    ai_assistant_greeting:"नमस्ते! मैं SHURL का AI सहायक हूं, आपको किस चीज़ में मदद चाहिए?",
-    ai_assistant_error:"संदेश नहीं भेजा जा सका, कृपया पुनः प्रयास करें।",
-    ext_title:"ब्राउज़र एक्सटेंशन कनेक्ट करें",
-    ext_desc:"SHURL Chrome एक्सटेंशन कनेक्ट करने के लिए इस कोड का उपयोग करें — हाल ही के लिंक, क्लिक की संख्या देखें और पॉपअप से ही मौजूदा पेज को तुरंत छोटा करें। सभी प्लान पर मुफ़्त।",
-    // ===== NAV =====
-    home:"होम", nav_home:"होम", plans:"मूल्य", login:"लॉगिन", register:"रजिस्टर", logout:"लॉगआउट", language:"भाषा",
-    dashboard:"डैशबोर्ड", account:"खाता", api:"API", bulk:"बल्क", admin:"एडमिन",
-    // ===== AUTH =====
-    login_sub:"SHURL पर आपका पुनः स्वागत है।", login_security:"Cloudflare द्वारा सुरक्षित · शुरू करने के लिए खाता बनाएं",
-    no_account:"अभी तक खाता नहीं है?", have_account:"पहले से खाता है?", demo_accounts:" ",
-    register_sub:"लिंक प्रबंधित करने के लिए मुफ़्त खाता बनाएं।", register_free:"मुफ़्त रजिस्टर करें",
-    reg_username:"उपयोगकर्ता नाम (8-25 अक्षर)", reg_email:"ईमेल (वैकल्पिक)", reg_password:"पासवर्ड (न्यूनतम 9 अक्षर, कम से कम 1 बड़ा अक्षर आवश्यक)",
-    reg_newpassword:"नया पासवर्ड",
-    // ===== FORGOT PASSWORD =====
-    forgot_password:"पासवर्ड भूल गए", forgot_sub:"रिकवरी कोड ईमेल पर प्राप्त करने के लिए उपयोगकर्ता नाम दर्ज करें।", change_password:"पासवर्ड बदलें", old_password:"वर्तमान पासवर्ड", new_password:"नया पासवर्ड", confirm_password:"पासवर्ड की पुष्टि करें", send_code:"सत्यापन कोड भेजें", verify_code:"सत्यापन कोड (6 अंक)", code_sent_to_email:"सत्यापन कोड आपके ईमेल पर भेजा गया है।", code_sent:"सत्यापन कोड भेजा गया", password_changed:"पासवर्ड सफलतापूर्वक बदला गया!", password_mismatch:"पासवर्ड मेल नहीं खाते", password_too_short:"पासवर्ड कम से कम 9 अक्षरों का होना चाहिए", fill_all_fields:"कृपया सभी फ़ील्ड भरें", sending:"भेजा जा रहा है...", processing:"प्रसंस्करण...", send_failed:"भेजने में विफल", change_failed:"पासवर्ड बदलने में विफल", cancel:"रद्द करें", confirm:"पुष्टि करें", security_password:"पासवर्ड",
-    forgot_submit:"रिकवरी कोड भेजें", reset_code:"सत्यापन कोड (6 अंक)", reset_submit:"पासवर्ड बदलें",
-    back_to_login:"लॉगिन पर वापस जाएं",
-    // ===== HOME =====
-    home_title:"मुफ़्त URL शॉर्टनर", home_sub:"तेज़ी से शॉर्ट लिंक बनाएं, क्लिक ट्रैक करें, और उपयोगकर्ताओं को धोखाधड़ी से बचाएं।",
-    home_promo_title:"✨ खाता बनाएं — 🎁 हर दिन 10 लिंक मुफ़्त!",
-    home_promo_sub:"बिना समय-सीमा · कस्टम उपनाम · लिंक प्रबंधन · क्लिक आंकड़े",
-    home_promo_desc:"बिना समय-सीमा · कस्टम उपनाम · लिंक प्रबंधन · क्लिक आंकड़े",
-    home_promo_btn1:"मुफ़्त रजिस्टर करें", home_promo_btn2:"पहले से खाता है?",
-    home_hero_sub:"मल्टी-टियर लिंक शॉर्टनिंग प्लेटफ़ॉर्म — सुरक्षित, विस्तृत आंकड़े, कैंपेन प्रबंधन।",
-    home_guest_hint:"कस्टम उपनाम सेट करने, लिंक प्रबंधित करने और आंकड़े देखने के लिए लॉगिन करें। अतिथि: 5 लिंक/दिन।",
-    home_url_placeholder:"https://udaaharan.com/bahut-lamba-path", home_alias_placeholder:"aapka-naam",
-    home_note_placeholder:"इस लिंक के लिए नोट", home_password_placeholder:"खाली छोड़ें = कोई सुरक्षा नहीं",
-    home_add_dest:"लक्ष्य URL जोड़ें", home_dest_a:"लक्ष्य URL A (जोड़ें)", home_dest_b:"लक्ष्य URL B (जोड़ें)",
-    url_to_shorten:"शॉर्ट करने के लिए URL", shorten_now:"अभी शॉर्ट करें", processing:"प्रोसेसिंग...",
-    custom_alias:"कस्टम उपनाम", custom_alias_opt:"कस्टम उपनाम (वैकल्पिक)",
-    title_field:"शीर्षक", title_opt:"शीर्षक (वैकल्पिक)", campaign:"कैंपेन", tags:"टैग",
-    expiry_date:"समाप्ति तिथि (वैकल्पिक)", password_protect:"सुरक्षा पासवर्ड (वैकल्पिक)",
-    custom_domain:"कस्टम डोमेन",
-    pixel_tracking:"Pixel ट्रैकिंग", ab_testing:"A/B टेस्टिंग", deep_link:"डीप लिंक", link_protect:"लिंक सुरक्षा",
-    adv_options:"⚙ उन्नत विकल्प (Pixel, A/B, डीप लिंक)", destination:"लक्ष्य", result_dest:"लक्ष्य:",
-    // ===== QR CODE =====
-    qr_title:"QR कोड बनाएं", qr_guest_title:"QR कोड बनाएं",
-    qr_guest_desc:"कस्टम रंग · कस्टम आकार", qr_guest_btn:"अभी बनाएं",
-    qr_desc:"कोई भी URL (शॉर्ट किया हुआ या नहीं) दर्ज करें और तुरंत QR कोड बनाएं। हर QR जनरेशन पर दैनिक कोटा से 1 कटौती होगी।",
-    qr_url_label:"QR के लिए URL", qr_color:"रंग", qr_size:"आकार", qr_btn:"QR बनाएं",
-    qr_copy_link:"लिंक कॉपी करें", qr_download:"PNG डाउनलोड करें", qr_processing:"QR बन रहा है...",
-    qr_quota_error:"आज की QR जनरेशन सीमा पूरी हो गई है",
-    // ===== BULK QR =====
-    bulkqr:"बल्क QR", bulkqr_title:"बल्क QR कोड", bulkqr_hint:"प्रति पंक्ति एक शॉर्ट लिंक। बल्क में QR बनाएं और Excel फ़ाइल में डाउनलोड करें।",
-    bulkqr_generate:"बल्क QR बनाएं", bulkqr_download:"Excel (.xls) डाउनलोड करें", bulkqr_color:"QR रंग",
-    bulkqr_empty:"कोई मान्य लिंक नहीं।", bulkqr_max:"प्रति बार अधिकतम 1200 लिंक।",
-    bulkqr_loading:"QR बन रहा है...", bulkqr_done:"QR बन गए। 'Excel डाउनलोड' दबाकर सेव करें।",
-    bulkqr_super:"यह सुविधा केवल Super प्लान के लिए है।",
-    // ===== DASHBOARD =====
-    my_links:"मेरे लिंक", total_clicks:"कुल क्लिक", daily_limit:"दैनिक लिंक सीमा",
-    create_new:"नया लिंक बनाएं", create_success:"लिंक सफलतापूर्वक बना!",
-    col_link:"लिंक", col_dest:"लक्ष्य", col_clicks:"क्लिक", col_status:"स्थिति", col_created:"बनाया गया",
-    status:"स्थिति", created:"बनाया गया", actions:"क्रियाएं",
-    copy:"कॉपी", copied:"कॉपी हो गया ✓", stats:"आंकड़े", edit:"संपादित करें", del:"हटाएं",
-    enabled:"सक्रिय", disabled:"निष्क्रिय", deleted:"हटा दिया गया", undo_delete:"हटाना रद्द करें", force_delete:"स्थायी रूप से हटाएं",
-    export:"CSV निर्यात", optional:"वैकल्पिक", no_data:"अभी कोई डेटा नहीं।",
-    delete_confirm:"लिंक हटाएं /", delete_warning:"? यह क्रिया पूर्वत नहीं की जा सकती।",
-    edit_title:"लिंक संपादित करें /", edit_dest:"लक्ष्य URL", edit_save:"परिवर्तन सेव करें", edit_cancel:"रद्द करें",
-    edit_enabled:"लिंक सक्रिय करें", edit_tags_placeholder:"अल्पविराम से अलग किए गए",
-    // ===== BULK =====
-    bulk_title:"बल्क बनाएं", bulk_sub:"प्रति पंक्ति एक URL दर्ज करें। सीमा:",
-    bulk_per_batch:"लिंक/बार।", bulk_input_placeholder:"https://udaaharan1.com\\nhttps://udaaharan2.com",
-    bulk_submit:"बल्क बनाएं", bulk_success:"सफल", bulk_errors:"त्रुटियां", bulk_empty:"कृपया कम से कम 1 URL दर्ज करें।",
-    // ===== ANALYTICS =====
-    analytics_title:"आंकड़े", analytics_back:"← डैशबोर्ड पर वापस जाएं",
-    analytics_total:"कुल क्लिक", analytics_24h:"पिछले 24 घंटे", analytics_7d:"पिछले 7 दिन", analytics_30d:"पिछले 30 दिन",
-    analytics_14d:"पिछले 14 दिन", analytics_by_hour:"घंटे के अनुसार (24h)", analytics_device:"डिवाइस",
-    analytics_country:"देश", analytics_browser:"ब्राउज़र", analytics_referrer:"रेफ़रर",
-    analytics_recent:"हाल के क्लिक", analytics_time:"समय", analytics_no_clicks:"अभी कोई क्लिक नहीं।",
-    // ===== ACCOUNT =====
-    account_title:"खाता", account_joined:"जुड़ने की तिथि", account_current_limits:"वर्तमान प्लान सीमाएं",
-    account_upgrade:"प्लान अपग्रेड करें", account_upgrade_sub:"उत्पादकता बढ़ाने के लिए सभी शक्तिशाली सुविधाएं अनलॉक करें।",
-    account_pro:"Pro", account_pro_desc:"मार्केटर और क्रिएटर के लिए",
-    account_super:"Super", account_super_desc:"व्यवसाय और टीम के लिए",
-    account_voucher:"वाउचर कोड से सक्रिय करें", account_voucher_hint:"वाउचर है? दर्ज करें और मुफ़्त अपग्रेड करें।",
-    account_voucher_btn:"वाउचर कोड दर्ज करें", account_enter_voucher:"वाउचर कोड दर्ज करें:",
-    acct_links_day:"लिंक/दिन", acct_detailed:"विस्तृत", acct_max:"अधिकतम", yes:"हां", no:"नहीं",
-    joined:"जुड़ने की तिथि", plan:"प्लान",
-    // ===== UPGRADE =====
-    upgrade_pro:"Pro अपग्रेड", upgrade_super:"Super अपग्रेड", upgrade_plus:"Plus अपग्रेड",
-    upgrade_to_unlock:"यह सुविधा अनलॉक करने के लिए अपग्रेड करें",
-    upgrade_banner_title:"यह सुविधा अनलॉक करने के लिए अपग्रेड करें",
-    upgrade_banner_desc:"Pro: 200 लिंक/दिन, बल्क, API · Super: 600 लिंक/दिन, कस्टम डोमेन",
-    upgrade_banner_btn:"अपग्रेड →",
-    enter_voucher:"वाउचर कोड दर्ज करें", activate_voucher:"वाउचर कोड से सक्रिय करें",
-    // ===== VOUCHER =====
-    pricing_voucher_title:"वाउचर सक्रिय करें", pricing_voucher_placeholder:"वाउचर कोड दर्ज करें",
-    pricing_voucher_activate:"सक्रिय करें", pricing_voucher_buy_link:"छूट वाला वाउचर खरीदें",
-    pricing_voucher_select_prompt:"वाउचर खरीदने के लिए पहले प्लान और अवधि चुनें (प्रोमोशन के दौरान लागू)।",
-    pricing_voucher_choose_plan:"प्लान चुनें:", pricing_voucher_choose_time:"अवधि चुनें:",
-    pricing_voucher_week:"1 सप्ताह", pricing_voucher_month:"1 माह (-5%)", pricing_voucher_year:"1 वर्ष",
-    pricing_voucher_pay:"भुगतान", pricing_voucher_save:"बचत", vn_pay_title:"🇻🇳 भुगतान", vn_pay_select_period:"अवधि चुनें:", vn_pay_bank:"बैंक:", vn_pay_acct_no:"खाता संख्या:", vn_pay_acct_name:"खाताधारक:", vn_pay_amount:"राशि:", vn_pay_transfer_content:"हस्तांतरण नोट:", vn_pay_security:"लेनदेन बैंक द्वारा सुरक्षित है। व्यवस्थापक 1 घंटे के भीतर स्वीकृत करेगा।", vn_pay_confirm:"मैंने हस्तांतरण कर दिया", vn_pay_processing:"प्रसंस्करण...", vn_pay_success:"अनुरोध प्राप्त हुआ। व्यवस्थापक 1 घंटे के भीतर स्वीकृत करेगा।",
-    pricing_voucher_select_alert:"कृपया प्लान और अवधि चुनें", pricing_voucher_enter_code:"कृपया कोड दर्ज करें",
-    pricing_voucher_invalid:"अमान्य वाउचर",
-    // ===== PRICING =====
-    pricing_title:"मूल्य और प्लान तुलना", pricing_hero_title:"पारदर्शी मूल्य",
-    pricing_hero_desc:"अपने लिए उपयुक्त प्लान चुनें। कभी भी अपग्रेड या रद्द करें। कोई छिपा शुल्क नहीं।",
-    pricing_per_month:"/माह", pricing_free_desc:"बुनियादी से शुरू करें",
-    pricing_f_10links:"10 लिंक/दिन", pricing_f_manage:"लिंक प्रबंधन", pricing_f_clickstats:"क्लिक आंकड़े",
-    pricing_plus_desc:"150 लिंक/दिन", pricing_plus_btn:"Plus अपग्रेड",pricing_per_week:"/सप्ताह",
-    pricing_plus_f1:"150 लिंक/दिन", pricing_plus_f2:"लिंक कभी समाप्त नहीं", pricing_plus_f3:"बल्क शॉर्टन — 150 लिंक/बार",
-    pricing_popular:"सबसे लोकप्रिय", pay_vn_btn:"VN भुगतान (MoMo/Napas)", pricing_per_batch:"बार", pricing_per_link:"लिंक", pricing_links:"लिंक",
-    pricing_day:"दिन", pricing_month:"माह", pricing_req_month:"रिक्वेस्ट/माह", pricing_custom:"कस्टम",
-    pricing_advanced_mgmt:"उन्नत प्रबंधन", pricing_compare_title:"विस्तृत तुलना", pricing_compare_feature:"सुविधा",
-    pricing_expiry:"लिंक वैधता", pricing_unlimited_short:"∞", pricing_7days:"7 दिन",
-    pricing_support:"सहायता", pricing_support_247:"24/7 + SLA",
-    pricing_cta_title:"अपग्रेड के लिए तैयार?", pricing_cta_desc:"आज ही अपग्रेड करें और सभी सुविधाएं अनलॉक करें।",
-    pricing_cta_btn:"अभी शुरू करें",
-    pricing_checkout_error:"भुगतान त्रुटि", pricing_connection_error:"कनेक्शन त्रुटि",
-    pricing_error_notice:"यदि भुगतान विफल हो जाए या भुगतान के बाद प्लान/वाउचर प्राप्त न हो, तो कृपया सफल लेनदेन का स्क्रीनशॉट (विशिष्ट दिनांक-समय सहित) इस ईमेल पर भेजें:",
-    pricing_error_subject:"SHURL भुगतान समस्या", pricing_error_body:"समस्या का विवरण:\\n\\nप्लान:\\nलेनदेन दिनांक/समय:\\n\\nलेनदेन का स्क्रीनशॉट संलग्न करें",
-    pricing_error_desc:"समीक्षा टीम जल्द से जल्द समतुल्य वाउचर से धनवापसी करेगी।",
-    pricing_footer:"SHURL — मल्टी-टियर लिंक शॉर्टनिंग प्लेटफ़ॉर्म · सुरक्षित · तेज़",
-    // ===== PLAN FEATURES =====
-    plan_pro_f1:"200 लिंक/दिन", plan_pro_f2:"300 लिंक/बार", plan_pro_f3:"उन्नत प्रबंधन",
-    plan_pro_f4:"विस्तृत", plan_pro_f5:"QR कोड", plan_pro_f6:"5,000 रिक्वेस्ट/माह",
-    plan_pro_f7:"1 पिक्सेल/लिंक, 50 लिंक", plan_pro_f8:"2 URL, 20 लिंक", plan_pro_f9:"iOS/Android",
-    plan_pro_f10:"डीप लिंक", plan_pro_f11:"पासवर्ड सुरक्षा (वैकल्पिक)",
-    plan_super_f1:"600 लिंक/दिन", plan_super_f2:"600 लिंक/बार", plan_super_f3:"सभी Pro सुविधाएं",
-    plan_super_f4:"उन्नत (हीटमैप)", plan_super_f5:"QR कोड + बल्क QR", plan_super_f6:"10,000 रिक्वेस्ट/माह",
-    plan_super_f7:"कस्टम डोमेन", plan_super_f8:"2 पिक्सेल/लिंक, ∞", plan_super_f9:"3 URL, कस्टम %, ∞",
-    plan_super_f10:"स्मार्ट फ़ॉलबैक", plan_super_f11:"ब्रूट-फ़ोर्स सुरक्षा",
-    plan_ps_f1:"600 लिंक/दिन (Pro ×6)", plan_ps_f2:"600 लिंक/बार", plan_ps_f5:"10,000 रिक्वेस्ट/माह (×10)",
-    plan_ps_f8:"3 URL, कस्टम %, ∞", plan_ps_f9:"स्मार्ट फ़ॉलबैक",
-    plan_unlimited:"असीमित", plan_advanced:"उन्नत", plan_priority_support:"प्राथमिकता सहायता",
-    // ===== FAQ =====
-    pricing_faq_title:"अक्सर पूछे जाने वाले प्रश्न",
-    pricing_faq1_q:"क्या मैं कभी भी रद्द कर सकता हूं?", pricing_faq1_a:"हां। आप कभी भी प्लान रद्द कर सकते हैं। रद्द करने के बाद खाता Free प्लान पर वापस आ जाता है लेकिन पुराने लिंक बने रहते हैं।",
-    pricing_faq2_q:"क्या मैं वाउचर से भुगतान कर सकता हूं?", pricing_faq2_a:"हां। यदि आपके पास वाउचर कोड है, तो खाता → वाउचर कोड दर्ज करें पर जाकर मुफ़्त अपग्रेड करें।",
-    pricing_faq3_q:"डाउनग्रेड पर पुराने लिंक खो जाएंगे?", pricing_faq3_a:"नहीं। सभी बनाए गए लिंक बने रहते हैं। डाउनग्रेड पर केवल उन्नत सुविधाएं लॉक होती हैं।",
-    pricing_faq4_q:"क्या मैं कस्टम डोमेन उपयोग कर सकता हूं?", pricing_faq4_a:"कस्टम डोमेन केवल Super प्लान में उपलब्ध है। DNS को SHURL की ओर पॉइंट करें।",
-    pricing_faq5_q:"क्या API में रेट लिमिट है?", pricing_faq5_a:"Pro: 5,000 रिक्वेस्ट/माह। Super: 10,000/माह।",
-    pricing_faq6_q:"Plus प्लान में क्या अलग है?", pricing_faq6_a:"Plus में 150 लिंक/दिन और प्रति बार 150 लिंक बल्क शॉर्टन की अनुमति है। लिंक कभी समाप्त नहीं होते — हर कैंपेन के लिए उपयुक्त।",
-    pricing_faq7_q:"वाउचर खरीदना सीधे अपग्रेड से सस्ता होता है?", pricing_faq7_a:"केवल प्रोमोशन के दौरान (एडमिन द्वारा निर्धारित)। प्रोमोशन के बाहर वाउचर मूल्य सीधे अपग्रेड के बराबर है।",
-    // ===== PAYMENT =====
-    pay_history_title:"भुगतान इतिहास", pay_type:"प्रकार", pay_date:"भुगतान तिथि", pay_status:"स्थिति",
-    pay_voucher:"वाउचर", pay_upgrade:"अपग्रेड", pay_success:"सफल", pay_failed:"विफल", pay_no_history:"अभी कोई लेनदेन नहीं।",
-    // ===== TIER LIMITS =====
-    tier_limits_title:"वर्तमान प्लान सीमाएं", links_per_day:"लिंक/दिन", advanced_mgmt:"उन्नत प्रबंधन",
-    detailed_stats:"विस्तृत आंकड़े", max:"अधिकतम",
-    // ===== API =====
-    api_title:"API Token", api_no_token:"आपके पास अभी API token नहीं है।", api_gen_token:"Token बनाएं",
-    api_regen_token:"Token पुनः बनाएं", api_monthly_limit:"कोटा:", api_requests_month:"रिक्वेस्ट/माह।",
-    api_example:"उपयोग उदाहरण (cURL)", api_other:"अन्य एंडपॉइंट: GET /api/v1/links · GET /api/v1/analytics/:code",
-    api_no_access:"वर्तमान प्लान में API उपलब्ध नहीं है। PRO या SUPER में अपग्रेड करें।",
-    // ===== ADMIN =====
-    admin_title:"सिस्टम प्रशासन", admin_users:"उपयोगकर्ता", admin_reports:"दुरुपयोग रिपोर्ट",
-    admin_blacklist:"ब्लैकलिस्ट", admin_vouchers:"वाउचर",
-    admin_username:"उपयोगकर्ता नाम", admin_email:"ईमेल", admin_role:"भूमिका", admin_created:"बनाया गया",
-    admin_save:"सेव करें", admin_reason:"कारण", admin_status:"स्थिति", admin_dismiss:"खारिज करें",
-    admin_no_reports:"कोई रिपोर्ट नहीं।", admin_add_domain:"जोड़ें", admin_add_keyword:"जोड़ें",
-    admin_new_domain:"bad-example.com", admin_new_keyword:"कीवर्ड",
-    admin_bl_domains:"अवरुद्ध डोमेन", admin_bl_keywords:"संवेदनशील कीवर्ड (जोड़ें)",
-    admin_bl_defaults:"डिफ़ॉल्ट कीवर्ड (हटाए नहीं जा सकते):", admin_create_voucher:"+ नया वाउचर बनाएं",
-    admin_voucher_code:"वाउचर कोड", admin_tier:"प्लान", admin_used:"उपयोग किया", admin_limit:"सीमा",
-    admin_expires:"समाप्ति", admin_active:"स्थिति", admin_delete:"हटाएं",
-    admin_panel_title:"एडमिन पैनल", admin_promo_title:"प्रोमोशन सेटिंग", admin_promo_enable:"प्रोमोशन सक्रिय करें",
-    admin_promo_from:"से तिथि", admin_promo_to:"तक तिथि", admin_promo_month_disc:"मासिक छूट (%)", admin_promo_year_disc:"वार्षिक छूट (%)",
-    admin_promo_saved:"प्रोमोशन सेटिंग सेव हो गई", admin_promo_save_error:"सेव करने में त्रुटि",
-    admin_promo_ended:"प्रोमोशन समाप्त हो गया", admin_promo_starts:"प्रोमोशन शुरू होगा", admin_promo_remaining:"शेष",
-    admin_pay_report_title:"भुगतान रिपोर्ट", admin_customer:"ग्राहक", admin_amount:"राशि", admin_total_revenue:"कुल आय",
-    admin_export_csv:"CSV निर्यात", admin_no_data:"कोई डेटा नहीं", admin_report_error:"रिपोर्ट लोड करने में त्रुटि",
-    // ===== SIDEBAR =====
-    sidebar_recent:"हाल के", sidebar_ad_placeholder:"विज्ञापन — जल्द आ रहा है", sidebar_ad_outside:"बाहरी विज्ञापन स्थान",
-    sidebar_ad:"विज्ञापन",
-    sidebar_guest_title:"✨ मुफ़्त खाता बनाएं", sidebar_guest_desc:"रजिस्टर करें और 10 लिंक/दिन, लिंक प्रबंधन और आंकड़े पाएं।",
-    sidebar_guest_feat1:"कस्टम उपनाम", sidebar_guest_feat2:"लिंक प्रबंधन और आंकड़े", sidebar_guest_btn:"अभी रजिस्टर करें →",
-    sidebar_pro_title:"⭐ Pro अपग्रेड", sidebar_pro_desc:"शक्तिशाली सुविधाएं अनलॉक करें।",
-    sidebar_super_title:"🚀 Super अपग्रेड", sidebar_super_desc:"व्यवसाय के लिए।",
-    sidebar_upgrade_now:"अभी अपग्रेड करें →", sidebar_view_super:"Super प्लान देखें →",
-    sidebar_pro_current:"आप Pro उपयोग कर रहे हैं — Super में जाकर पाएं:",
-    sidebar_register_title:"✨ मुफ़्त रजिस्टर", sidebar_register_desc:"खाता बनाएं और अधिक लाभ पाएं।",
-    sidebar_register_feat1:"10 लिंक/दिन", sidebar_register_feat2:"कस्टम उपनाम",
-    sidebar_register_feat3:"लिंक प्रबंधन",
-    sidebar_register_feat4:"क्लिक आंकड़े",
-    sidebar_register_btn:"मूल्य देखें →",
-    // ===== SUPPORT =====
-    support_subject:"SHURL — भुगतान सहायता", support_body_greeting:"नमस्ते SHURL टीम,",
-    support_body_issue:"प्लान के भुगतान में मुझे समस्या हुई:", support_body_plan:"चुना गया प्लान:",
-    support_body_amount:"राशि:", support_body_date:"भुगतान तिथि:",
-    support_body_screenshot:"मैंने सफल भुगतान का स्क्रीनशॉट संलग्न किया है।",
-    support_body_thanks:"कृपया सहयोग करें। धन्यवाद।", support_body_name:"खाता नाम:",
-    support_title:"भुगतान में समस्या है?", support_desc:"यदि भुगतान विफल हो जाए या प्लान सक्रिय न हो, तो सहायता टीम से संपर्क करें। तेज़ी से निपटाने के लिए सफल भुगतान का स्क्रीनशॉट संलग्न करें।",
-    support_contact_btn:"सहायता टीम से संपर्क करें",
-    // ===== EMAIL =====
-    email_brand:"Short URL", email_voucher_subject:"SHURL वाउचर — प्लान सक्रियण कोड",
-    email_voucher_thanks_1:"निम्नलिखित प्लान के उपयोग के लिए धन्यवाद:", email_voucher_thanks_2:"",
-    email_voucher_instruction:"इस वाउचर को कॉपी करें और खाता अनुभाग के वाउचर इनपुट फ़ील्ड में पेस्ट करके सक्रिय करें:",
-    email_voucher_activate_note:"वाउचर प्लान", email_voucher_activate_note_2:"कोड दर्ज करते ही सक्रिय हो जाएगा।",
-    email_voucher_warning:"खोने से बचने के लिए इस वाउचर कोड को दूसरों के साथ साझा न करें।",
-    email_voucher_closing:"प्लेटफ़ॉर्म के विकास में आपके योगदान के लिए धन्यवाद।", email_signature:"सादर,",
-    // ===== ROLES =====
-    role_guest:"अतिथि", role_free:"मुफ़्त", role_pro:"Pro", role_super:"Super", role_admin:"एडमिन",
-    // ===== MISC =====
-    days:"दिन", hours:"घंटे", minutes:"मिनट", loading:"लोड हो रहा है...", footer_tagline:"मल्टी-टियर लिंक शॉर्टनिंग प्लेटफ़ॉर्म · सुरक्षित · तेज़",
-    footer_contact:"संपर्क करें",
-    // ===== ERROR CODES =====
-    err_url_invalid:"अमान्य URL (http:// या https:// से शुरू होना चाहिए)",
-    err_domain_blacklisted:"लक्ष्य डोमेन सुरक्षा ब्लैकलिस्ट में है।",
-    err_keyword_blocked:'कस्टम उपनाम में ब्रांड या संवेदनशील कीवर्ड है।',
-    err_code_taken:'यह कोड पहले से उपयोग में है। कृपया दूसरा कोड चुनें।',
-    err_pixel_limit_reached:"आप प्लान की पिक्सेल लिंक सीमा पर पहुंच गए हैं।",
-    err_ab_limit_reached:"आप प्लान की A/B टेस्टिंग सीमा पर पहुंच गए हैं।",
-    err_ab_percent_invalid:"A/B प्रतिशत का योग 100% होना चाहिए।",
-    err_pw_wrong:"पासवर्ड गलत है",
-    err_pw_bruteforce:"बहुत अधिक प्रयास। कृपया 15 मिनट बाद पुनः प्रयास करें।",
-    err_link_not_found:"लिंक नहीं मिला",
-    err_quota_exceeded:"आप दैनिक लिंक सीमा पार कर चुके हैं।"
-,
-    mt_title:"🛠️ फ़ीचर रखरखाव", mt_desc:"रखरखाव सक्षम करें ताकि फ़ीचर अस्थायी रूप से बंद हो। उपयोगकर्ताओं को रखरखाव रिबन दिखेगा।", mt_stripe:"Stripe (कार्ड भुगतान)", mt_qr:"QR बैंक (VietQR)", mt_voucher:"वाउचर", mt_bulk:"बल्क शॉर्टन", mt_api:"API", mt_analytics:"एनालिटिक्स", mt_note_ph:"रखरखाव का कारण (वैकल्पिक)", mt_ribbon:"रखरखाव", mt_alert:"फ़ीचर रखरखाव में है", mt_loading:"लोड हो रहा है...", mt_error:"त्रुटि", mt_confirm:"पुष्टि करें", mt_cancel:"रद्द करें", mt_save:"💾 सहेजें", mt_success:"सफल!", mt_payment_success:"भुगतान सफल!", mt_payment_cancel:"भुगतान रद्द", mt_voucher_success:"वाउचर खरीदा गया!", mt_voucher_cancel:"वाउचर खरीद रद्द", mt_expired_30:"30 दिनों में समाप्त। कभी भी नवीनीकरण करें।", mt_no_notif:"कोई नई सूचना नहीं", mt_notif_title:"🔔 सूचनाएँ", mt_pending_payments:"लंबित भुगतान", mt_pending_reports:"रिपोर्ट", mt_downgrade_err:"आप उच्च प्लान पर हैं, निम्न प्लान नहीं खरीद सकते!", mt_pay_method:"विधि", mt_no_history:"अभी तक कोई लेन-देन नहीं.",
-    totp_code:"TOTP कोड (6 अंक)",
-    totp_required:"पासवर्ड सही! Google Authenticator से TOTP कोड दर्ज करें।",
-    webhooks:"वेबहुक",
-    data_export:"डेटा निर्यात",
-    campaign_history:"अभियान इतिहास",
-    team_management:"टीम प्रबंधन",
-    wh_tab_title:"वेबहुक",
-    wh_requires:"वेबहुक के लिए Pro या Super प्लान आवश्यक है।",
-    wh_loading:"लोड हो रहा है...",
-    wh_add_title:"वेबहुक जोड़ें",
-    wh_url_label:"वेबहुक URL (HTTPS)",
-    wh_name_label:"नाम (वैकल्पिक)",
-    wh_add_btn:"वेबहुक जोड़ें",
-    wh_guide_title:"मार्गदर्शन",
-    wh_guide_desc:"वेबहुक लिंक क्लिक होने पर आपके URL पर POST अनुरोध भेजता है।",
-    wh_empty:"अभी कोई वेबहुक नहीं।",
-    wh_col_name:"नाम",
-    wh_col_url:"URL",
-    wh_col_event:"घटना",
-    wh_col_created:"बनाया गया",
-    wh_col_delete:"हटाएं",
-    wh_err_url:"कृपया वेबहुक URL दर्ज करें।",
-    wh_err_https:"URL में HTTPS आवश्यक है।",
-    wh_adding:"जोड़ रहे हैं...", wh_added:"वेबहुक जोड़ा गया!", wh_delete_confirm:"इस वेबहुक को हटाएं?",
-    export_tab_title:"डेटा निर्यात", export_requires:"डेटा निर्यात के लिए Pro या Super प्लान आवश्यक है।",
-    export_csv_btn:"CSV निर्यात", export_json_btn:"JSON निर्यात", export_csv_done:"CSV निर्यात हुआ!", export_json_done:"JSON निर्यात हुआ!",
-    export_desc:"निर्यात में आपके सभी लिंक शामिल हैं: कोड, गंतव्य URL, क्लिक संख्या, स्थिति, बनाया गया दिनांक, समाप्ति दिनांक।",
-    export_csv_hint:"CSV — Excel/Google Sheets से खोलें। JSON — API या बैकअप के लिए।",
-    team_tab_title:"टीम", team_requires:"टीम के लिए Super प्लान आवश्यक है।", team_loading:"लोड हो रहा है...",
-    team_create_title:"टीम बनाएं", team_name_label:"टीम का नाम", team_create_btn:"टीम बनाएं",
-    team_guide_title:"मार्गदर्शन", team_guide_desc:"टीम कई उपयोगकर्ताओं को एक साथ लिंक प्रबंधित करने की अनुमति देती है। टीम सदस्य एक-दूसरे के लिंक देख, संपादित और हटा सकते हैं।",
-    team_guide_limit:"Super: प्रति टीम अधिकतम 10 सदस्य।", team_empty:"अभी कोई टीम नहीं। नीचे बनाएं।",
-    team_col_member:"सदस्य", team_col_role:"भूमिका", team_col_joined:"शामिल हुए", team_role_owner:"स्वामी", team_role_member:"सदस्य",
-    team_delete_btn:"टीम हटाएं", team_delete_confirm:"यह टीम हटाएं? सभी सदस्य हटा दिए जाएंगे।",
-    team_add_placeholder:"उपयोगकर्ता नाम", team_add_btn:"जोड़ें", team_remove_confirm:"इस सदस्य को हटाएं?",
-    team_err_name:"टीम का नाम दर्ज करें।", team_creating:"बना रहे हैं...", team_created:"टीम बनाई गई!",
-    campaigns_tab_title:"अभियान", campaigns_requires:"अभियान इतिहास के लिए Plus प्लान या उच्च आवश्यक है।",
-    campaigns_loading:"लोड हो रहा है...", campaigns_guide_title:"मार्गदर्शन",
-    campaigns_guide_desc:"अभियान लिंक को मार्केटिंग अभियान अनुसार समूहित करते हैं। लिंक का अभियान बदलने पर पुराना अभियान इतिहास स्वतः सहेजा जाता है।",
-    campaigns_guide_desc2:"आप अवलोकन देख सकते हैं: प्रति अभियान लिंक संख्या, कुल क्लिक, और परिवर्तन इतिहास।",
-    campaigns_empty:"अभी कोई अभियान नहीं। अभियान के साथ लिंक बनाकर शुरू करें।",
-    campaigns_col_name:"अभियान", campaigns_col_links:"लिंक", campaigns_col_clicks:"कुल क्लिक", campaigns_col_history:"इतिहास",
-    campaigns_back:"← वापस", campaigns_history_title:"अभियान इतिहास:", campaigns_no_links:"कोई लिंक नहीं।",
-    admin_ban:"प्रतिबंध", admin_unban:"प्रतिबंध हटाएं", admin_banned:"प्रतिबंधित", admin_active:"सक्रिय", admin_expires:"समाप्ति:", admin_notify:"सूचना भेजें", admin_delete_user:"उपयोगकर्ता हटाएं", admin_ban_user:"उपयोगकर्ता प्रतिबंध", admin_unban_user:"प्रतिबंध हटाएं",
-    bulkqr:"बल्क QR", bulkqr_title:"बल्क QR कोड", bulkqr_hint:"प्रति पंक्ति एक शॉर्ट लिंक। बल्क में QR कोड जनरेट करें और Excel फ़ाइल के रूप में डाउनलोड करें।", bulkqr_generate:"बल्क QR जनरेट करें", bulkqr_download:"Excel डाउनलोड (.xls)", bulkqr_color:"QR रंग", bulkqr_empty:"कोई मान्य लिंक नहीं।", bulkqr_max:"प्रति बैच अधिकतम 1200 लिंक।", bulkqr_loading:"QR जनरेट हो रहा है...", bulkqr_done:"QR कोड जनरेट हो गए। 'Excel डाउनलोड' पर क्लिक करके सेव करें।", bulkqr_super:"Super प्लान के लिए विशेष सुविधा।",
-    guide_close:"मार्गदर्शन बंद करें",
-    guide_home_title:"SHORT URL शुरू करें", guide_home_desc:"छोटे लिंक, QR कोड बनाएं और अपनी गतिविधि एक जगह से प्रबंधित करें।", guide_home_step1:"Short URL बनाएं — लंबे URL को साझा करने में आसान लिंक में छोटा करें।", guide_home_step2:"QR कोड बनाएं — लिंक को QR कोड में बदलें और उत्पाद, दस्तावेज़ या प्रचार में उपयोग करें।", guide_home_step3:"गतिविधि ट्रैक करें — Analytics में क्लिक और उपयोग डेटा देखें।", guide_home_cta:"Short URL बनाएं",
-    guide_shorturls_title:"Short URL बनाएं और प्रबंधित करें", guide_shorturls_desc:"लंबे URL को छोटे, साझा करने में आसान लिंक में बदलें।", guide_shorturls_step1:"मूल URL पेस्ट करें — जिस URL को आप छोटा करना चाहते हैं उसे दर्ज करें।", guide_shorturls_step2:"आवश्यकतानुसार अनुकूलित करें — सिस्टम के मौजूदा विकल्पों का उपयोग करें।", guide_shorturls_step3:"बनाएं और साझा करें — Short URL बनाएं और अपने चैनलों में उपयोग करें।", guide_shorturls_cta:"Short URL बनाएं",
-    guide_dashboard_title:"गतिविधि अवलोकन", guide_dashboard_desc:"एक जगह से Short URL स्थिति और खाता गतिविधि जल्दी देखें।", guide_dashboard_step1:"अवलोकन देखें — मुख्य मेट्रिक्स जांचें।", guide_dashboard_step2:"गतिविधि ट्रैक करें — सिस्टम की हाल की गतिविधि देखें।", guide_dashboard_step3:"Analytics में गहराई से — अधिक विस्तृत विश्लेषण के लिए Analytics खोलें।", guide_dashboard_cta:"Analytics देखें",
-    guide_bulkqr_title:"एक या अधिक URL के लिए QR कोड बनाएं", guide_bulkqr_desc:"एक QR कोड जल्दी बनाएं या एक साथ कई लिंक प्रोसेस करें।", guide_bulkqr_step1:"बनाने का तरीका चुनें — एक QR कोड बनाएं या बल्क QR टूल का उपयोग करें।", guide_bulkqr_step2:"QR अनुकूलित करें — आवश्यकतानुसार रंग और आकार चुनें।", guide_bulkqr_step3:"बनाएं और डाउनलोड करें — QR कोड बनाएं और दस्तावेज़, उत्पाद या अभियान में उपयोग करें।",
-    guide_analytics_title:"प्रत्येक लिंक का प्रदर्शन समझें", guide_analytics_desc:"क्लिक ट्रैक करें और जानें कि उपयोगकर्ता आपके लिंक के साथ कैसे इंटरैक्ट करते हैं।", guide_analytics_step1:"क्लिक देखें — समय के अनुसार ट्रैफ़िक ट्रैक करें।", guide_analytics_step2:"विज़िटर विश्लेषण — सिस्टम द्वारा प्रदान किए गए Analytics डेटा को देखें।", guide_analytics_step3:"प्रदर्शन तुलना करें — मौजूदा डेटा से कौन सा Short URL बेहतर काम करता है यह आकलन करें।",
-    guide_webhooks_title:"वेबहुक क्या है?", guide_webhooks_desc:"SHORT URL को अन्य सिस्टम से कनेक्ट करें और लिंक संबंधी घटनाओं पर स्वचालित सूचनाएं प्राप्त करें।", guide_webhooks_step1:"वेबहुक बनाएं — सूचना प्राप्त करने के लिए गंतव्य URL जोड़ें।", guide_webhooks_step2:"ट्रैक करने के लिए घटनाएं चुनें — सिस्टम वर्तमान में क्लिक घटना का समर्थन करता है।", guide_webhooks_step3:"कनेक्ट करें और डेटा जांचें — अपने URL पर आने वाले अनुरोधों की निगरानी करके वेबहुक काम कर रहा है यह पुष्टि करें।", guide_webhooks_cta:"वेबहुक जोड़ें",
-    guide_export_title:"अपना डेटा निर्यात करें", guide_export_desc:"Short URL डेटा और संबंधित गतिविधि डाउनलोड करें — संग्रहण, विश्लेषण या अन्य सिस्टम में उपयोग के लिए।", guide_export_step1:"निर्यात करने के लिए डेटा चुनें — डाउनलोड करने के लिए लिंक और गतिविधि चुनें।", guide_export_step2:"प्रारूप चुनें — सिस्टम वर्तमान में CSV और JSON निर्यात का समर्थन करता है।", guide_export_step3:"निर्यात करें और सहेजें — फ़ाइल को अपने डिवाइस पर डाउनलोड करें।", guide_export_cta:"डेटा निर्यात करें",
-    guide_campaigns_title:"Campaign अनुसार लिंक व्यवस्थित करें", guide_campaigns_desc:"Short URL और संबंधित गतिविधि को समूहीकृत करें — आसान प्रबंधन, ट्रैकिंग और प्रदर्शन तुलना के लिए।", guide_campaigns_step1:"Campaign बनाएं — लिंक बनाते या संपादित करते समय campaign निर्दिष्ट करें।", guide_campaigns_step2:"संबंधित लिंक जोड़ें — एक ही campaign के लिंक समूहीकृत होंगे।", guide_campaigns_step3:"प्रदर्शन ट्रैक और तुलना करें — अवलोकन देखें: लिंक संख्या, कुल क्लिक और परिवर्तन इतिहास।", guide_campaigns_cta:"कैम्पेन देखें",
-    guide_team_title:"टीम के साथ काम करें", guide_team_desc:"सदस्यों को प्रबंधित करें और अनुमतियां सेट करें ताकि कई लोग SHORT URL पर सहयोग कर सकें।", guide_team_step1:"सदस्य आमंत्रित करें — टीम में सदस्य का उपयोगकर्ता नाम जोड़ें।", guide_team_step2:"पहुंच स्तर सेट करें — Owner और Member की टीम में अलग-अलग अनुमतियां हैं।", guide_team_step3:"साथ प्रबंधित करें और ट्रैक करें — टीम सदस्य एक-दूसरे के लिंक देख, संपादित और हटा सकते हैं।", guide_team_cta:"टीम बनाएं",
-    guide_api_title:"API द्वारा SHORT URL एकीकृत करें", guide_api_desc:"API का उपयोग करके SHORT URL को अपनी वेबसाइट, ऐप या आंतरिक सिस्टम से कनेक्ट करें।", guide_api_step1:"API Key बनाएं या प्राप्त करें — इस पेज पर API टोकन जनरेट करें।", guide_api_step2:"API को अनुरोध भेजें — API Key के साथ /api/v1/shorten एंडपॉइंट का उपयोग करें।", guide_api_step3:"परिणाम प्राप्त करें और प्रोसेस करें — API शॉर्ट लिंक और संबंधित डेटा लौटाता है।", guide_api_cta:"API Key बनाएं",
-    guide_pricing_title:"अपनी ज़रूरत के अनुसार प्लान चुनें", guide_pricing_desc:"सेवा प्लान तुलना करें और Short URL निर्माण, प्रबंधन और ट्रैकिंग ज़रूरतों के अनुसार स्तर चुनें।", guide_pricing_step1:"प्रत्येक प्लान की सीमाएं देखें — Free, Plus, Pro और Super।", guide_pricing_step2:"सुविधाओं की तुलना करें — प्रत्येक प्लान में अलग लिंक सीमा, API, एनालिटिक्स और सुविधाएं हैं।", guide_pricing_step3:"उपयुक्त प्लान चुनें — अधिक क्षमता की आवश्यकता होने पर अपग्रेड करें।", guide_pricing_cta:"योजनाएं देखें",
-    guide_account_title:"अपना खाता प्रबंधित करें", guide_account_desc:"खाता जानकारी, व्यक्तिगत प्राथमिकताएं और SHORT URL अनुभव से संबंधित सेटिंग्स प्रबंधित करें।", guide_account_step1:"खाता जानकारी जांचें — उपयोगकर्ता नाम, ईमेल और वर्तमान प्लान देखें।", guide_account_step2:"सेटिंग्स समायोजित करें — अपनी जानकारी और व्यक्तिगत प्राथमिकताएं अपडेट करें।", guide_account_step3:"परिवर्तन सहेजें — लागू करने के लिए पुष्टि करें।", guide_account_cta:"खाता अपडेट करें",
-    guide_admin_title:"सिस्टम प्रशासन", guide_admin_desc:"व्यवस्थापक क्षेत्र से SHORT URL घटकों की निगरानी और प्रबंधन करें।", guide_admin_step1:"सिस्टम अवलोकन जांचें — उपयोगकर्ता, लिंक और रिपोर्ट प्रबंधित करें।", guide_admin_step2:"डेटा और उपयोगकर्ता प्रबंधित करें — रिपोर्ट, ब्लैकलिस्ट, वाउचर और भुगतान की समीक्षा करें।", guide_admin_step3:"व्यवस्थापक सेटिंग्स जांचें — रखरखाव, सुरक्षा, ऑडिट लॉग और सूचनाएं।", guide_admin_cta:"एडमिन खोलें",
-    notif_title:"सूचनाएं", notif_empty:"कोई सूचना नहीं", notif_from:"से:", notif_new:"नया", notif_ok:"समझ गया", crown_hint:"फीचर गाइड देखें", crown_upgrade_to_unlock:"इस फीचर को अनलॉक करने के लिए अपग्रेड करें", demo_bulkqr_title:"Bulk QR — थोक QR बनाएं", demo_webhooks_title:"Webhooks — ऑटो-इवेंट भेजें", demo_campaigns_title:"Campaigns — लिंक समूह प्रबंधित करें", demo_export_title:"Export — डेटा निर्यात", demo_api_title:"API — बाहरी सिस्टम एकीकरण", demo_dashboard_title:"Dashboard — Short URL प्रबंधन", demo_bulkqr_s1_t:"टेक्स्ट बॉक्स में कई URL दर्ज करें", demo_bulkqr_s1_d:"प्रति पंक्ति एक URL", demo_bulkqr_s2_t:"QR जनरेट बटन क्लिक करें", demo_bulkqr_s2_d:"प्रत्येक URL के लिए QR बनाता है", demo_bulkqr_s3_t:"सभी QR डाउनलोड करें", demo_bulkqr_s3_d:"सभी QR कोड के साथ ZIP फ़ाइल", demo_webhooks_s1_t:"Webhook गंतव्य URL जोड़ें", demo_webhooks_s1_d:"इवेंट सूचनाएं प्राप्त करने वाला URL", demo_webhooks_s2_t:"जब कोई लिंक क्लिक करता है", demo_webhooks_s2_d:"Webhook स्वतः URL पर POST करता है", demo_webhooks_s3_t:"बाहरी सिस्टम डेटा प्राप्त करता है", demo_webhooks_s3_d:"IP, देश, डिवाइस, समय", demo_campaigns_s1_t:"नया Campaign बनाएं", demo_campaigns_s1_d:"अभियान का नाम और विवरण", demo_campaigns_s2_t:"Campaign में Short URL जोड़ें", demo_campaigns_s2_d:"एक समूह में कई लिंक", demo_campaigns_s3_t:"संयुक्त एनालिटिक्स देखें", demo_campaigns_s3_d:"Campaign के सभी लिंक के आँकड़े", demo_export_s1_t:"CSV या JSON प्रारूप चुनें", demo_export_s1_d:"सभी लिंक और आँकड़े निर्यात करें", demo_export_s2_t:"Export बटन क्लिक करें", demo_export_s2_d:"सिस्टम डेटा संकलित करता है", demo_export_s3_t:"फ़ाइल डाउनलोड करें", demo_export_s3_d:"सभी लिंक + क्लिक + तिथियां", demo_api_s1_t:"API Token बनाएं", demo_api_s1_d:"API प्रमाणीकरण के लिए Token", demo_api_s2_t:"POST /api/v1/shorten भेजें", demo_api_s2_d:"बाहरी सिस्टम से Short URL बनाएं", demo_api_s3_t:"JSON परिणाम प्राप्त करें", demo_api_s3_d:"Short URL कोड + पूर्ण लिंक", demo_dashboard_s1_t:"Short URL बनाएं", demo_dashboard_s1_d:"लंबा URL पेस्ट करें → छोटा लिंक पाएं", demo_dashboard_s2_t:"लिंक प्रबंधित करें", demo_dashboard_s2_d:"कॉपी, QR, एनालिटिक्स, संपादन, हटाएं", demo_dashboard_s3_t:"आँकड़े देखें", demo_dashboard_s3_d:"लिंक संख्या, कुल क्लिक", demo_anim_url:"URL", demo_anim_qr:"QR", demo_anim_ok:"✓", demo_anim_link_click:"लिंक क्लिक", demo_anim_event:"इवेंट", demo_anim_post:"POST → URL", demo_anim_external:"बाहरी सिस्टम", demo_anim_campaign:"अभियान", demo_anim_analytics:"एनालिटिक्स", demo_anim_data:"डेटा", demo_anim_export:"निर्यात", demo_anim_csv:"CSV/JSON", demo_anim_app:"ऐप", demo_anim_url_long:"लंबा URL", demo_anim_clicks:"क्लिक", api_tier_expired:"आपका प्लान समाप्त हो गया है। API का उपयोग जारी रखने के लिए अपग्रेड करें।", api_not_available:"वर्तमान प्लान API का समर्थन नहीं करता। PRO या SUPER में अपग्रेड करें।", api_quota_exceeded:"आपने अपनी API कोटा समाप्त कर दी है", api_upgrade_to_continue:"जारी रखने के लिए अपग्रेड करें।", api_upgrade_to_increase:"सीमा बढ़ाने के लिए अपग्रेड करें।",
-    feedback_title:"प्रतिक्रिया और सहायता", feedback_btn:"प्रतिक्रिया", feedback_type_bug:"बग रिपोर्ट करें", feedback_type_feature:"फीचर अनुरोध", feedback_type_question:"प्रश्न पूछें", feedback_type_other:"अन्य", feedback_label_message:"संदेश", feedback_placeholder:"समस्या, सुझाव या प्रश्न का वर्णन करें...", feedback_label_email:"ईमेल (वैकल्पिक)", feedback_email_placeholder:"email@example.com", feedback_cancel:"रद्द करें", feedback_submit:"भेजें", feedback_success_title:"भेजा गया!", feedback_success_desc:"धन्यवाद! हम जल्द ही समीक्षा करेंगे और जवाब देंगे।", feedback_close:"बंद करें", feedback_error:"कुछ गलत हुआ, कृपया पुनः प्रयास करें।", admin_feedback_tab:"प्रतिक्रिया", admin_no_feedback:"कोई प्रतिक्रिया नहीं।", acct_overview:"アカウント概要", acct_total_clicks:"総クリック数", acct_profile_title:"アカウントプロフィール", acct_username:"ユーザー名", acct_joined:"参加日", acct_plan_title:"現在のプラン", acct_plan_active:"使用中", acct_plan_running:"実行中 ✓", acct_plan_expired:"期限切れ", acct_free:"無料", acct_joined_label:"参加", acct_expiry_label:"有効期限", acct_start_label:"開始", acct_upgrade_plan:"プランをアップグレード", acct_manage_plan:"プランを管理", acct_pay_plan:"プラン", acct_pay_method:"支払い方法", acct_pay_amount:"金額", acct_voucher_title:"バウチャーコードで有効化", acct_voucher_hint:"バウチャーコードを入力してオファーまたはサービスプランを有効化してください。", acct_voucher_placeholder:"バウチャーコードを入力", acct_voucher_btn:"有効化", acct_security_title:"セキュリティ", acct_2fa_enabled:"有効 ✓", acct_2fa_disabled:"無効", acct_session:"セッション", acct_current_device:"現在のデバイス", acct_browser:"ブラウザ", acct_bank_qr:"銀行QR", acct_pay_method_stripe:"Stripe", adm_notif_sys:"システム通知", adm_notif_empty:"新着通知はありません", adm_notif_read:"既読", adm_notif_unread:"未読", adm_notif_delete:"削除", adm_notif_delete_confirm:"この通知を削除しますか？", adm_notif_deleted:"通知が削除されました", adm_notif_not_found:"通知が見つかりません", adm_notif_missing_id:"通知IDが不足しています", adm_notif_from:"差出人", adm_notif_to:"送信先", adm_notif_all_users:"全ユーザー", adm_notif_close:"閉じる", fb_detail_title:"フィードバック詳細", fb_detail_type:"種類", fb_detail_sender:"送信者", fb_detail_anonymous:"匿名", fb_detail_page:"ページ", fb_detail_time:"時間", fb_detail_status:"ステータス", fb_status_new:"新着", fb_status_replied:"返信済み", fb_status_closed:"クローズ", fb_type_bug:"バグ報告", fb_type_feature:"機能リクエスト", fb_type_question:"質問", fb_type_other:"その他", notif_mark_all_read:"すべて既読にする", notif_marked_all:"すべて既読にしました",
-  },
-
-  ja: {
-    ai_assistant_title:"AIに質問", ai_assistant_placeholder:"質問を入力してください...", ai_assistant_send:"送信",
-    ai_assistant_greeting:"こんにちは！SHURLのAIアシスタントです。どのようにお手伝いしましょうか？",
-    ai_assistant_error:"メッセージを送信できませんでした。もう一度お試しください。",
-    ext_title:"ブラウザ拡張機能を接続",
-    ext_desc:"このコードを使ってSHURLのChrome拡張機能を接続しましょう — 最近作成したリンクやクリック数の確認、閲覧中のページのすぐ短縮ができます。すべてのプランで無料です。",
-    // ===== NAV =====
-    home:"ホーム", nav_home:"ホーム", plans:"料金", login:"ログイン", register:"新規登録", logout:"ログウト", language:"言語",
-    dashboard:"ダッシュボード", account:"アカウント", api:"API", bulk:"一括作成", admin:"管理",
-
- // ===== AUTH =====
-    login_sub:"SHURLへようこそ。", login_security:"Cloudflare保護 アカウントを作成して始めましょう",
-    no_account:"アカウントをお持ちでないですか？", have_account:"既にアカウントをお持ちですか？", demo_accounts:" ",
-    register_sub:"無料アカウントを作成してリンクを管理しょう。", register_free:"無料で登録",
-    reg_username:"ユーザー名（8〜25文字）", reg_email:"メールドレス任意）", reg_password:"パスワード9文字以上大文字を1つ以上含む）",
-    reg_newpassword:"新しいパスワード",
-    // ===== FORGOT PASSWORD =====
-    forgot_password:"パスワードを忘れた", forgot_sub:"ユーザー名を入力すると、復旧コードメールでお送りします。", change_password:"パスワード変更", old_password:"現在のパスワード", new_password:"新しいパスワード", confirm_password:"パスワード確認", send_code:"確認コードを送信", verify_code:"確認コード（6桁）", code_sent_to_email:"確認コードがメールに送信されました。", code_sent:"確認コード送信済み", password_changed:"パスワードが正常に変更されました！", password_mismatch:"パスワードが一致しません", password_too_short:"パスワードは9文字以上必要です", fill_all_fields:"すべての項目を入力してください", sending:"送信中...", processing:"処理中...", send_failed:"送信失敗", change_failed:"パスワード変更失敗", cancel:"キャンセル", confirm:"確認", security_password:"パスワード",
-    forgot_submit:"復旧コードを送信", reset_code:"確認コード（6桁）", reset_submit:"パスワードを変更",
-    back_to_login:"ログインに戻る",
-    // ===== HOME =====
-    home_title:"無料の短縮URLサービス", home_sub:"素早く短縮リンクを作成、クリック数を追跡し、ユーザー詐欺から守ります。",
-    home_promo_title:"✨ アカウント作成 — 🎁 毎日10リンク無料！",
-    home_promo_sub:"期限なし · カスタムエイリアス · リ管理 · クリック統計",
-    home_promo_desc:"期限なし · カスタムエイリアス · リンク管理 · クリック統計",
-    home_promo_btn1:"無料で登録", home_promo_btn2:"既にアカウントをお持ちですか？",
-    home_hero_sub:"マルチティア短縮リンクプラットフォーム — 安全、詳細な統計、キャンペーン管理。",
-    home_guest_hint:"ログインするとカスタムエイリアスの設定、リンク管理、統計の閲覧が可能です。ゲスト：1日5リンク。",
-    home_url_placeholder:"https://example.com/とても長いパス", home_alias_placeholder:"あなたのカスタム名",
-    home_note_placeholder:"このリンクへのメモ", home_password_placeholder:"空欄＝保護なし",
-    home_add_dest:"転送先URLを追加", home_dest_a:"転送先URL A（追加）", home_dest_b:"転送先URL B（追加）",
-    url_to_shorten:"短縮するURL", shorten_now:"今すぐ短縮", processing:"処理中...",
-    custom_alias:"カスタムエイリアス", custom_alias_opt:"カスタムエイリアス（任意）",
-    title_field:"タイトル", title_opt:"タイトル（任意）", campaign:"キャンペーン", tags:"タグ",
-    expiry_date:"有効期限（任意）", password_protect:"保護用パスワード（任意）",
-    custom_domain:"独自ドメイン",
-    pixel_tracking:"ピクセル計測", ab_testing:"A/Bテスト", deep_link:"ディープリンク", link_protect:"リンク保護",
-    adv_options:"⚙ 詳細オプション（ピクセル、A/B、ディープリンク）", destination:"転送先", result_dest:"転送先：",
-    // ===== QR CODE =====
-    qr_title:"QRコード作成", qr_guest_title:"QRコード作成",
-    qr_guest_desc:"色のカスタマイズ · サイズのカスタマイズ", qr_guest_btn:"今すぐ作成",
-    qr_desc:"任意のURL（短縮済み・未短縮どちらでも）を入力してQRコードを即座に作成。QR作成1回につき1日あたりの枠から1つ消費します。",
-    qr_url_label:"QRコード化するURL", qr_color:"カラー", qr_size:"サイズ", qr_btn:"QR生成",
-    qr_copy_link:"リンクをコピー", qr_download:"PNGをダウンロード", qr_processing:"QR生成中...",
-    qr_quota_error:"本日のQR作成回数の上限に達しました",
-    // ===== BULK QR =====
-    bulkqr:"一括QR", bulkqr_title:"QRコード一括作成", bulkqr_hint:"1行に1つの短縮リンク。QRコードを一括生成しExcelファイルでダウンロードできます。",
-    bulkqr_generate:"QRを一括生成", bulkqr_download:"Excel (.xls) をダウンロード", bulkqr_color:"QRの色",
-    bulkqr_empty:"有効なリンクがありません。", bulkqr_max:"1回最大1200リンクまで。",
-    bulkqr_loading:"QR生成中...", bulkqr_done:"QRを生成しました。「Excelをダウンロード」を押して保存してください。",
-    bulkqr_super:"Superプラン限定機能です。",
-    // ===== DASHBOARD =====
-    my_links:"マイリンク", total_clicks:"総クリック数", daily_limit:"1日のリンク上限",
-    create_new:"新規リンク作成", create_success:"リンクを作成しました！",
-    col_link:"リンク", col_dest:"転送先", col_clicks:"クリック数", col_status:"状態", col_created:"作成日",
-    status:"状態", created:"作成日", actions:"操作",
-    copy:"コピー", copied:"コピーしました ✓", stats:"統計", edit:"編集", del:"削除",
-    enabled:"有効", disabled:"無効", deleted:"削除済み", undo_delete:"削除を取り消す", force_delete:"完全に削除",
-    export:"CSVエクスポート", optional:"任意", no_data:"データがありません。",
-    delete_confirm:"リンクを削除 /", delete_warning:"？ この操作は取り消せません。",
-    edit_title:"リンクを編集 /", edit_dest:"転送先URL", edit_save:"変更を保存", edit_cancel:"キャンセル",
-    edit_enabled:"リンクを有効化", edit_tags_placeholder:"カンマ区切り",
-    // ===== BULK =====
-    bulk_title:"一括作成", bulk_sub:"1行に1つのURLを入力してください。上限：",
-    bulk_per_batch:"リンク/回。", bulk_input_placeholder:"https://example1.com\\nhttps://example2.com",
-    bulk_submit:"一括作成", bulk_success:"成功", bulk_errors:"エラー", bulk_empty:"URLを1つ以上入力してください。",
-    // ===== ANALYTICS =====
-   _title:"統計", analytics_back:"← ダッシュボードに戻る",
-    analytics_total:"総クリック数", analytics_24h:"過去24時間", analytics_7d:"過去7日間", analytics_30d:"過去30日間",
-    analytics_14d:"直近14日間", analytics_by_hour:"時間別（24h）", analytics_device:"デバイス",
-    analytics_country:"国", analytics_browser:"ブラウザ", analytics_referrer:"参照元",
-    analytics_recent:"最近のクリック", analytics_time:"時刻", analytics_no_clicks:"クリックはまだありません。",
-    // ===== ACCOUNT =====
-    account_title:"アカウント", account_joined:"登録日", account_current_limits:"現在のプラン制限",
-    account_upgrade:"プランをアップグレード", account_upgrade_sub:"強力な全機能を解放して生産性を向上させましょう。",
-    account_pro:"Pro", account_pro_desc:"マーケター・クリエイター向け",
-    account_super:"Super", account_super_desc:"企業・チーム向け",
-    account_voucher:"バウチャーコードで有効化", account_voucher_hint:"バウチャーをお持ちですか？入力すると無料でアップグレードできます。",
-    account_voucher_btn:"バウチャーコードを入力", account_enter_voucher:"バウチャーコードを入力：",
-    acct_links_day:"リンク/日", acct_detailed:"詳細", acct_max:"最大", yes:"はい", no:"いいえ",
-    joined:"登録日", plan:"プラン",
-    // ===== UPGRADE =====
-    upgrade_pro:"Proへアップグレード", upgrade_super:"Superへアップグレード", upgrade_plus:"Plusへアップグレード",
-    upgrade_to_unlock:"この機能を使うにはアップグレードしてください",
-    upgrade_banner_title:"アップグレードしてこの機能を解放",
-    upgrade_banner_desc:"Pro：200リンク/日、一括作成、API · Super：600リンク/日、独自ドメイン",
-    upgrade_banner_btn:"アップグレード →",
-    enter_voucher:"バウチャーコードを入力", activate_voucher:"バウチャーコードで有効化",
-    // VOUCHER =====
-    pricing_voucher_title:"バウチャーの有効化", pricing_voucher_placeholder:"バウチャーコードを入力",
-    pricing_voucher_activate:"有効化", pricing_voucher_buy_link:"割引バウチャーを購入",
-    pricing_voucher_select_prompt:"先にプランと期間を選択してバウチャーをご購入ください（キャンペーン中のみ適用）。",
-    pricing_voucher_choose_plan:"プランを選択：", pricing_voucher_choose_time:"期間を選択：",
-    pricing_voucher_week:"1週間", pricing_voucher_month:"1ヶ月 (-5%)", pricing_voucher_year:"1年",
-    pricing_voucher_pay:"決済", pricing_voucher_save:"お得", vn_pay_title:"🇻🇳 お支払い", vn_pay_select_period:"期間を選択:", vn_pay_bank:"銀行:", vn_pay_acct_no:"口座番号:", vn_pay_acct_name:"口座名義:", vn_pay_amount:"金額:", vn_pay_transfer_content:"振込内容:", vn_pay_security:"取引は銀行によって保護されています。管理者が1時間以内に承認します。", vn_pay_confirm:"振込完了", vn_pay_processing:"処理中...", vn_pay_success:"リクエストを受け付けました。管理者が1時間以内に承認します。",
-    pricing_voucher_select_alert:"プランと期間を選択してください", pricing_voucher_enter_code:"コードを入力してください",
-    pricing_voucher_invalid:"無効なバウチャーです",
-    // ===== PRICING =====
-    pricing_title:"料金 & プラン比較", pricing_hero_title:"明確な料金設定",
-    pricing_hero_desc:"自分に合ったプランを選びましょう。いつでもアップグレード・解約可能。隠れた費用はありません。",
-    pricing_per_month:"/月", pricing_free_desc:"基本から始める",
-    pricing_f_10links:"10リンク/日", pricing_f_manage:"リンク管理", pricing_f_clickstats:"クリック統計",
-    pricing_plus_desc:"150リンク/日", pricing_plus_btn:"Plusへアップグレード",pricing_per_week:"/週",
-    pricing_plus_f1:"150リンク/日", pricing_plus_f2:"リンクは期限切れなし", pricing_plus_f3:"一括短縮 — 150リンク/回",
-    pricing_popular:"一番人気", pay_vn_btn:"VN決済 (MoMo/Napas)", pricing_per_batch:"回", pricing_per_link:"リンク", pricing_links:"リンク",
-    pricing_day:"日", pricing_month:"ヶ月", pricing_req_month:"リクエスト/月", pricing_custom:"カスタム",
-    pricing_advanced_mgmt:"高度な管理", pricing_compare_title:"詳細比較", pricing_compare_feature:"機能",
-    pricing_expiry:"リンクの有効期限", pricing_unlimited_short:"∞", pricing_7days:"7日間",
-    pricing_support:"サポート", pricing_support_247:"24/7 + SLA",
-    pricing_cta_title:"アップグレードの準備はできましたか？", pricing_cta_desc:"今すぐアップグレードして全機能を解放しましょう。",
-    pricing_cta_btn:"今すぐ始める",
-    pricing_checkout_error:"決済エラー", pricing_connection_error:"接続エラー",
-    pricing_error_notice:"決済が失敗した場合、または支払い後にプラン/バウチャーが届かない場合は、成功取引のスクリーンショット（日時が分かるもの）を添えてメールでお知らせください：",
-    pricing_error_subject:"SHURL 決済に関する問題", pricing_error_body:"問題の内容：\\n\\nプラン：\\n取引日時：\\n\\n取引スクリーンショットを添付してください",
-    pricing_error_desc:"確認チームが速やかに同等のバウチャーで返金いたします。",
-    pricing_footer:"SHURL — マルチティア短縮リンクプラットフォーム · 安全 · 高速",
-    // ===== PLAN FEATURES =====
-    plan_pro_f1:"200リンク/日", plan_pro_f2:"300リンク/回", plan_pro_f3:"高度な管理",
-    plan_pro_f4:"詳細", plan_pro_f5:"QRコード", plan_pro_f6:"5,000リクエスト/月",
-    plan_pro_f7:"1ピクセル/リンク、50リンク", plan_pro_f8:"2 URL、20リンク", plan_pro_f9:"iOS/Android",
-    plan_pro_f10:"ディープリンク", plan_pro_f11:"パスワード保護（任意）",
-    plan_super_f1:"600リンク/日", plan_super_f2:"600リンク/回", plan_super_f3:"Proの全機能",
-    plan_super_f4:"高度（ヒートマップ）", plan_super_f5:"QRコード + 一括QR", plan_super_f6:"10,000リクエスト/月",
-    plan_super_f7:"独自ドメイン", plan_super_f8:"2ピクセル/リンク、∞", plan_super_f9:"3 URL、カスタム%、∞",
-    plan_super_f10:"スマートフォールバック", plan_super_f11:"ブルートフォース対策",
-    plan_ps_f1:"600リンク/日 (Pro×6)", plan_ps_f2:"600リンク/回", plan_ps_f5:"10,000リクエスト/月 (×10)",
-    plan_ps_f8:"3 URL、カスタム%、∞", plan_ps_f9:"スマートフォールバック",
-    plan_unlimited:"無制限", plan_advanced:"高度", plan_priority_support:"優先サポート",
-    // ===== FAQ =====
-    pricing_faq_title:"よくあるご質問",
-    pricing_faq1_q:"いつでも解約できますか？", pricing_faq1_a:"はい。いつでもプランを解約できます。解約後はFreeプランに戻りますが、既存のリンクはそのまま残ります。",
-    pricing_faq2_q:"バウチャーで支払えますか？", pricing_faq2_a:"はい。バウチャーコードをお持ちの場合は、アカウント → バウチャーコードを入力 から無料でアップグレードできます。",
-    pricing_faq3_q:"ダウングレードすると既存のリンクは失われますか？", pricing_faq3_a:"いいえ。作成済みのリンクはすべて残ります。ダウングレード時にロックされるのは高度な機能のみです。",
-    pricing_faq4_q:"独自ドメインは使えますか？", pricing_faq4_a:"独自ドメインはSuperプランのみ利用可能です。DNSをSHURLに向けて設定してください。",
-    pricing_faq5_q:"APIにレート制限はありますか？", pricing_faq5_a:"Pro：5,000リクエスト/月。Super：10,000/月。",
-    pricing_faq6_q:"Plusプランの特徴は？", pricing_faq6_a:"Plusは150リンク/日、150リンク/回の一括短縮が可能です。リンクは期限切れなし — あらゆるキャンペーンに最適です。",
-    pricing_faq7_q:"バウチャー購入の方が直接アップグレードより安いことはありますか？", pricing_faq7_a:"キャンペーン中（管理者設定）のみです。キャンペーン外では、バウチャー価格は直接アップグレードと同じです。",
-    // ===== PAYMENT =====
-    pay_history_title:"支払い履歴", pay_type:"種別", pay_date:"支払日", pay_status:"状態",
-    pay_voucher:"バウチャー", pay_upgrade:"アップグレード", pay_success:"成功", pay_failed:"失敗", pay_no_history:"取引履歴はありません。",
-    // ===== TIER LIMITS =====
-    tier_limits_title:"現在のプラン制限", links_per_day:"リンク/日", advanced_mgmt:"高度な管理",
-    detailed_stats:"詳細統計", max:"最大",
-    // ===== API =====
-    api_title:"APIトークン", api_no_token:"APIトークンはまだありません。", api_gen_token:"トークンを生成",
-    api_regen_token:"トークンを再生成", api_monthly_limit:"上限：", api_requests_month:"リクエスト/月。",
-    api_example:"使用例（cURL）", api_other:"その他のエンドポイント：GET /api/v1/links · GET /api/v1/analytics/:code",
-    api_no_access:"現在のプランではAPIをご利用いただけません。PROまたはSUPERにアップグレードしてください。",
-    // ===== ADMIN =====
-    admin_title:"システム管理", admin_users:"ユーザー", admin_reports:"違反報告",
-    admin_blacklist:"ブラックリスト", admin_vouchers:"バウチャー",
-    admin_username:"ユーザー名", admin_email:"メールアドレス", admin_role:"役割", admin_created:"作成日",
-    admin_save:"保存", admin_reason:"理由", admin_status:"状態", admin_dismiss:"却下",
-    admin_no_reports:"報告はありません。", admin_add_domain:"追加", admin_add_keyword:"追加",
-    admin_new_domain:"bad-example.com", admin_new_keyword:"キーワード",
-    admin_bl_domains:"ブロック済みドメイン", admin_bl_keywords:"センシティブなキーワード（追加）",
-    admin_bl_defaults:"デフォルトキーワード（削除不可）：", admin_create_voucher:"+ 新規バウチャー作成",
-    admin_voucher_code:"バウチャーコード", admin_tier:"プラン", admin_used:"使用済み", admin_limit:"上限",
-    admin_expires:"有効期限",_active:"状態", admin_delete:"削除",
-    admin_panel_title:"管理パネル", admin_promo_title:"キャンペーン設定", admin_promo_enable:"キャンペーンを有効化",
-    admin_promo_from:"開始日", admin_promo_to:"終了日", admin_promo_month_disc:"1ヶ月割引 (%)", admin_promo_year_disc:"1年割引 (%)",
-    admin_promo_saved:"キャンペーン設定を保存しました", admin_promo_save_error:"保存エラー",
-    admin_promo_ended:"キャンペーンは終了しました", admin_promo_starts:"キャンペーン開始予定", admin_promo_remaining:"残り",
-    admin_pay_report_title:"支払いレポート", admin_customer:"顧客", admin_amount:"金額", admin_total_revenue:"総収入",
-    admin_export_csv:"CSVエクスポート", admin_no_data:"データなし", admin_report_error:"レポート読み込みエラー",
-    // ===== SIDEBAR =====
-    sidebar_recent:"最近", sidebar_ad_placeholder:"広告 — 近日公開", sidebar_ad_outside:"外部広告スペース",
-    sidebar_ad:"広告",
-    sidebar_guest_title:"✨ 無料アカウントを作成", sidebar_guest_desc:"登録すると毎日10リンク、リンク管理、統計が利用できます。",
-    sidebar_guest_feat1:"カスタムエイリアス", sidebar_guest_feat2:"リンク管理 & 統計", sidebar_guest_btn:"今すぐ登録 →",
-    sidebar_pro_title:"⭐ Proへアップグレード", sidebar_pro_desc:"強力な機能を解放しましょう。",
-    sidebar_super_title:"🚀 Superへアップグレード", sidebar_super_desc:"企業向け。",
-    sidebar_upgrade_now:"今すぐアップグレード →", sidebar_view_super:"Superプランを見る →",
-    sidebar_pro_current:"現在Proをご利用中 — Superにするとさらに：",
-    sidebar_register_title:"✨ 無料で登録", sidebar_register_desc:"アカウントを作成してもっと多くの特典を。",
-    sidebar_register_feat1:"10リンク/日", sidebar_register_feat2:"カスタムエイリアス",
-    sidebar_register_feat3:"リンク管理", sidebar_register_feat4:"クリック統計",
-    sidebar_register_btn:"料金を見る →",
-    // ===== SUPPORT =====
-    support_subject:"SHURL — 支払いサポート", support_body_greeting:"SHURLチームへ、",
-    support_body_issue:"プランのお支払い中に問題が発生しました：", support_body_plan:"申込プラン：",
-    support_body_amount:"金額：", support_body_date:"支払日：",
-    support_body_screenshot:"支払い成功のスクリーンショットを添付いたします。",
-    support_body_thanks:"ご対応よろしくお願いいたします。", support_body_name:"アカウント名：",
-    support_title:"支払いに問題がありますか？", support_desc:"支払いが失敗した場合やプランが有効化されない場合は、サポートチームにお問い合わせください。対応を迅速化するため、支払い成功のスクリーンショットを添付してください。",
-    support_contact_btn:"サポートに問い合わせ",
-    // ===== EMAIL =====
-    email_brand:"Short URL", email_voucher_subject:"SHURL バウチャー — プラン有効化コード",
-    email_voucher_thanks_1:"次のプランをご利用いただきありがとうございます：", email_voucher_thanks_2:"",
-    email_voucher_instruction:"このバウチャーをコピーし、アカウントセクションのバウチャー入力欄に貼り付けて有効化してください：",
-    email_voucher_activate_note:"バウチャープラン", email_voucher_activate_note_2:"はコード入力後すぐに有効化されます。",
-    email_voucher_warning:"紛失を防ぐため、このバウチャーコードを他人と共有しないでください。",
-    email_voucher_closing:"プラットフォームの発展への協力に感謝いたします。", email_signature:"敬具、",
-    // ===== ROLES =====
-    role_guest:"ゲスト", role_free:"無料", role_pro:"Pro", role_super:"Super", role_admin:"管理者",
-    // ===== MISC =====
-    days:"日", hours:"時間", minutes:"分", loading:"読み込み中...", footer_tagline:"マルチティア短縮リンクプラットフォーム · 安全 · 高速",
-    footer_contact:"お問い合わせ",
-    // ===== ERROR CODES =====
-    err_url_invalid:"無効なURLです（http:// または https:// で始まる必要があります）",
-    err_domain_blacklisted:"転送先ドメインはセキュリティブラックリストに含まれています。",
-    err_keyword_blocked:'カスタムエイリアスにブランドまたはセンシティブなキーワードが含まれています。',
-    err_code_taken:'このコードは既に使用されています。別のコードを選んでください。',
-    err_pixel_limit_reached:"プランのピクセルリンク上限に達しました。",
-    err_ab_limit_reached:"プランのA/Bテスト上限に達しました。",
-    err_ab_percent_invalid:"A/Bの割合の合計は100%である必要があります。",
-    err_pw_wrong:"パスワードが正しくありません",
-    err_pw_bruteforce:"試行回数が多すぎます。15分後に再試行してください。",
-    err_link_not_found:"リンクが見つかりません",
-    err_quota_exceeded:"1日のリンク上限を超えました。"
-,
-    mt_title:"🛠️ 機能メンテナンス", mt_desc:"メンテナンスを有効にすると機能が一時的に無効になります。ユーザーにはメンテナンスリボンが表示されます。", mt_stripe:"Stripe (カード決済)", mt_qr:"QR銀行 (VietQR)", mt_voucher:"バウチャー", mt_bulk:"一括短縮", mt_api:"API", mt_analytics:"分析", mt_note_ph:"メンテナンス理由（任意）", mt_ribbon:"メンテナンス", mt_alert:"機能はメンテナンス中です", mt_loading:"読み込み中...", mt_error:"エラー", mt_confirm:"確認", mt_cancel:"キャンセル", mt_save:"💾 保存", mt_success:"成功!", mt_payment_success:"支払い成功!", mt_payment_cancel:"支払いがキャンセルされました", mt_voucher_success:"バウチャー購入成功!", mt_voucher_cancel:"バウチャー購入キャンセル", mt_expired_30:"30日後に期限切れ。いつでも更新できます。", mt_no_notif:"新着通知なし", mt_notif_title:"🔔 通知", mt_pending_payments:"保留中の支払い", mt_pending_reports:"レポート", mt_downgrade_err:"より高いプランのため、低いプランは購入できません!", mt_pay_method:"方法", mt_no_history:"取引履歴なし.",
-    totp_code:"TOTPコード（6桁）",
-    totp_required:"パスワード正確！Google AuthenticatorのTOTPコードを入力してください。",
-    webhooks:"Webhooks",
-    data_export:"データエクスポート",
-    campaign_history:"キャンペーン履歴",
-    team_management:"チーム管理",
-    wh_tab_title:"Webhooks",
-    wh_requires:"WebhooksにはProまたはSuperプランが必要です。",
-    wh_loading:"読み込み中...",
-    wh_add_title:"Webhookを追加",
-    wh_url_label:"Webhook URL (HTTPS)",
-    wh_name_label:"名前（任意）",
-    wh_add_btn:"Webhookを追加",
-    wh_guide_title:"ガイド",
-    wh_guide_desc:"Webhookはリンククリック時にURLへPOSTリクエストを送信します。",
-    wh_empty:"Webhookがありません。",
-    wh_col_name:"名前",
-    wh_col_url:"URL",
-    wh_col_event:"イベント",
-    wh_col_created:"作成日",
-    wh_col_delete:"削除",
-    wh_err_url:"Webhook URLを入力してください。",
-    wh_err_https:"URLはHTTPSを使用してください。",
-    analytics_title:"統計",
-    admin_active:"ステータス",
-    wh_adding:"追加中...", wh_added:"Webhookを追加しました!", wh_delete_confirm:"このWebhookを削除しますか？",
-    export_tab_title:"データエクスポート", export_requires:"データエクスポートにはProまたはSuperプランが必要です。",
-    export_csv_btn:"CSVエクスポート", export_json_btn:"JSONエクスポート", export_csv_done:"CSVエクスポート完了!", export_json_done:"JSONエクスポート完了!",
-    export_desc:"エクスポートにはすべてのリンクが含まれます：コード、宛先URL、クリック数、ステータス、作成日、有効期限。",
-    export_csv_hint:"CSV — Excel/Google Sheetsで開く。JSON — APIまたはバックアップ用。",
-    team_tab_title:"チーム", team_requires:"チームにはSuperプランが必要です。", team_loading:"読み込み中...",
-    team_create_title:"チーム作成", team_name_label:"チーム名", team_create_btn:"チーム作成",
-    team_guide_title:"ガイド", team_guide_desc:"チームにより複数ユーザーが一緒にリンクを管理できます。チームメンバーはお互いのリンクを閲覧、編集、削除できます。",
-    team_guide_limit:"Super: チームあたり最大10名。", team_empty:"チームがありません。下から作成してください。",
-    team_col_member:"メンバー", team_col_role:"役割", team_col_joined:"参加日", team_role_owner:"オーナー", team_role_member:"メンバー",
-    team_delete_btn:"チーム削除", team_delete_confirm:"このチームを削除しますか？すべてのメンバーが外されます。",
-    team_add_placeholder:"ユーザー名", team_add_btn:"追加", team_remove_confirm:"このメンバーを削除しますか？",
-    team_err_name:"チーム名を入力してください。", team_creating:"作成中...", team_created:"チームを作成しました!",
-    campaigns_tab_title:"キャンペーン", campaigns_requires:"キャンペーン履歴にはPlusプラン以上が必要です。",
-    campaigns_loading:"読み込み中...", campaigns_guide_title:"ガイド",
-    campaigns_guide_desc:"キャンペーンはマーケティングキャンペーンごとにリンクをグループ化します。リンクのキャンペーンを変更すると、旧キャンペーン履歴が自動保存されます。",
-    campaigns_guide_desc2:"概要を確認できます：キャンペーンごとのリンク数、合計クリック数、変更履歴。",
-    campaigns_empty:"キャンペーンがありません。キャンペーンを指定してリンクを作成してください。",
-    campaigns_col_name:"キャンペーン", campaigns_col_links:"リンク", campaigns_col_clicks:"合計クリック", campaigns_col_history:"履歴",
-    campaigns_back:"← 戻る", campaigns_history_title:"キャンペーン履歴:", campaigns_no_links:"リンクがありません。",
-    admin_ban:"ブロック", admin_unban:"ブロック解除", admin_banned:"ブロック中", admin_active:"正常", admin_expires:"期限:", admin_notify:"通知を送信", admin_delete_user:"ユーザー削除", admin_ban_user:"ユーザーブロック", admin_unban_user:"ブロック解除",
-    bulkqr:"一括QR", bulkqr_title:"一括QRコード", bulkqr_hint:"1行に1つの短縮リンク。一括でQRコードを生成し、Excelファイルとしてダウンロード。", bulkqr_generate:"一括QR生成", bulkqr_download:"Excelダウンロード (.xls)", bulkqr_color:"QRカラー", bulkqr_empty:"有効なリンクがありません。", bulkqr_max:"1回あたり最大1200リンク。", bulkqr_loading:"QR生成中...", bulkqr_done:"QRコードが生成されました。'Excelダウンロード'をクリックして保存。", bulkqr_super:"Superプラン限定機能。",
-    guide_close:"ガイドを閉じる",
-    guide_home_title:"SHORT URLを始める", guide_home_desc:"短縮リンク、QRコードを作成し、アクティビティを一箇所から管理しましょう。", guide_home_step1:"Short URLを作成 — 長いURLを共有しやすいリンクに短縮します。", guide_home_step2:"QRコードを作成 — リンクをQRコードに変換し、製品、ドキュメント、プロモーションに使用します。", guide_home_step3:"アクティビティを追跡 — Analyticsでクリック数と使用データを確認します。", guide_home_cta:"Short URLを作成",
-    guide_shorturls_title:"Short URLの作成と管理", guide_shorturls_desc:"長いURLを短く、共有しやすく管理しやすいリンクに変換します。", guide_shorturls_step1:"元のURLを貼り付け — 短縮したいURLを入力します。", guide_shorturls_step2:"必要に応じてカスタマイズ — システムの既存オプションを使用します。", guide_shorturls_step3:"作成して共有 — Short URLを作成後、チャネルで使用します。", guide_shorturls_cta:"Short URLを作成",
-    guide_dashboard_title:"アクティビティ概要", guide_dashboard_desc:"Short URLのステータスとアカウントアクティビティを一箇所で素早く確認します。", guide_dashboard_step1:"概要を確認 — 主要な指標をチェックします。", guide_dashboard_step2:"アクティビティを追跡 — システムの最近のアクティビティを確認します。", guide_dashboard_step3:"Analyticsを深掘り — より詳細な分析が必要な場合はAnalyticsを開きます。", guide_dashboard_cta:"Analyticsを見る",
-    guide_bulkqr_title:"1つ以上のURLにQRコードを作成", guide_bulkqr_desc:"1つのQRコードをすばやく作成、または複数のリンクを一度に処理します。", guide_bulkqr_step1:"作成方法を選択 — 1つのQRコードを作成するか、一括QRツールを使用します。", guide_bulkqr_step2:"QRをカスタマイズ — 必要に応じて色とサイズを選択します。", guide_bulkqr_step3:"作成してダウンロード — QRコードを作成し、ドキュメント、製品、キャンペーンに使用します。",
-    guide_analytics_title:"各リンクの効果を理解", guide_analytics_desc:"クリック数を追跡し、ユーザーがリンクとどう相互作用するかを確認します。", guide_analytics_step1:"クリック数を確認 — 時間ごとのトラフィックを追跡します。", guide_analytics_step2:"訪問者を分析 — システムが提供するAnalyticsデータを確認します。", guide_analytics_step3:"効果を比較 — 既存のデータでどのShort URLがより良いかを評価します。",
-    guide_webhooks_title:"Webhookとは？", guide_webhooks_desc:"SHORT URLを他のシステムと接続し、リンク関連のイベント発生時に自動通知を受け取ります。", guide_webhooks_step1:"Webhookを作成 — 通知を受け取る宛先URLを追加します。", guide_webhooks_step2:"追跡するイベントを選択 — システムは現在クリックイベントをサポートしています。", guide_webhooks_step3:"接続してデータをテスト — URLに届くリクエストを監視してWebhookが機能することを確認します。", guide_webhooks_cta:"Webhookを追加",
-    guide_export_title:"データをエクスポート", guide_export_desc:"Short URLデータと関連アクティビティをダウンロードして保存、分析、他システムで使用します。", guide_export_step1:"エクスポートするデータを選択 — ダウンロードするリンクとアクティビティを選択します。", guide_export_step2:"形式を選択 — システムは現在CSVとJSONエクスポートをサポートしています。", guide_export_step3:"エクスポートして保存 — ファイルをデバイスにダウンロードします。", guide_export_cta:"データをエクスポート",
-    guide_campaigns_title:"Campaignごとにリンクを整理", guide_campaigns_desc:"Short URLと関連アクティビティをグループ化し、管理、追跡、効果比較を容易にします。", guide_campaigns_step1:"Campaignを作成 — リンクの作成・編集時にcampaignを指定します。", guide_campaigns_step2:"関連リンクを紐付け — 同じcampaignのリンクがグループ化されます。", guide_campaigns_step3:"効果を追跡・比較 — 概要を確認：リンク数、合計クリック数、変更履歴。", guide_campaigns_cta:"キャンペーンを見る",
-    guide_team_title:"チームで協力する", guide_team_desc:"メンバーを管理し権限を設定して、複数の人がSHORT URLで協力できます。", guide_team_step1:"メンバーを招待 — チームにメンバーのユーザー名を追加します。", guide_team_step2:"アクセス権を設定 — OwnerとMemberはチーム内で異なる権限を持ちます。", guide_team_step3:"共同で管理・追跡 — チームメンバーはお互いのリンクを閲覧、編集、削除できます。", guide_team_cta:"チームを作成",
-    guide_api_title:"APIでSHORT URLを統合", guide_api_desc:"APIを使用してSHORT URLをウェブサイト、アプリ、内部システムに接続します。", guide_api_step1:"APIキーを作成・取得 — このページでAPIトークンを生成します。", guide_api_step2:"APIにリクエストを送信 — APIキーと共に/api/v1/shortenエンドポイントを使用します。", guide_api_step3:"結果を受信して処理 — APIがショートリンクと関連データを返します。", guide_api_cta:"APIキーを作成",
-    guide_pricing_title:"ニーズに合ったプランを選択", guide_pricing_desc:"サービスプランを比較し、Short URLの作成、管理、追跡のニーズに合ったレベルを選択します。", guide_pricing_step1:"各プランの制限を確認 — Free、Plus、Pro、Super。", guide_pricing_step2:"機能を比較 — 各プランでリンク制限、API、分析、機能が異なります。", guide_pricing_step3:"適切なプランを選択 — より多くの容量が必要な場合はアップグレードします。", guide_pricing_cta:"プランを見る",
-    guide_account_title:"アカウントを管理", guide_account_desc:"アカウント情報、個人設定、SHORT URLの体験に関連する設定を管理します。", guide_account_step1:"アカウント情報を確認 — ユーザー名、メール、現在のプランを確認します。", guide_account_step2:"設定を調整 — 情報と個人設定を更新します。", guide_account_step3:"変更を保存 — 適用するには確認します。", guide_account_cta:"アカウント更新",
-    guide_admin_title:"システム管理", guide_admin_desc:"管理エリアからSHORT URLコンポーネントを監視および管理します。", guide_admin_step1:"システム概要を確認 — ユーザー、リンク、レポートを管理します。", guide_admin_step2:"データとユーザーを管理 — レポート、ブラックリスト、バウチャー、支払いを確認します。", guide_admin_step3:"管理設定を確認 — メンテナンス、セキュリティ、監査ログ、通知。", guide_admin_cta:"管理を開く",
-    notif_title:"通知", notif_empty:"通知はありません", notif_from:"送信者:", notif_new:"新着", notif_ok:"了解", crown_hint:"機能ガイドを表示", crown_upgrade_to_unlock:"この機能をアンロックするにはアップグレードしてください", demo_bulkqr_title:"Bulk QR — QR一括生成", demo_webhooks_title:"Webhooks — イベント自動送信", demo_campaigns_title:"Campaigns — リンクグループ管理", demo_export_title:"Export — データエクスポート", demo_api_title:"API — 外部システム連携", demo_dashboard_title:"Dashboard — Short URL管理", demo_bulkqr_s1_t:"テキストボックスに複数URLを入力", demo_bulkqr_s1_d:"1行に1URL", demo_bulkqr_s2_t:"QR生成ボタンをクリック", demo_bulkqr_s2_d:"各URLのQRを作成", demo_bulkqr_s3_t:"全QRをダウンロード", demo_bulkqr_s3_d:"全QRコードを含むZIPファイル", demo_webhooks_s1_t:"Webhook送信先URLを追加", demo_webhooks_s1_d:"イベント通知を受け取るURL", demo_webhooks_s2_t:"リンクがクリックされた時", demo_webhooks_s2_d:"Webhookが自動でURLにPOST", demo_webhooks_s3_t:"外部システムがデータを受信", demo_webhooks_s3_d:"IP、国、デバイス、時間", demo_campaigns_s1_t:"新しいCampaignを作成", demo_campaigns_s1_d:"キャンペーン名と説明を入力", demo_campaigns_s2_t:"CampaignにShort URLを追加", demo_campaigns_s2_d:"1つのグループに複数リンク", demo_campaigns_s3_t:"統合Analyticsを表示", demo_campaigns_s3_d:"Campaign内の全リンクの統計", demo_export_s1_t:"CSVまたはJSON形式を選択", demo_export_s1_d:"全リンクと統計をエクスポート", demo_export_s2_t:"エクスポートボタンをクリック", demo_export_s2_d:"システムがデータをコンパイル", demo_export_s3_t:"ファイルをダウンロード", demo_export_s3_d:"全リンク + クリック + 日付を含む", demo_api_s1_t:"API Tokenを作成", demo_api_s1_d:"API認証用Token", demo_api_s2_t:"POST /api/v1/shortenを送信", demo_api_s2_d:"外部システムからShort URLを作成", demo_api_s3_t:"JSON結果を受信", demo_api_s3_d:"Short URLコード + フルリンク", demo_dashboard_s1_t:"Short URLを作成", demo_dashboard_s1_d:"長いURLを貼り付け → 短縮リンクを取得", demo_dashboard_s2_t:"リンク管理", demo_dashboard_s2_d:"コピー、QR、Analytics、編集、削除", demo_dashboard_s3_t:"統計を表示", demo_dashboard_s3_d:"リンク数、総クリック数", demo_anim_url:"URL", demo_anim_qr:"QR", demo_anim_ok:"✓", demo_anim_link_click:"リンククリック", demo_anim_event:"イベント", demo_anim_post:"POST → URL", demo_anim_external:"外部システム", demo_anim_campaign:"キャンペーン", demo_anim_analytics:"分析", demo_anim_data:"データ", demo_anim_export:"エクスポート", demo_anim_csv:"CSV/JSON", demo_anim_app:"アプリ", demo_anim_url_long:"長いURL", demo_anim_clicks:"クリック数", api_tier_expired:"プランの有効期限が切れました。APIの使用を続けるにはアップグレードしてください。", api_not_available:"現在のプランはAPIをサポートしていません。PROまたはSUPERにアップグレードしてください。", api_quota_exceeded:"APIクォータを使い切りました", api_upgrade_to_continue:"続行するにはアップグレードしてください。", api_upgrade_to_increase:"制限を増やすにはアップグレードしてください。",
-    feedback_title:"フィードバックとサポート", feedback_btn:"フィードバック", feedback_type_bug:"バグ報告", feedback_type_feature:"機能リクエスト", feedback_type_question:"質問", feedback_type_other:"その他", feedback_label_message:"内容", feedback_placeholder:"問題、提案、質問を説明してください...", feedback_label_email:"メール（任意）", feedback_email_placeholder:"email@example.com", feedback_cancel:"キャンセル", feedback_submit:"送信", feedback_success_title:"送信しました！", feedback_success_desc:"ありがとうございます！確認してすぐに返信します。", feedback_close:"閉じる", feedback_error:"エラーが発生しました。もう一度お試しください。", admin_feedback_tab:"フィードバック", admin_no_feedback:"フィードバックはありません。", acct_overview:"Aperçu du compte", acct_total_clicks:"Total des clics", acct_profile_title:"Profil du compte", acct_username:"Nom d'utilisateur", acct_joined:"Date d'inscription", acct_plan_title:"Plan actuel", acct_plan_active:"En cours d'utilisation", acct_plan_running:"Actif ✓", acct_plan_expired:"Expiré", acct_free:"Gratuit", acct_joined_label:"Inscrit", acct_expiry_label:"Expire", acct_start_label:"Commencé", acct_upgrade_plan:"Améliorer le plan", acct_manage_plan:"Gérer le plan", acct_pay_plan:"Plan", acct_pay_method:"Méthode", acct_pay_amount:"Montant", acct_voucher_title:"Activer avec un code voucher", acct_voucher_hint:"Entrez le code voucher pour activer des offres ou des forfaits.", acct_voucher_placeholder:"Entrez le code voucher", acct_voucher_btn:"Activer", acct_security_title:"Sécurité", acct_2fa_enabled:"Activé ✓", acct_2fa_disabled:"Non activé", acct_session:"Session", acct_current_device:"Appareil actuel", acct_browser:"Navigateur", acct_bank_qr:"Banque QR", acct_pay_method_stripe:"Stripe", adm_notif_sys:"Notifications système", adm_notif_empty:"Aucune nouvelle notification", adm_notif_read:"Lu", adm_notif_unread:"Non lu", adm_notif_delete:"Supprimer", adm_notif_delete_confirm:"Supprimer cette notification?", adm_notif_deleted:"Notification supprimée", adm_notif_not_found:"Notification introuvable", adm_notif_missing_id:"ID de notification manquant", adm_notif_from:"De", adm_notif_to:"Envoyé à", adm_notif_all_users:"Tous les utilisateurs", adm_notif_close:"Fermer", fb_detail_title:"Détails du feedback", fb_detail_type:"Type", fb_detail_sender:"Expéditeur", fb_detail_anonymous:"Anonyme", fb_detail_page:"Page", fb_detail_time:"Heure", fb_detail_status:"Statut", fb_status_new:"Nouveau", fb_status_replied:"Répondu", fb_status_closed:"Fermé", fb_type_bug:"Rapport de bug", fb_type_feature:"Demande de fonctionnalité", fb_type_question:"Q&R", fb_type_other:"Autre", notif_mark_all_read:"Tout marquer comme lu", notif_marked_all:"Tout marqué comme lu",
-  },
-
-  fr: {
-    ai_assistant_title:"Demander à l'IA", ai_assistant_placeholder:"Tapez votre question...", ai_assistant_send:"Envoyer",
-    ai_assistant_greeting:"Bonjour ! Je suis l'assistant IA de SHURL, comment puis-je vous aider ?",
-    ai_assistant_error:"Impossible d'envoyer le message, veuillez réessayer.",
-    ext_title:"Connecter l'extension de navigateur",
-    ext_desc:"Utilisez ce code pour connecter l'extension Chrome de SHURL — consultez les liens récents, le nombre de clics et raccourcissez rapidement la page en cours, directement depuis le popup. Gratuit sur tous les forfaits.",
-    // ===== NAV =====
-    home:"Accueil", nav_home:"Accueil", plans:"Tarifs", login:"Connexion", register:"Inscription", logout:"Déconnexion", language:"Langue",
-    dashboard:"Tableau de bord", account:"Compte", api:"API", bulk:"En masse", admin:"Administration",
-    // ===== AUTH =====
-    login_sub:"Bon retour sur SHURL.", login_security:"Sécurisé par Cloudflare · Créez un compte pour commencer",
-    no_account:"Pas encore de compte ?", have_account:"Vous avez déjà un compte ?", demo_accounts:" ",
-    register_sub:"Créez un compte gratuit pour gérer vos liens.", register_free:"Inscription gratuite",
-    reg_username:"Nom d'utilisateur (8-25 caractères)", reg_email:"E-mail (facultatif)", reg_password:"Mot de passe (min. 9 caractères, dont au moins 1 majuscule)",
-    reg_newpassword:"Nouveau mot de passe",
-    // ===== FORGOT PASSWORD =====
-    forgot_password:"Mot de passe oublié", forgot_sub:"Saisissez votre nom d'utilisateur pour recevoir un code de récupération par e-mail.", change_password:"Changer le mot de passe", old_password:"Mot de passe actuel", new_password:"Nouveau mot de passe", confirm_password:"Confirmer le mot de passe", send_code:"Envoyer le code", verify_code:"Code de vérification (6 chiffres)", code_sent_to_email:"Un code de vérification a été envoyé à votre e-mail.", code_sent:"Code de vérification envoyé", password_changed:"Mot de passe modifié avec succès !", password_mismatch:"Les mots de passe ne correspondent pas", password_too_short:"Le mot de passe doit contenir au moins 9 caractères", fill_all_fields:"Veuillez remplir tous les champs", sending:"Envoi...", processing:"Traitement...", send_failed:"Échec de l'envoi", change_failed:"Échec du changement de mot de passe", cancel:"Annuler", confirm:"Confirmer", security_password:"Mot de passe",
-    forgot_submit:"Envoyer le code de récupération", reset_code:"Code de vérification (6 chiffres)", reset_submit:"Changer le mot de passe",
-    back_to_login:"Retour à la connexion",
-    // ===== HOME =====
-    home_title:"Raccourcisseur de liens gratuit", home_sub:"Créez des liens courts rapidement, suivez les clics et protègez vos utilisateurs contre la fraude.",
-    home_promo_title:"✨ Créez un compte — 🎁 10 liens gratuits chaque jour !",
-    home_promo_sub:"Sans expiration · Alias personnalisé · Gestion des liens · Statistiques de clics",
-    home_promo_desc:"Sans expiration · Alias personnalisé · Gestion des liens · Statistiques de clics",
-    home_promo_btn1:"Inscription gratuite", home_promo_btn2:"Vous avez déjà un compte ?",
-    home_hero_sub:"Plateforme multi-niveaux de raccourcissement de liens — sécurité, statistiques détaillées, gestion de campagnes.",
-    home_guest_hint:"Connectez-vous pour définir un alias personnalisé, gérer vos liens et voir les statistiques. Invité : 5 liens/jour.",
-    home_url_placeholder:"https://exemple.com/chemin-tres-long", home_alias_placeholder:"mon-alias",
-    home_note_placeholder:"Note pour ce lien", home_password_placeholder:"Laisser vide = sans protection",
-    home_add_dest:"Ajouter une URL de destination", home_dest_a:"URL de destination A (ajouter)", home_dest_b:"URL de destination B (ajouter)",
-    url_to_shorten:"URL à raccourcir", shorten_now:"Raccourcir maintenant", processing:"Traitement...",
-    custom_alias:"Alias personnalisé", custom_alias_opt:"Alias personnalisé (facultatif)",
-    title_field:"Titre", title_opt:"Titre (facultatif)", campaign:"Campagne", tags:"Étiquettes",
-    expiry_date:"Date d'expiration (facultatif)", password_protect:"Mot de passe de protection (facultatif)",
-    custom_domain:"Domaine personnalisé",
-    pixel_tracking:"Suivi Pixel", ab_testing:"Test A/B", deep_link:"Lien profond", link_protect:"Protection du lien",
-    adv_options:"⚙ Options avancées (Pixel, A/B, liens profonds)", destination:"Destination", result_dest:"Destination :",
-    // ===== QR CODE =====
-    qr_title:"Générer un QR Code", qr_guest_title:"Générer un QR Code",
-    qr_guest_desc:"Couleur personnalisée · Taille personnalisée", qr_guest_btn:"Générer maintenant",
-    qr_desc:"Saisissez n'importe quelle URL (raccourcie ou non) pour générer un QR Code instantanément. Chaque génération de QR consomme 1 unité du quota quotidien.",
-    qr_url_label:"URL pour le QR Code", qr_color:"Couleur", qr_size:"Taille", qr_btn:"Générer le QR",
-    qr_copy_link:"Copier le lien", qr_download:"Télécharger le PNG", qr_processing:"Génération du QR...",
-    qr_quota_error:"Quota de génération de QR atteint pour aujourd'hui",
-    // ===== BULK QR =====
-    bulkqr:"QR en masse", bulkqr_title:"QR Codes en masse", bulkqr_hint:"Un lien par ligne. Générez des QR en masse et téléchargez en fichier Excel.",
-    bulkqr_generate:"Générer les QR en masse", bulkqr_download:"Télécharger Excel (.xls)", bulkqr_color:"Couleur du QR",
-    bulkqr_empty:"Aucun lien valide.", bulkqr_max:"Maximum 1200 liens par lot.",
-    bulkqr_loading:"Génération des QR...", bulkqr_done:"QR générés. Cliquez sur 'Télécharger Excel' pour enregistrer.",
-    bulkqr_super:"Fonctionnalité réservée au plan Super.",
-    // ===== DASHBOARD =====
-    my_links:"Mes liens", total_clicks:"Total de clics", daily_limit:"Quota quotidien de liens",
-    create_new:"Créer un nouveau lien", create_success:"Lien créé avec succès !",
-    col_link:"Lien", col_dest:"Destination", col_clicks:"Clics", col_status:"Statut", col_created:"Créé le",
-    status:"Statut", created:"Créé le", actions:"Actions",
-    copy:"Copier", copied:"Copié ✓", stats:"Statistiques", edit:"Modifier", del:"Supprimer",
-    enabled:"Activé", disabled:"Désactivé", deleted:"Supprimé", undo_delete:"Annuler la suppression", force_delete:"Supprimer définitivement",
-    export:"Exporter en CSV", optional:"Facultatif", no_data:"Aucune donnée.",
-    delete_confirm:"Supprimer le lien /", delete_warning:" ? Cette action est irréversible.",
-    edit_title:"Modifier le lien /", edit_dest:"URL de destination", edit_save:"Enregistrer les modifications", edit_cancel:"Annuler",
-    edit_enabled:"Activer le lien", edit_tags_placeholder:"séparées par des virgules",
-    // ===== BULK =====
-    bulk_title:"Création en masse", bulk_sub:"Saisissez une URL par ligne. Limite :",
-    bulk_per_batch:"liens/lot.", bulk_input_placeholder:"https://exemple1.com\\nhttps://exemple2.com",
-    bulk_submit:"Créer en masse", bulk_success:"Réussi", bulk_errors:"Erreurs", bulk_empty:"Veuillez saisir au moins 1 URL.",
-    // ===== ANALYTICS =====
-    analytics_title:"Statistiques", analytics_back:"← Retour au tableau de bord",
-    analytics_total:"Total de clics", analytics_24h:"Dernières 24 h", analytics_7d:"7 derniers jours", analytics_30d:"30 derniers jours",
-    analytics_14d:"14 derniers jours", analytics_by_hour:"Par heure (24 h)", analytics_device:"Appareil",
-    analytics_country:"Pays", analytics_browser:"Navigateur", analytics_referrer:"Source de référence",
-    analytics_recent:"Clics récents", analytics_time:"Heure", analytics_no_clicks:"Aucun clic pour le moment.",
-    // ===== ACCOUNT =====
-    account_title:"Compte", account_joined:"Membre depuis", account_current_limits:"Limites du plan actuel",
-    account_upgrade:"Améliorer le plan", account_upgrade_sub:"Débloquez toutes les fonctionnalités puissantes pour booster votre productivité.",
-    account_pro:"Pro", account_pro_desc:"Pour les marketeurs et créateurs",
-    account_super:"Super", account_super_desc:"Pour les entreprises et équipes",
-    account_voucher:"Activer avec un code voucher", account_voucher_hint:"Un code voucher ? Saisissez-le pour améliorer gratuitement.",
-    account_voucher_btn:"Saisir le code voucher", account_enter_voucher:"Saisir le code voucher :",
-    acct_links_day:"liens/jour", acct_detailed:"détaillé", acct_max:"max", yes:"Oui", no:"Non",
-    joined:"Membre depuis", plan:"Plan",
-    // ===== UPGRADE =====
-    upgrade_pro:"Améliorer en Pro", upgrade_super:"Améliorer en Super", upgrade_plus:"Améliorer en Plus",
-    upgrade_to_unlock:"Améliorez votre plan pour débloquer cette fonctionnalité",
-    upgrade_banner_title:"Améliorez pour débloquer cette fonctionnalité",
-    upgrade_banner_desc:"Pro : 200 liens/jour, création en masse, API · Super : 1 200 liens/jour, domaine personnalisé",
-    upgrade_banner_btn:"Améliorer →",
-    enter_voucher:"Saisir le code voucher", activate_voucher:"Activer avec un code voucher",
-    // ===== VOUCHER =====
-    pricing_voucher_title:"Activer un voucher", pricing_voucher_placeholder:"Saisir le code voucher",
-    pricing_voucher_activate:"Activer", pricing_voucher_buy_link:"Acheter un voucher en promotion",
-    pricing_voucher_select_prompt:"Choisissez d'abord le plan et la durée pour acheter un voucher (applicable en période promotionnelle).",
-    pricing_voucher_choose_plan:"Choisir le plan :", pricing_voucher_choose_time:"Choisir la durée :",
-    pricing_voucher_week:"1 semaine", pricing_voucher_month:"1 mois (-5 %)", pricing_voucher_year:"1 an",
-    pricing_voucher_pay:"Payer", pricing_voucher_save:"économie", vn_pay_title:"🇻🇳 Paiement", vn_pay_select_period:"Choisir la durée:", vn_pay_bank:"Banque:", vn_pay_acct_no:"N° de compte:", vn_pay_acct_name:"Titulaire:", vn_pay_amount:"Montant:", vn_pay_transfer_content:"Note de virement:", vn_pay_security:"Transaction sécurisée par la banque. Validation admin sous 1 heure.", vn_pay_confirm:"J\'ai effectué le virement", vn_pay_processing:"Traitement...", vn_pay_success:"Demande reçue. L\'admin validera sous 1 heure.",
-    pricing_voucher_select_alert:"Veuillez choisir un plan et une durée", pricing_voucher_enter_code:"Veuillez saisir le code",
-    pricing_voucher_invalid:"Voucher invalide",
-    // ===== PRICING =====
-    pricing_title:"Tarifs & Comparaison des plans", pricing_hero_title:"Des tarifs transparents",
-    pricing_hero_desc:"Choisissez le plan qui vous convient. Améliorez ou annulez à tout moment. Aucun frais caché.",
-    pricing_per_month:"/mois", pricing_free_desc:"Commencez avec l'essentiel",
-    pricing_f_10links:"10 liens/jour", pricing_f_manage:"Gestion des liens", pricing_f_clickstats:"Statistiques de clics",
-    pricing_plus_desc:"150 liens/jour", pricing_plus_btn:"Améliorer en Plus",pricing_per_week:"/semana",
-    pricing_plus_f1:"150 liens/jour", pricing_plus_f2:"Liens sans expiration", pricing_plus_f3:"Raccourcissement en masse — 150 liens/lot",
-    pricing_popular:"Le plus populaire", pay_vn_btn:"Paiement VN (MoMo/Napas)", pricing_per_batch:"lot", pricing_per_link:"lien", pricing_links:"liens",
-    pricing_day:"jour", pricing_month:"mois", pricing_req_month:"requêtes/mois", pricing_custom:"personnalisé",
-    pricing_advanced_mgmt:"Gestion avancée", pricing_compare_title:"Comparaison détaillée", pricing_compare_feature:"Fonctionnalité",
-    pricing_expiry:"Durée de validité des liens", pricing_unlimited_short:"∞", pricing_7days:"7 jours",
-    pricing_support:"Support", pricing_support_247:"24/7 + SLA",
-    pricing_cta_title:"Prêt à améliorer votre plan ?", pricing_cta_desc:"Améliorez dès aujourd'hui pour débloquer toutes les fonctionnalités.",
-    pricing_cta_btn:"Commencer maintenant",
-    pricing_checkout_error:"Erreur de paiement", pricing_connection_error:"Erreur de connexion",
-    pricing_error_notice:"Si le paiement échoue ou si vous ne recevez pas le plan/voucher après paiement, veuillez envoyer un e-mail avec une capture d'écran de la transaction réussie (avec date et heure) à",
-    pricing_error_subject:"Problème de paiement SHURL", pricing_error_body:"Description du problème :\\n\\nPlan :\\nDate/heure de la transaction :\\n\\nJoindre la capture d'écran de la transaction",
-    pricing_error_desc:"L'équipe de vérification vous remboursera sous forme de voucher équivalent dans les meilleurs délais.",
-    pricing_footer:"SHURL — Plateforme multi-niveaux de raccourcissement de liens · Sécurisé · Rapide",
-    // ===== PLAN FEATURES =====
-    plan_pro_f1:"200 liens/jour", plan_pro_f2:"300 liens/lot", plan_pro_f3:"Gestion avancée",
-    plan_pro_f4:"détaillées", plan_pro_f5:"QR Codes", plan_pro_f6:"5 000 requêtes/mois",
-    plan_pro_f7:"1 pixel/liens, 50 liens", plan_pro_f8:"2 URLs, 20 liens", plan_pro_f9:"iOS/Android",
-    plan_pro_f10:"Liens profonds", plan_pro_f11:"Protection par mot de passe (facultatif)",
-    plan_super_f1:"1 200 liens/jour", plan_super_f2:"1 200 liens/lot", plan_super_f3:"Toutes les fonctionnalités Pro",
-    plan_super_f4:"avancées (heatmap)", plan_super_f5:"QR Codes + QR en masse", plan_super_f6:"50 000 requêtes/mois",
-    plan_super_f7:"Domaine personnalisé", plan_super_f8:"2 pixels/liens, ∞", plan_super_f9:"3 URLs, % personnalisé, ∞",
-    plan_super_f10:"Fallback intelligent", plan_super_f11:"Anti brute-force",
-    plan_ps_f1:"1 200 liens/jour (Pro ×6)", plan_ps_f2:"1 200 liens/lot", plan_ps_f5:"50 000 requêtes/mois (×10)",
-    plan_ps_f8:"3 URLs, % personnalisé, ∞", plan_ps_f9:"Fallback intelligent",
-    plan_unlimited:"illimité", plan_advanced:"avancé", plan_priority_support:"Support prioritaire",
-    // ===== FAQ =====
-    pricing_faq_title:"Foire aux questions",
-    pricing_faq1_q:"Puis-je annuler à tout moment ?", pricing_faq1_a:"Oui. Vous pouvez annuler votre plan à tout moment. Après annulation, le compte revient au plan Free, mais vos liens existants sont conservés.",
-    pricing_faq2_q:"Puis-je payer avec un voucher ?", pricing_faq2_a:"Oui. Si vous avez un code voucher, allez dans Compte → Saisir le code voucher pour améliorer gratuitement.",
-    pricing_faq3_q:"Mes anciens liens seront-ils perdus en cas de rétrogradation ?", pricing_faq3_a:"Non. Tous les liens créés sont conservés. Seules les fonctionnalités avancées sont verrouillées lors d'une rétrogradation.",
-    pricing_faq4_q:"Puis-je utiliser un domaine personnalisé ?", pricing_faq4_a:"Le domaine personnalisé est disponible uniquement avec le plan Super. Vous devez pointer vos DNS vers SHURL.",
-    pricing_faq5_q:"L'API a-t-elle une limite de débit ?", pricing_faq5_a:"Pro : 5 000 requêtes/mois. Super : 50 000/mois.",
-    pricing_faq6_q:"Quelle est la différence avec le plan Plus ?", pricing_faq6_a:"Plus permet 150 liens/jour et un raccourcissement en masse de 150 liens/lot. Les liens n'expirent jamais — idéal pour toutes les campagnes.",
-    pricing_faq7_q:"Acheter un voucher est-il moins cher qu'une amélioration directe ?", pricing_faq7_a:"Uniquement pendant les promotions (définies par l'administrateur). Hors promotion, le prix du voucher est identique à l'amélioration directe.",
-    // ===== PAYMENT =====
-    pay_history_title:"Historique des paiements", pay_type:"Type", pay_date:"Date de paiement", pay_status:"Statut",
-    pay_voucher:"Voucher", pay_upgrade:"Amélioration", pay_success:"Réussi", pay_failed:"Échoué", pay_no_history:"Aucune transaction.",
-    // ===== TIER LIMITS =====
-    tier_limits_title:"Limites du plan actuel", links_per_day:"liens/jour", advanced_mgmt:"Gestion avancée",
-    detailed_stats:"Statistiques détaillées", max:"max",
-    // ===== API =====
-    api_title:"Token API", api_no_token:"Vous n'avez pas encore de token API.", api_gen_token:"Générer un token",
-    api_regen_token:"Régénérer le token", api_monthly_limit:"Quota :", api_requests_month:"requêtes/mois.",
-    api_example:"Exemple d'utilisation (cURL)", api_other:"Autres endpoints : GET /api/v1/links · GET /api/v1/analytics/:code",
-    api_no_access:"L'API n'est pas disponible avec votre plan actuel. Passez à PRO ou SUPER.",
-    // ===== ADMIN =====
-    admin_title:"Administration système", admin_users:"Utilisateurs", admin_reports:"Signalements d'abus",
-    admin_blacklist:"Liste noire", admin_vouchers:"Vouchers",
-    admin_username:"Nom d'utilisateur", admin_email:"E-mail", admin_role:"Rôle", admin_created:"Créé le",
-    admin_save:"Enregistrer", admin_reason:"Motif", admin_status:"Statut", admin_dismiss:"Rejeter",
-    admin_no_reports:"Aucun signalement.", admin_add_domain:"Ajouter", admin_add_keyword:"Ajouter",
-    admin_new_domain:"mauvais-exemple.com", admin_new_keyword:"mot-clé",
-    admin_bl_domains:"Domaines bloqués", admin_bl_keywords:"Mots-clés sensibles (ajouter)",
-    admin_bl_defaults:"Mots-clés par défaut (non supprimables) :", admin_create_voucher:"+ Créer un nouveau voucher",
-    admin_voucher_code:"Code voucher", admin_tier:"Plan", admin_used:"Utilisé", admin_limit:"Limite",
-    admin_expires:"Expire", admin_active:"Statut", admin_delete:"Supprimer",
-    admin_panel_title:"Panneau d'administration", admin_promo_title:"Paramètres de promotion", admin_promo_enable:"Activer la promotion",
-    admin_promo_from:"Date de début", admin_promo_to:"Date de fin", admin_promo_month_disc:"Remise mensuelle (%)", admin_promo_year_disc:"Remise annuelle (%)",
-    admin_promo_saved:"Paramètres de promotion enregistrés", admin_promo_save_error:"Erreur d'enregistrement",
-    admin_promo_ended:"La promotion est terminée", admin_promo_starts:"La promotion commencera", admin_promo_remaining:"Restant",
-    admin_pay_report_title:"Rapport des paiements", admin_customer:"Client", admin_amount:"Montant", admin_total_revenue:"Revenu total",
-    admin_export_csv:"Exporter en CSV", admin_no_data:"Aucune donnée", admin_report_error:"Erreur de chargement du rapport",
-    // ===== SIDEBAR =====
-    sidebar_recent:"Récents", sidebar_ad_placeholder:"Publicité — Bientôt disponible", sidebar_ad_outside:"Emplacement publicitaire externe",
-    sidebar_ad:"Publicité",
-    sidebar_guest_title:"✨ Créez un compte gratuit", sidebar_guest_desc:"Inscrivez-vous pour obtenir 10 liens/jour, la gestion des liens et les statistiques.",
-    sidebar_guest_feat1:"Alias personnalisé", sidebar_guest_feat2:"Gestion & statistiques des liens", sidebar_guest_btn:"S'inscrire maintenant →",
-    sidebar_pro_title:"⭐ Améliorer en Pro", sidebar_pro_desc:"Débloquez des fonctionnalités puissantes.",
-    sidebar_super_title:"🚀 Améliorer en Super", sidebar_super_desc:"Pour les entreprises.",
-    sidebar_upgrade_now:"Améliorer maintenant →", sidebar_view_super:"Voir le plan Super →",
-    sidebar_pro_current:"Vous utilisez Pro — passez à Super pour bénéficier de :",
-    sidebar_register_title:"✨ Inscription gratuite", sidebar_register_desc:"Créez un compte pour plus d'avantages.",
-    sidebar_register_feat1:"10 liens/jour", sidebar_register_feat2:"Alias personnalisé",
-    sidebar_register_feat3:"Gestion des liens", sidebar_register_feat4:"Statistiques de clics",
-    sidebar_register_btn:"Voir les tarifs →",
-    // ===== SUPPORT =====
-    support_subject:"SHURL — Support paiement", support_body_greeting:"Bonjour l'équipe SHURL,",
-    support_body_issue:"J'ai rencontré un problème lors du paiement du plan :", support_body_plan:"Plan choisi :",
-    support_body_amount:"Montant :", support_body_date:"Date de paiement :",
-    support_body_screenshot:"Je joins la capture d'écran du paiement réussi.",
-    support_body_thanks:"Merci de votre aide.", support_body_name:"Nom du compte :",
-    support_title:"Un problème de paiement ?", support_desc:"Si le paiement échoue ou si le plan n'est pas activé, contactez l'équipe support. Joignez une capture d'écran du paiement réussi pour un traitement rapide.",
-    support_contact_btn:"Contacter le support",
-    // ===== EMAIL =====
-    email_brand:"Short URL", email_voucher_subject:"Voucher SHURL — Code d'activation du plan",
-    email_voucher_thanks_1:"Merci d'avoir utilisé le plan", email_voucher_thanks_2:"suivant :",
-    email_voucher_instruction:"Copiez ce voucher et collez-le dans le champ voucher de la section Compte pour l'activer :",
-    email_voucher_activate_note:"Le plan voucher", email_voucher_activate_note_2:"est activé immédiatement après la saisie du code.",
-    email_voucher_warning:"Ne partagez pas ce code voucher avec d'autres personnes afin d'éviter toute perte.",
-    email_voucher_closing:"Merci de contribuer au développement de cette plateforme.", email_signature:"Cordialement,",
-    // ===== ROLES =====
-    role_guest:"Invité", role_free:"Gratuit", role_pro:"Pro", role_super:"Super", role_admin:"Administrateur",
-    // ===== MISC =====
-    days:"jours", hours:"heures", minutes:"minutes", loading:"Chargement...", footer_tagline:"Plateforme multi-niveaux de raccourcissement de liens · Sécurisé · Rapide",
-    footer_contact:"Contact",
-    // ===== ERROR CODES =====
-    err_url_invalid:"URL invalide (doit commencer par http:// ou https://)",
-    err_domain_blacklisted:"Le domaine de destination figure dans la liste noire de sécurité.",
-    err_keyword_blocked:"L'alias personnalisé contient un mot-clé de marque ou sensible.",
-    err_code_taken:"Ce code est déjà utilisé. Veuillez en choisir un autre.",
-    err_pixel_limit_reached:"Vous avez atteint la limite de liens avec pixel de votre plan.",
-    err_ab_limit_reached:"Vous avez atteint la limite de tests A/B de votre plan.",
-    err_ab_percent_invalid:"La somme des pourcentages A/B doit être égale à 100 %.",
-    err_pw_wrong:"Mot de passe incorrect",
-    err_pw_bruteforce:"Trop de tentatives. Réessayez dans 15 minutes.",
-    err_link_not_found:"Lien introuvable",
-    err_quota_exceeded:"Vous avez dépassé la limite quotidienne de liens."
-,
-    mt_title:"🛠️ Maintenance", mt_desc:"Activez la maintenance pour désactiver temporairement une fonctionnalité. Les utilisateurs verront un ruban Maintenance.", mt_stripe:"Stripe (Paiement par carte)", mt_qr:"QR Banque (VietQR)", mt_voucher:"Voucher", mt_bulk:"Shorten en masse", mt_api:"API", mt_analytics:"Analytique", mt_note_ph:"Raison de la maintenance (optionnel)", mt_ribbon:"Maintenance", mt_alert:"Fonctionnalité en maintenance", mt_loading:"Chargement...", mt_error:"Erreur", mt_confirm:"Confirmer", mt_cancel:"Annuler", mt_save:"💾 Enregistrer", mt_success:"Succès!", mt_payment_success:"Paiement réussi!", mt_payment_cancel:"Paiement annulé", mt_voucher_success:"Voucher acheté!", mt_voucher_cancel:"Achat de voucher annulé", mt_expired_30:"Expire dans 30 jours. Renouvelez à tout moment.", mt_no_notif:"Aucune nouvelle notification", mt_notif_title:"🔔 Notifications", mt_pending_payments:"Paiements en attente", mt_pending_reports:"Signalements", mt_downgrade_err:"Vous êtes sur un forfait supérieur, impossible d'acheter un forfait inférieur!", mt_pay_method:"Méthode", mt_no_history:"Aucune transaction.",
-    totp_code:"Code TOTP (6 chiffres)",
-    totp_required:"Mot de passe correct ! Entrez le code TOTP de Google Authenticator.",
-    webhooks:"Webhooks",
-    data_export:"Export de données",
-    campaign_history:"Historique des campagnes",
-    team_management:"Gestion d'équipe",
-    wh_tab_title:"Webhooks",
-    wh_requires:"Les webhooks nécessitent le plan Pro ou Super.",
-    wh_loading:"Chargement...",
-    wh_add_title:"Ajouter un Webhook",
-    wh_url_label:"URL Webhook (HTTPS)",
-    wh_name_label:"Nom (facultatif)",
-    wh_add_btn:"Ajouter le Webhook",
-    wh_guide_title:"Guide",
-    wh_guide_desc:"Le webhook envoie une requête POST à votre URL à chaque clic sur un lien.",
-    wh_empty:"Aucun webhook.",
-    wh_col_name:"Nom",
-    wh_col_url:"URL",
-    wh_col_event:"Événement",
-    wh_col_created:"Créé le",
-    wh_col_delete:"Supprimer",
-    wh_err_url:"Veuillez saisir l'URL du webhook.",
-    wh_err_https:"L'URL doit utiliser HTTPS.",
-    wh_adding:"Ajout en cours...", wh_added:"Webhook ajouté !", wh_delete_confirm:"Supprimer ce webhook ?",
-    export_tab_title:"Export de données", export_requires:"L'export de données nécessite le plan Pro ou Super.",
-    export_csv_btn:"Exporter CSV", export_json_btn:"Exporter JSON", export_csv_done:"CSV exporté !", export_json_done:"JSON exporté !",
-    export_desc:"L'export inclut tous vos liens : code, URL de destination, nombre de clics, statut, date de création, date d'expiration.",
-    export_csv_hint:"CSV — ouvrir avec Excel/Google Sheets. JSON — pour API ou sauvegarde.",
-    team_tab_title:"Équipe", team_requires:"L'équipe nécessite le plan Super.", team_loading:"Chargement...",
-    team_create_title:"Créer une équipe", team_name_label:"Nom de l'équipe", team_create_btn:"Créer l'équipe",
-    team_guide_title:"Guide", team_guide_desc:"L'équipe permet à plusieurs utilisateurs de gérer les liens ensemble. Les membres peuvent voir, modifier et supprimer les liens des autres.",
-    team_guide_limit:"Super : 10 membres maximum par équipe.", team_empty:"Aucune équipe. Créez-en une ci-dessous.",
-    team_col_member:"Membre", team_col_role:"Rôle", team_col_joined:"Rejoint", team_role_owner:"Propriétaire", team_role_member:"Membre",
-    team_delete_btn:"Supprimer l'équipe", team_delete_confirm:"Supprimer cette équipe ? Tous les membres seront retirés.",
-    team_add_placeholder:"nom d'utilisateur", team_add_btn:"Ajouter", team_remove_confirm:"Retirer ce membre ?",
-    team_err_name:"Entrez un nom d'équipe.", team_creating:"Création...", team_created:"Équipe créée !",
-    campaigns_tab_title:"Campagnes", campaigns_requires:"L'historique des campagnes nécessite le plan Plus ou supérieur.",
-    campaigns_loading:"Chargement...", campaigns_guide_title:"Guide",
-    campaigns_guide_desc:"Les campagnes regroupent les liens par campagne marketing. Lorsque vous changez la campagne d'un lien, l'ancien historique est sauvegardé automatiquement.",
-    campaigns_guide_desc2:"Vous pouvez voir un aperçu : liens par campagne, total des clics et historique des changements.",
-    campaigns_empty:"Aucune campagne. Créez un lien avec une campagne pour commencer.",
-    campaigns_col_name:"Campagne", campaigns_col_links:"Liens", campaigns_col_clicks:"Total clics", campaigns_col_history:"Historique",
-    campaigns_back:"← Retour", campaigns_history_title:"Historique de campagne :", campaigns_no_links:"Aucun lien.",
-    admin_ban:"Bannir", admin_unban:"Débannir", admin_banned:"Banni", admin_active:"Actif", admin_expires:"Expire:", admin_notify:"Envoyer notification", admin_delete_user:"Supprimer utilisateur", admin_ban_user:"Bannir utilisateur", admin_unban_user:"Débannir utilisateur",
-    bulkqr:"QR en masse", bulkqr_title:"QR Code en masse", bulkqr_hint:"Un lien raccourci par ligne. Générez des QR codes en masse et téléchargez en fichier Excel.", bulkqr_generate:"Générer QR en masse", bulkqr_download:"Télécharger Excel (.xls)", bulkqr_color:"Couleur QR", bulkqr_empty:"Aucun lien valide.", bulkqr_max:"Max. 1200 liens par lot.", bulkqr_loading:"Génération QR...", bulkqr_done:"QR codes générés. Cliquez sur 'Télécharger Excel' pour sauvegarder.", bulkqr_super:"Fonctionnalité réservée au plan Super.",
-    guide_close:"Fermer le guide",
-    guide_home_title:"Commencer avec SHORT URL", guide_home_desc:"Créez des liens courts, des QR codes et gérez votre activité depuis un seul endroit.", guide_home_step1:"Créer un Short URL — Raccourcissez une longue URL en un lien facile à partager.", guide_home_step2:"Créer un QR code — Convertissez un lien en QR code pour vos produits, documents ou promotions.", guide_home_step3:"Suivre l'activité — Consultez les clics et les données d'utilisation dans Analytics.", guide_home_cta:"Créer un Short URL",
-    guide_shorturls_title:"Créer et gérer des Short URLs", guide_shorturls_desc:"Transformez les longues URL en liens courts, faciles à partager et à gérer.", guide_shorturls_step1:"Collez l'URL originale — Saisissez l'URL que vous souhaitez raccourcir.", guide_shorturls_step2:"Personnalisez si besoin — Utilisez les options existantes du système.", guide_shorturls_step3:"Créez et partagez — Créez un Short URL puis utilisez-le dans vos canaux.", guide_shorturls_cta:"Créer un Short URL",
-    guide_dashboard_title:"Aperçu de l'activité", guide_dashboard_desc:"Consultez rapidement l'état de vos Short URLs et l'activité du compte depuis un seul endroit.", guide_dashboard_step1:"Voir l'aperçu — Consultez les indicateurs clés.", guide_dashboard_step2:"Suivre l'activité — Visualisez l'activité récente du système.", guide_dashboard_step3:"Approfondir Analytics — Ouvrez Analytics pour une analyse plus détaillée.", guide_dashboard_cta:"Voir Analytics",
-    guide_bulkqr_title:"Créer des QR codes pour un ou plusieurs URL", guide_bulkqr_desc:"Créez rapidement un QR code ou traitez plusieurs liens à la fois.", guide_bulkqr_step1:"Choisir la méthode — Créez un QR code unique ou utilisez l'outil QR en masse.", guide_bulkqr_step2:"Personnaliser le QR — Choisissez la couleur et la taille selon vos besoins.", guide_bulkqr_step3:"Créer et télécharger — Créez des QR codes pour vos documents, produits ou campagnes.",
-    guide_analytics_title:"Comprendre les performances de chaque lien", guide_analytics_desc:"Suivez les clics et découvrez comment les utilisateurs interagissent avec vos liens.", guide_analytics_step1:"Voir les clics — Suivez le trafic dans le temps.", guide_analytics_step2:"Analyser les visiteurs — Consultez les données Analytics fournies par le système.", guide_analytics_step3:"Comparer les performances — Utilisez les données existantes pour évaluer quels Short URLs fonctionnent le mieux.",
-    guide_webhooks_title:"Qu'est-ce qu'un Webhook ?", guide_webhooks_desc:"Connectez SHORT URL à d'autres systèmes pour recevoir des notifications automatiques lors d'événements liés à vos liens.", guide_webhooks_step1:"Créer un Webhook — Ajoutez une URL de destination pour recevoir les notifications.", guide_webhooks_step2:"Choisir les événements — Le système prend actuellement en charge l'événement de clic.", guide_webhooks_step3:"Connecter et tester — Surveillez les requêtes envoyées à votre URL pour confirmer que le Webhook fonctionne.", guide_webhooks_cta:"Ajouter un Webhook",
-    guide_export_title:"Exporter vos données", guide_export_desc:"Téléchargez les données Short URL et l'activité associée pour le stockage, l'analyse ou l'utilisation dans d'autres systèmes.", guide_export_step1:"Sélectionner les données — Choisissez les liens et l'activité à télécharger.", guide_export_step2:"Choisir le format — Le système prend actuellement en charge l'export CSV et JSON.", guide_export_step3:"Exporter et sauvegarder — Téléchargez le fichier sur votre appareil.", guide_export_cta:"Exporter les données",
-    guide_campaigns_title:"Organiser les liens par Campaign", guide_campaigns_desc:"Regroupez les Short URLs et l'activité associée pour une gestion, un suivi et une comparaison faciles.", guide_campaigns_step1:"Créer une Campaign — Attribuez une campaign à un lien lors de la création ou de l'édition.", guide_campaigns_step2:"Associer les liens — Les liens d'une même campaign sont regroupés.", guide_campaigns_step3:"Suivre et comparer — Vue d'ensemble : nombre de liens, clics totaux, historique des changements.", guide_campaigns_cta:"Voir les Campaigns",
-    guide_team_title:"Travailler en équipe", guide_team_desc:"Gérez les membres et les permissions pour que plusieurs personnes collaborent sur SHORT URL.", guide_team_step1:"Inviter des membres — Ajoutez le nom d'utilisateur d'un membre à l'équipe.", guide_team_step2:"Définir les accès — Owner et Member ont des permissions différentes dans l'équipe.", guide_team_step3:"Gérer et suivre ensemble — Les membres de l'équipe peuvent consulter, modifier et supprimer les liens les uns des autres.", guide_team_cta:"Créer une équipe",
-    guide_api_title:"Intégrer SHORT URL via API", guide_api_desc:"Utilisez l'API pour connecter SHORT URL à votre site web, application ou système interne.", guide_api_step1:"Créer ou obtenir une clé API — Générez un jeton API sur cette page.", guide_api_step2:"Envoyer une requête — Utilisez l'endpoint /api/v1/shorten avec votre clé API.", guide_api_step3:"Recevoir et traiter — L'API renvoie un lien court et les données associées.", guide_api_cta:"Créer une clé API",
-    guide_pricing_title:"Choisir le plan adapté", guide_pricing_desc:"Comparez les plans et choisissez le niveau adapté à vos besoins de création, gestion et suivi de Short URLs.", guide_pricing_step1:"Voir les limites — Free, Plus, Pro et Super.", guide_pricing_step2:"Comparer les fonctionnalités — Chaque plan a des limites de liens, API, analytics et fonctionnalités différentes.", guide_pricing_step3:"Choisir le bon plan — Mettez à niveau quand vous avez besoin de plus de capacité.", guide_pricing_cta:"Voir les forfaits",
-    guide_account_title:"Gérer votre compte", guide_account_desc:"Gérez les informations de compte, les préférences personnelles et les paramètres liés à votre expérience SHORT URL.", guide_account_step1:"Vérifier les infos — Consultez le nom d'utilisateur, l'email et le plan actuel.", guide_account_step2:"Ajuster les paramètres — Mettez à jour vos informations et préférences.", guide_account_step3:"Sauvegarder — Confirmez pour appliquer.", guide_account_cta:"Mettre à jour le compte",
-    guide_admin_title:"Administration système", guide_admin_desc:"Surveillez et gérez les composants de SHORT URL depuis la zone d'administration.", guide_admin_step1:"Aperçu du système — Gérez les utilisateurs, les liens et les rapports.", guide_admin_step2:"Gérer les données et utilisateurs — Examinez les rapports, la liste noire, les vouchers et les paiements.", guide_admin_step3:"Vérifier les paramètres admin — Maintenance, sécurité, journaux d'audit et notifications.", guide_admin_cta:"Ouvrir Admin",
-    notif_title:"Notifications", notif_empty:"Aucune notification", notif_from:"De:", notif_new:"Nouveau", notif_ok:"Compris", crown_hint:"Voir le guide des fonctionnalités", crown_upgrade_to_unlock:"Mettez à niveau pour débloquer cette fonctionnalité", demo_bulkqr_title:"Bulk QR — Créer des QR en masse", demo_webhooks_title:"Webhooks — Envoi automatique d'événements", demo_campaigns_title:"Campaigns — Gérer des groupes de liens", demo_export_title:"Export — Exporter des données", demo_api_title:"API — Intégrer des systèmes externes", demo_dashboard_title:"Dashboard — Gérer les Short URLs", demo_bulkqr_s1_t:"Entrez plusieurs URLs dans la zone de texte", demo_bulkqr_s1_d:"Une URL par ligne", demo_bulkqr_s2_t:"Cliquez sur Générer QR", demo_bulkqr_s2_d:"Le système crée un QR pour chaque URL", demo_bulkqr_s3_t:"Télécharger tous les QR", demo_bulkqr_s3_d:"Fichier ZIP avec tous les QR Codes", demo_webhooks_s1_t:"Ajouter l'URL de destination webhook", demo_webhooks_s1_d:"URL recevant les notifications d'événements", demo_webhooks_s2_t:"Quand quelqu'un clique sur le lien", demo_webhooks_s2_d:"Le webhook POST automatiquement l'événement", demo_webhooks_s3_t:"Le système externe reçoit les données", demo_webhooks_s3_d:"IP, pays, appareil, heure", demo_campaigns_s1_t:"Créer une nouvelle Campaign", demo_campaigns_s1_d:"Nommez et décrivez votre campagne", demo_campaigns_s2_t:"Ajouter des Short URLs à la Campaign", demo_campaigns_s2_d:"Plusieurs liens dans un groupe", demo_campaigns_s3_t:"Voir les Analytics agrégés", demo_campaigns_s3_d:"Statistiques de tous les liens de la Campaign", demo_export_s1_t:"Choisir le format CSV ou JSON", demo_export_s1_d:"Exporter tous les liens et statistiques", demo_export_s2_t:"Cliquer sur Exporter", demo_export_s2_d:"Le système compile les données", demo_export_s3_t:"Télécharger le fichier", demo_export_s3_d:"Fichier avec tous les liens + clics + dates", demo_api_s1_t:"Créer un token API", demo_api_s1_d:"Token pour l'authentification API", demo_api_s2_t:"Envoyer POST /api/v1/shorten", demo_api_s2_d:"Créer un Short URL depuis un système externe", demo_api_s3_t:"Recevoir le résultat JSON", demo_api_s3_d:"Code Short URL + lien complet", demo_dashboard_s1_t:"Créer un Short URL", demo_dashboard_s1_d:"Coller l'URL longue → obtenir un lien court", demo_dashboard_s2_t:"Gérer les liens", demo_dashboard_s2_d:"Copier, QR, Analytics, Modifier, Supprimer", demo_dashboard_s3_t:"Voir les statistiques", demo_dashboard_s3_d:"Nombre de liens, total des clics", demo_anim_url:"URL", demo_anim_qr:"QR", demo_anim_ok:"✓", demo_anim_link_click:"Clic lien", demo_anim_event:"Événement", demo_anim_post:"POST → URL", demo_anim_external:"Système externe", demo_anim_campaign:"Campagne", demo_anim_analytics:"Analytics", demo_anim_data:"Données", demo_anim_export:"Exporter", demo_anim_csv:"CSV/JSON", demo_anim_app:"App", demo_anim_url_long:"URL longue", demo_anim_clicks:"Clics", api_tier_expired:"Votre forfait a expiré. Veuillez mettre à niveau pour continuer à utiliser l'API.", api_not_available:"Le forfait actuel ne prend pas en charge l'API. Passez à PRO ou SUPER.", api_quota_exceeded:"Vous avez épuisé votre quota API", api_upgrade_to_continue:"Veuillez mettre à niveau pour continuer.", api_upgrade_to_increase:"Veuillez mettre à niveau pour augmenter les limites.",
-    feedback_title:"Feedback et support", feedback_btn:"Feedback", feedback_type_bug:"Signaler un bug", feedback_type_feature:"Demander une fonctionnalité", feedback_type_question:"Poser une question", feedback_type_other:"Autre", feedback_label_message:"Message", feedback_placeholder:"Décrivez le problème, la suggestion ou la question...", feedback_label_email:"Email (optionnel)", feedback_email_placeholder:"email@example.com", feedback_cancel:"Annuler", feedback_submit:"Envoyer", feedback_success_title:"Envoyé !", feedback_success_desc:"Merci ! Nous examinerons et répondrons bientôt.", feedback_close:"Fermer", feedback_error:"Une erreur est survenue, veuillez réessayer.", admin_feedback_tab:"Commentaires", admin_no_feedback:"Aucun commentaire pour le moment.", acct_overview:"Resumen de cuenta", acct_total_clicks:"Total de clics", acct_profile_title:"Perfil de cuenta", acct_username:"Nombre de usuario", acct_joined:"Fecha de registro", acct_plan_title:"Plan actual", acct_plan_active:"En uso", acct_plan_running:"Activo ✓", acct_plan_expired:"Expirado", acct_free:"Gratis", acct_joined_label:"Registro", acct_expiry_label:"Vence", acct_start_label:"Inicio", acct_upgrade_plan:"Mejorar plan", acct_manage_plan:"Gestionar plan", acct_pay_plan:"Plan", acct_pay_method:"Método", acct_pay_amount:"Monto", acct_voucher_title:"Activar con código de voucher", acct_voucher_hint:"Ingrese el código de voucher para activar ofertas o planes de servicio.", acct_voucher_placeholder:"Ingrese el código de voucher", acct_voucher_btn:"Activar", acct_security_title:"Seguridad", acct_2fa_enabled:"Activado ✓", acct_2fa_disabled:"No activado", acct_session:"Sesión", acct_current_device:"Dispositivo actual", acct_browser:"Navegador", acct_bank_qr:"Banco QR", acct_pay_method_stripe:"Stripe", adm_notif_sys:"Notificaciones del sistema", adm_notif_empty:"Sin notificaciones nuevas", adm_notif_read:"Leído", adm_notif_unread:"No leído", adm_notif_delete:"Eliminar", adm_notif_delete_confirm:"¿Eliminar esta notificación?", adm_notif_deleted:"Notificación eliminada", adm_notif_not_found:"Notificación no encontrada", adm_notif_missing_id:"Falta ID de notificación", adm_notif_from:"De", adm_notif_to:"Enviado a", adm_notif_all_users:"Todos los usuarios", adm_notif_close:"Cerrar", fb_detail_title:"Detalles del feedback", fb_detail_type:"Tipo", fb_detail_sender:"Remitente", fb_detail_anonymous:"Anónimo", fb_detail_page:"Página", fb_detail_time:"Hora", fb_detail_status:"Estado", fb_status_new:"Nuevo", fb_status_replied:"Respondido", fb_status_closed:"Cerrado", fb_type_bug:"Reporte de error", fb_type_feature:"Solicitud de función", fb_type_question:"Preguntas y respuestas", fb_type_other:"Otro", notif_mark_all_read:"Marcar todo como leído", notif_marked_all:"Todo marcado como leído",
-  },
-
-  es: {
-    ai_assistant_title:"Preguntar a la IA", ai_assistant_placeholder:"Escribe tu pregunta...", ai_assistant_send:"Enviar",
-    ai_assistant_greeting:"¡Hola! Soy el asistente de IA de SHURL, ¿en qué puedo ayudarte?",
-    ai_assistant_error:"No se pudo enviar el mensaje, inténtalo de nuevo.",
-    ext_title:"Conectar extensión del navegador",
-    ext_desc:"Usa este código para conectar la extensión de Chrome de SHURL: mira los enlaces recientes, el número de clics y acorta rápidamente la página que estás viendo, directo desde la ventana emergente. Gratis en todos los planes.",
-    // ===== NAV =====
-    home:"Inicio", nav_home:"Inicio", plans:"Precios", login:"Iniciar sesión", register:"Registrarse", logout:"Cerrar sesión", language:"Idioma",
-    dashboard:"Panel", account:"Cuenta", api:"API", bulk:"Masivo", admin:"Administración",
-    // ===== AUTH =====
-    login_sub:"Bienvenido de nuevo a SHURL.", login_security:"Protegido por Cloudflare · Crea una cuenta para empezar",
-    no_account:"¿Aún no tienes cuenta?", have_account:"¿Ya tienes cuenta?", demo_accounts:" ",
-    register_sub:"Crea una cuenta gratuita para gestionar tus enlaces.", register_free:"Registro gratuito",
-    reg_username:"Nombre de usuario (8-25 caracteres)", reg_email:"Correo electrónico (opcional)", reg_password:"Contraseña (mínimo 9 caracteres y al menos 1 mayúscula)",
-    reg_newpassword:"Nueva contraseña",
-    // ===== FORGOT PASSWORD =====
-    forgot_password:"Olvidé mi contraseña", forgot_sub:"Introduce tu nombre de usuario para recibir un código de recuperación por correo.", change_password:"Cambiar contraseña", old_password:"Contraseña actual", new_password:"Nueva contraseña", confirm_password:"Confirmar contraseña", send_code:"Enviar código", verify_code:"Código de verificación (6 dígitos)", code_sent_to_email:"Se ha enviado un código de verificación a tu correo.", code_sent:"Código enviado", password_changed:"¡Contraseña cambiada con éxito!", password_mismatch:"Las contraseñas no coinciden", password_too_short:"La contraseña debe tener al menos 9 caracteres", fill_all_fields:"Por favor completa todos los campos", sending:"Enviando...", processing:"Procesando...", send_failed:"Error al enviar", change_failed:"Error al cambiar la contraseña", cancel:"Cancelar", confirm:"Confirmar", security_password:"Contraseña",
-    forgot_submit:"Enviar código de recuperación", reset_code:"Código de verificación (6 dígitos)", reset_submit:"Cambiar contraseña",
-    back_to_login:"Volver al inicio de sesión",
-    // ===== HOME =====
-    home_title:"Acortador de enlaces gratuito", home_sub:"Crea enlaces cortos rápidamente, rastrea los clics y protege a los usuarios del fraude.",
-    home_promo_title:"✨ Crea una cuenta — 🎁 ¡10 enlaces gratis cada día!",
-    home_promo_sub:"Sin límite de tiempo · Alias personalizado · Gestión de enlaces · Estadísticas de clics",
-    home_promo_desc:"Sin límite de tiempo · Alias personalizado · Gestión de enlaces · Estadísticas de clics",
-    home_promo_btn1:"Registro gratuito", home_promo_btn2:"¿Ya tienes cuenta?",
-    home_hero_sub:"Plataforma multinivel de acortamiento de enlaces — segura, estadísticas detalladas, gestión de campañas.",
-    home_guest_hint:"Inicia sesión para usar alias personalizados, gestionar enlaces y ver estadísticas. Invitado: 5 enlaces/día.",
-    home_url_placeholder:"https://ejemplo.com/ruta-muy-larga", home_alias_placeholder:"tu-alias",
-    home_note_placeholder:"Nota para este enlace", home_password_placeholder:"Dejar vacío = sin protección",
-    home_add_dest:"Añadir URL de destino", home_dest_a:"URL de destino A (añadir)", home_dest_b:"URL de destino B (añadir)",
-    url_to_shorten:"URL a acortar", shorten_now:"Acortar ahora", processing:"Procesando...",
-    custom_alias:"Alias personalizado", custom_alias_opt:"Alias personalizado (opcional)",
-    title_field:"Título", title_opt:"Título (opcional)", campaign:"Campaña", tags:"Etiquetas",
-    expiry_date:"Fecha de caducidad (opcional)", password_protect:"Contraseña de protección (opcional)",
-    custom_domain:"Dominio personalizado",
-    pixel_tracking:"Seguimiento Pixel", ab_testing:"Prueba A/B", deep_link:"Enlace profundo", link_protect:"Protección de enlace",
-    adv_options:"⚙ Opciones avanzadas (Pixel, A/B, enlaces profundos)", destination:"Destino", result_dest:"Destino:",
-    // ===== QR CODE =====
-    qr_title:"Generar código QR", qr_guest_title:"Generar código QR",
-    qr_guest_desc:"Color personalizado · Tamaño personalizado", qr_guest_btn:"Generar ahora",
-    qr_desc:"Introduce cualquier URL (acortada o no) para generar un código QR al instante. Cada generación de QR consume 1 unidad del cuota diario.",
-    qr_url_label:"URL para el código QR", qr_color:"Color", qr_size:"Tamaño", qr_btn:"Generar QR",
-    qr_copy_link:"Copiar enlace", qr_download:"Descargar PNG", qr_processing:"Generando QR...",
-    qr_quota_error:"Has alcanzado el límite de generación de QR por hoy",
-    // ===== BULK QR =====
-    bulkqr:"QR masivo", bulkqr_title:"Códigos QR masivos", bulkqr_hint:"Un enlace corto por línea. Genera códigos QR en lote y descárgalos en un archivo Excel.",
-    bulkqr_generate:"Generar QR en lote", bulkqr_download:"Descargar Excel (.xls)", bulkqr_color:"Color del QR",
-    bulkqr_empty:"No hay enlaces válidos.", bulkqr_max:"Máximo 1200 enlaces por vez.",
-    bulkqr_loading:"Generando códigos QR...", bulkqr_done:"QR generados. Haz clic en 'Descargar Excel' para guardar.",
-    bulkqr_super:"Función exclusiva del plan Super.",
-    // ===== DASHBOARD =====
-    my_links:"Mis enlaces", total_clicks:"Total de clics", daily_limit:"Cuota diaria de enlaces",
-    create_new:"Crear nuevo enlace", create_success:"¡Enlace creado con éxito!",
-    col_link:"Enlace", col_dest:"Destino", col_clicks:"Clics", col_status:"Estado", col_created:"Creado",
-    status:"Estado", created:"Creado", actions:"Acciones",
-    copy:"Copiar", copied:"¡Copiado ✓!", stats:"Estadísticas", edit:"Editar", del:"Eliminar",
-    enabled:"Activo", disabled:"Desactivado", deleted:"Eliminado", undo_delete:"Deshacer eliminación", force_delete:"Eliminar definitivamente",
-    export:"Exportar CSV", optional:"Opcional", no_data:"Sin datos.",
-    delete_confirm:"Eliminar enlace /", delete_warning:"? Esta acción no se puede deshacer.",
-    edit_title:"Editar enlace /", edit_dest:"URL de destino", edit_save:"Guardar cambios", edit_cancel:"Cancelar",
-    edit_enabled:"Activar enlace", edit_tags_placeholder:"separadas por comas",
-    // ===== BULK =====
-    bulk_title:"Creación masiva", bulk_sub:"Introduce una URL por línea. Límite:",
-    bulk_per_batch:"enlaces/vez.", bulk_input_placeholder:"https://ejemplo1.com\\nhttps://ejemplo2.com",
-    bulk_submit:"Crear en lote", bulk_success:"Éxito", bulk_errors:"Errores", bulk_empty:"Introduce al menos 1 URL.",
-    // ===== ANALYTICS =====
-    analytics_title:"Estadísticas", analytics_back:"← Volver al panel",
-    analytics_total:"Total de clics", analytics_24h:"Últimas 24 horas", analytics_7d:"Últimos 7 días", analytics_30d:"Últimos 30 días",
-    analytics_14d:"Últimos 14 días", analytics_by_hour:"Por hora (24h)", analytics_device:"Dispositivo",
-    analytics_country:"País", analytics_browser:"Navegador", analytics_referrer:"Fuente de referencia",
-    analytics_recent:"Clics recientes", analytics_time:"Hora", analytics_no_clicks:"Aún no hay clics.",
-    // ===== ACCOUNT =====
-    account_title:"Cuenta", account_joined:"Miembro desde", account_current_limits:"Límites del plan actual",
-    account_upgrade:"Mejorar plan", account_upgrade_sub:"Desbloquea todas las funciones potentes para aumentar tu productividad.",
-    account_pro:"Pro", account_pro_desc:"Para marketers y creadores",
-    account_super:"Super", account_super_desc:"Para empresas y equipos",
-    account_voucher:"Activar con código voucher", account_voucher_hint:"¿Tienes un voucher? Introdúcelo y mejora gratis.",
-    account_voucher_btn:"Introducir código voucher", account_enter_voucher:"Introducir código voucher:",
-    acct_links_day:"enlaces/día", acct_detailed:"detallado", acct_max:"máx", yes:"Sí", no:"No",
-    joined:"Miembro desde", plan:"Plan",
-    // ===== UPGRADE =====
-    upgrade_pro:"Mejorar a Pro", upgrade_super:"Mejorar a Super", upgrade_plus:"Mejorar a Plus",
-    upgrade_to_unlock:"Mejora tu plan para desbloquear esta función",
-    upgrade_banner_title:"Mejora para desbloquear esta función",
-    upgrade_banner_desc:"Pro: 200 enlaces/día, lotes, API · Super: 1200 enlaces/día, dominio personalizado",
-    upgrade_banner_btn:"Mejorar →",
-    enter_voucher:"Introducir código voucher", activate_voucher:"Activar con código voucher",
-    // ===== VOUCHER =====
-    pricing_voucher_title:"Activar voucher", pricing_voucher_placeholder:"Introducir código voucher",
-    pricing_voucher_activate:"Activar", pricing_voucher_buy_link:"Comprar voucher con promoción",
-    pricing_voucher_select_prompt:"Elige primero el plan y la duración para comprar un voucher (aplicable en período promocional).",
-    pricing_voucher_choose_plan:"Elegir plan:", pricing_voucher_choose_time:"Elegir duración:",
-    pricing_voucher_week:"1 semana", pricing_voucher_month:"1 mes (-5%)", pricing_voucher_year:"1 año",
-    pricing_voucher_pay:"Pagar", pricing_voucher_save:"ahorro", vn_pay_title:"🇻🇳 Pago", vn_pay_select_period:"Elegir duración:", vn_pay_bank:"Banco:", vn_pay_acct_no:"N° de cuenta:", vn_pay_acct_name:"Titular:", vn_pay_amount:"Monto:", vn_pay_transfer_content:"Nota de transferencia:", vn_pay_security:"Transacción protegida por el banco. Aprobación del admin en 1 hora.", vn_pay_confirm:"Ya transferí", vn_pay_processing:"Procesando...", vn_pay_success:"Solicitud recibida. El admin aprobará en 1 hora.",
-    pricing_voucher_select_alert:"Selecciona plan y duración", pricing_voucher_enter_code:"Introduce el código",
-    pricing_voucher_invalid:"Voucher no válido",
-    // ===== PRICING =====
-    pricing_title:"Precios y comparación de planes", pricing_hero_title:"Precios transparentes",
-    pricing_hero_desc:"Elige el plan que se adapte a ti. Mejora o cancela en cualquier momento. Sin costes ocultos.",
-    pricing_per_month:"/mes", pricing_free_desc:"Empieza con lo básico",
-    pricing_f_10links:"10 enlaces/día", pricing_f_manage:"Gestión de enlaces", pricing_f_clickstats:"Estadísticas de clics",
-    pricing_plus_desc:"150 enlaces/día", pricing_plus_btn:"Mejorar a Plus",pricing_per_week:"/semana",
-    pricing_plus_f1:"150 enlaces/día", pricing_plus_f2:"Enlaces sin caducidad", pricing_plus_f3:"Acortado masivo — 150 enlaces/vez",
-    pricing_popular:"Más popular", pay_vn_btn:"Pago VN (MoMo/Napas)", pricing_per_batch:"vez", pricing_per_link:"enlace", pricing_links:"enlaces",
-    pricing_day:"día", pricing_month:"mes", pricing_req_month:"solicitudes/mes", pricing_custom:"personalizado",
-    pricing_advanced_mgmt:"Gestión avanzada", pricing_compare_title:"Comparación detallada", pricing_compare_feature:"Función",
-    pricing_expiry:"Validez de los enlaces", pricing_unlimited_short:"∞", pricing_7days:"7 días",
-    pricing_support:"Soporte", pricing_support_247:"24/7 + SLA",
-    pricing_cta_title:"¿Listo para mejorar?", pricing_cta_desc:"Mejora hoy y desbloquea todas las funciones.",
-    pricing_cta_btn:"Empezar ahora",
-    pricing_checkout_error:"Error de pago", pricing_connection_error:"Error de conexión",
-    pricing_error_notice:"Si el pago falla o no recibes el plan/voucher después de pagar, envía un correo con captura de pantalla de la transacción exitosa (con fecha y hora) a",
-    pricing_error_subject:"Problema de pago SHURL", pricing_error_body:"Describe el problema:\\n\\nPlan:\\nFecha/hora de la transacción:\\n\\nAdjunta captura de la transacción",
-    pricing_error_desc:"El equipo de revisión te reembolsará con un voucher equivalente lo antes posible.",
-    pricing_footer:"SHURL — Plataforma multinivel de acortamiento de enlaces · Segura · Rápida",
-    // ===== PLAN FEATURES =====
-    plan_pro_f1:"200 enlaces/día", plan_pro_f2:"300 enlaces/vez", plan_pro_f3:"Gestión avanzada",
-    plan_pro_f4:"detallado", plan_pro_f5:"Códigos QR", plan_pro_f6:"5000 solicitudes/mes",
-    plan_pro_f7:"1 píxel/enlace, 50 enlaces", plan_pro_f8:"2 URLs, 20 enlaces", plan_pro_f9:"iOS/Android",
-    plan_pro_f10:"Enlaces profundos", plan_pro_f11:"Protección con contraseña (opcional)",
-    plan_super_f1:"1200 enlaces/día", plan_super_f2:"1200 enlaces/vez", plan_super_f3:"Todas las funciones Pro",
-    plan_super_f4:"avanzado (mapa de calor)", plan_super_f5:"QR + QR masivo", plan_super_f6:"50 000 solicitudes/mes",
-    plan_super_f7:"Dominio personalizado", plan_super_f8:"2 píxeles/enlace, ∞", plan_super_f9:"3 URLs, % personalizado, ∞",
-    plan_super_f10:"Fallback inteligente", plan_super_f11:"Antifuerza bruta",
-    plan_ps_f1:"1200 enlaces/día (Pro ×6)", plan_ps_f2:"1200 enlaces/vez", plan_ps_f5:"50 000 solicitudes/mes (×10)",
-    plan_ps_f8:"3 URLs, % personalizado, ∞", plan_ps_f9:"Fallback inteligente",
-    plan_unlimited:"ilimitado", plan_advanced:"avanzado", plan_priority_support:"Soporte prioritario",
-    // ===== FAQ =====
-    pricing_faq_title:"Preguntas frecuentes",
-    pricing_faq1_q:"¿Puedo cancelar en cualquier momento?", pricing_faq1_a:"Sí. Puedes cancelar tu plan en cualquier momento. Tras cancelar, la cuenta vuelve al plan Free, pero los enlaces existantes se conservan.",
-    pricing_faq2_q:"¿Puedo pagar con voucher?", pricing_faq2_a:"Sí. Si tienes un código voucher, ve a Cuenta → Introducir código voucher para mejorar gratis.",
-    pricing_faq3_q:"¿Perderé mis enlaces antiguos al bajar de plan?", pricing_faq3_a:"No. Todos los enlaces creados se conservan. Solo las funciones avanzadas se bloquean al bajar de plan.",
-    pricing_faq4_q:"¿Puedo usar un dominio personalizado?", pricing_faq4_a:"El dominio personalizado solo está disponible en el plan Super. Debes apuntar tus DNS hacia SHURL.",
-    pricing_faq5_q:"¿La API tiene límite de solicitudes?", pricing_faq5_a:"Pro: 5000 solicitudes/mes. Super: 50 000/mes.",
-    pricing_faq6_q:"¿Qué tiene de diferente el plan Plus?", pricing_faq6_a:"Plus permite 150 enlaces/día y acortamiento masivo de 150 enlaces/vez. Los enlaces no caducan — ideal para cualquier campaña.",
-    pricing_faq7_q:"¿Comprar voucher es más barato que mejorar directamente?", pricing_faq7_a:"Solo durante promociones (configuradas por el administrador). Fuera de promoción, el precio del voucher es igual al de la mejora directa.",
-    // ===== PAYMENT =====
-    pay_history_title:"Historial de pagos", pay_type:"Tipo", pay_date:"Fecha de pago", pay_status:"Estado",
-    pay_voucher:"Voucher", pay_upgrade:"Mejora", pay_success:"Exitoso", pay_failed:"Fallido", pay_no_history:"Sin transacciones.",
-    // ===== TIER LIMITS =====
-    tier_limits_title:"Límites del plan actual", links_per_day:"enlaces/día", advanced_mgmt:"Gestión avanzada",
-    detailed_stats:"Estadísticas detalladas", max:"máx",
-    // ===== API =====
-    api_title:"Token API", api_no_token:"Aún no tienes token API.", api_gen_token:"Generar token",
-    api_regen_token:"Regenerar token", api_monthly_limit:"Cuota:", api_requests_month:"solicitudes/mes.",
-    api_example:"Ejemplo de uso (cURL)", api_other:"Otros endpoints: GET /api/v1/links · GET /api/v1/analytics/:code",
-    api_no_access:"Tu plan actual no incluye API. Mejora a PRO o SUPER para usarla.",
-    // ===== ADMIN =====
-    admin_title:"Administración del sistema", admin_users:"Usuarios", admin_reports:"Reportes de abuso",
-    admin_blacklist:"Lista negra", admin_vouchers:"Vouchers",
-    admin_username:"Usuario", admin_email:"Correo", admin_role:"Rol", admin_created:"Creado",
-    admin_save:"Guardar", admin_reason:"Motivo", admin_status:"Estado", admin_dismiss:"Descartar",
-    admin_no_reports:"No hay reportes.", admin_add_domain:"Añadir", admin_add_keyword:"Añadir",
-    admin_new_domain:"mal-ejemplo.com", admin_new_keyword:"palabra-clave",
-    admin_bl_domains:"Dominios bloqueados", admin_bl_keywords:"Palabras clave sensibles (añadir)",
-    admin_bl_defaults:"Palabras clave predeterminadas (no se pueden eliminar):", admin_create_voucher:"+ Crear nuevo voucher",
-    admin_voucher_code:"Código voucher", admin_tier:"Plan", admin_used:"Usado", admin_limit:"Límite",
-    admin_expires:"Caduca", admin_active:"Estado", admin_delete:"Eliminar",
-    admin_panel_title:"Panel de administración", admin_promo_title:"Configuración de promociones", admin_promo_enable:"Activar promoción",
-    admin_promo_from:"Desde", admin_promo_to:"Hasta", admin_promo_month_disc:"Descuento mensual (%)", admin_promo_year_disc:"Descuento anual (%)",
-    admin_promo_saved:"Configuración de promoción guardada", admin_promo_save_error:"Error al guardar configuración",
-    admin_promo_ended:"La promoción ha terminado", admin_promo_starts:"La promoción comenzará", admin_promo_remaining:"Restante",
-    admin_pay_report_title:"Reporte de pagos", admin_customer:"Cliente", admin_amount:"Importe", admin_total_revenue:"Ingresos totales",
-    admin_export_csv:"Exportar CSV", admin_no_data:"Sin datos", admin_report_error:"Error al cargar el reporte",
-    // ===== SIDEBAR =====
-    sidebar_recent:"Recientes", sidebar_ad_placeholder:"Publicidad — Próximamente", sidebar_ad_outside:"Espacio publicitario externo",
-    sidebar_ad:"Publicidad",
-    sidebar_guest_title:"✨ Crea una cuenta gratis", sidebar_guest_desc:"Regístrate para obtener 10 enlaces/día, gestión de enlaces y estadísticas.",
-    sidebar_guest_feat1:"Alias personalizado", sidebar_guest_feat2:"Gestión y estadísticas de enlaces", sidebar_guest_btn:"Registrarse ahora →",
-    sidebar_pro_title:"⭐ Mejorar a Pro", sidebar_pro_desc:"Desbloquea funciones potentes.",
-    sidebar_super_title:"🚀 Mejorar a Super", sidebar_super_desc:"Para empresas.",
-    sidebar_upgrade_now:"Mejorar ahora →", sidebar_view_super:"Ver plan Super →",
-    sidebar_pro_current:"Usas Pro — pasa a Super para obtener además:",
-    sidebar_register_title:"✨ Registro gratuito", sidebar_register_desc:"Crea una cuenta para más beneficios.",
-    sidebar_register_feat1:"10 enlaces/día", sidebar_register_feat2:"Alias personalizado",
-    sidebar_register_feat3:"Gestión de enlaces", sidebar_register_feat4:"Estadísticas de clics",
-    sidebar_register_btn:"Ver precios →",
-    // ===== SUPPORT =====
-    support_subject:"SHURL — Soporte de pagos", support_body_greeting:"Hola equipo de SHURL,",
-    support_body_issue:"Tuve un problema al pagar el plan:", support_body_plan:"Plan elegido:",
-    support_body_amount:"Importe:", support_body_date:"Fecha de pago:",
-    support_body_screenshot:"Adjunto captura de pantalla del pago exitoso.",
-    support_body_thanks:"Gracias por su ayuda.", support_body_name:"Nombre de cuenta:",
-    support_title:"¿Problemas con el pago?", support_desc:"Si el pago falla o el plan no se activó, contacta al equipo de soporte. Adjunta una captura del pago exitoso para procesarlo rápido.",
-    support_contact_btn:"Contactar soporte",
-    // ===== EMAIL =====
-    email_brand:"Short URL", email_voucher_subject:"Voucher SHURL — Código de activación del plan",
-    email_voucher_thanks_1:"Gracias por usar el plan", email_voucher_thanks_2:"siguiente:",
-    email_voucher_instruction:"Copia este voucher y pégalo en el campo voucher de la sección Cuenta para activarlo:",
-    email_voucher_activate_note:"El plan del voucher", email_voucher_activate_note_2:"se activa inmediatamente después de introducir el código.",
-    email_voucher_warning:"No compartas este código voucher con otras personas para evitar pérdidas.",
-    email_voucher_closing:"Gracias por contribuir al desarrollo de esta plataforma.", email_signature:"Saludos cordiales,",
-    // ===== ROLES =====
-    role_guest:"Invitado", role_free:"Gratis", role_pro:"Pro", role_super:"Super", role_admin:"Administrador",
-    // ===== MISC =====
-    days:"días", hours:"horas", minutes:"minutos", loading:"Cargando...", footer_tagline:"Plataforma multinivel de acortamiento de enlaces · Segura · Rápida",
-    footer_contact:"Contacto",
-    // ===== ERROR CODES =====
-    err_url_invalid:"URL no válida (debe comenzar con http:// o https://)",
-    err_domain_blacklisted:"El dominio de destino está en la lista negra de seguridad.",
-    err_keyword_blocked:'El alias personalizado contiene palabras clave de marca o sensibles.',
-    err_code_taken:'Este código ya está en uso. Elige otro.',
-    err_pixel_limit_reached:"Has alcanzado el límite de enlaces con píxel de tu plan.",
-    err_ab_limit_reached:"Has alcanzado el límite de pruebas A/B de tu plan.",
-    err_ab_percent_invalid:"La suma de porcentajes A/B debe ser igual al 100%.",
-    err_pw_wrong:"Contraseña incorrecta",
-    err_pw_bruteforce:"Demasiados intentos. Reintenta en 15 minutos.",
-    err_link_not_found:"Enlace no encontrado",
-    err_quota_exceeded:"Has superado el límite diario de enlaces."
-,
-    mt_title:"🛠️ Mantenimiento", mt_desc:"Activa el mantenimiento para deshabilitar temporalmente una función. Los usuarios verán una cinta Mantenimiento.", mt_stripe:"Stripe (Pago con tarjeta)", mt_qr:"QR Banco (VietQR)", mt_voucher:"Cupón", mt_bulk:"Acortar en masa", mt_api:"API", mt_analytics:"Analíticas", mt_note_ph:"Razón del mantenimiento (opcional)", mt_ribbon:"Mantenimiento", mt_alert:"Función en mantenimiento", mt_loading:"Cargando...", mt_error:"Error", mt_confirm:"Confirmar", mt_cancel:"Cancelar", mt_save:"💾 Guardar", mt_success:"¡Éxito!", mt_payment_success:"¡Pago exitoso!", mt_payment_cancel:"Pago cancelado", mt_voucher_success:"¡Cupón comprado!", mt_voucher_cancel:"Compra de cupón cancelada", mt_expired_30:"Expira en 30 días. Renueva cuando quieras.", mt_no_notif:"Sin notificaciones nuevas", mt_notif_title:"🔔 Notificaciones", mt_pending_payments:"Pagos pendientes", mt_pending_reports:"Reportes", mt_downgrade_err:"Estás en un plan superior, ¡no puedes comprar uno inferior!", mt_pay_method:"Método", mt_no_history:"Sin transacciones aún.",
-    totp_code:"Código TOTP (6 dígitos)",
-    totp_required:"¡Contraseña correcta! Ingresa el código TOTP de Google Authenticator.",
-    webhooks:"Webhooks",
-    data_export:"Exportación de datos",
-    campaign_history:"Historial de campañas",
-    team_management:"Gestión de equipo",
-    wh_tab_title:"Webhooks",
-    wh_requires:"Los webhooks requieren el plan Pro o Super.",
-    wh_loading:"Cargando...",
-    wh_add_title:"Añadir Webhook",
-    wh_url_label:"URL del Webhook (HTTPS)",
-    wh_name_label:"Nombre (opcional)",
-    wh_add_btn:"Añadir Webhook",
-    wh_guide_title:"Guía",
-    wh_guide_desc:"El webhook envía una petición POST a tu URL cada vez que alguien hace clic en un enlace.",
-    wh_empty:"Sin webhooks.",
-    wh_col_name:"Nombre",
-    wh_col_url:"URL",
-    wh_col_event:"Evento",
-    wh_col_created:"Creado",
-    wh_col_delete:"Eliminar",
-    wh_err_url:"Introduce la URL del webhook.",
-    wh_err_https:"La URL debe usar HTTPS.",
-    wh_adding:"Añadiendo...", wh_added:"¡Webhook añadido!", wh_delete_confirm:"¿Eliminar este webhook?",
-    export_tab_title:"Exportación de datos", export_requires:"La exportación de datos requiere el plan Pro o Super.",
-    export_csv_btn:"Exportar CSV", export_json_btn:"Exportar JSON", export_csv_done:"¡CSV exportado!", export_json_done:"¡JSON exportado!",
-    export_desc:"La exportación incluye todos tus enlaces: código, URL de destino, clics, estado, fecha de creación, fecha de caducidad.",
-    export_csv_hint:"CSV — abrir con Excel/Google Sheets. JSON — para API o copia de seguridad.",
-    team_tab_title:"Equipo", team_requires:"El equipo requiere el plan Super.", team_loading:"Cargando...",
-    team_create_title:"Crear equipo", team_name_label:"Nombre del equipo", team_create_btn:"Crear equipo",
-    team_guide_title:"Guía", team_guide_desc:"El equipo permite a varios usuarios gestionar enlaces juntos. Los miembros pueden ver, editar y eliminar los enlaces de los demás.",
-    team_guide_limit:"Super: máximo 10 miembros por equipo.", team_empty:"Sin equipo. Crea uno abajo.",
-    team_col_member:"Miembro", team_col_role:"Rol", team_col_joined:"Se unió", team_role_owner:"Propietario", team_role_member:"Miembro",
-    team_delete_btn:"Eliminar equipo", team_delete_confirm:"¿Eliminar este equipo? Todos los miembros serán retirados.",
-    team_add_placeholder:"nombre de usuario", team_add_btn:"Añadir", team_remove_confirm:"¿Retirar este miembro?",
-    team_err_name:"Introduce un nombre de equipo.", team_creating:"Creando...", team_created:"¡Equipo creado!",
-    campaigns_tab_title:"Campañas", campaigns_requires:"El historial de campañas requiere el plan Plus o superior.",
-    campaigns_loading:"Cargando...", campaigns_guide_title:"Guía",
-    campaigns_guide_desc:"Las campañas agrupan enlaces por campaña de marketing. Al cambiar la campaña de un enlace, el historial anterior se guarda automáticamente.",
-    campaigns_guide_desc2:"Puedes ver un resumen: enlaces por campaña, clics totales e historial de cambios.",
-    campaigns_empty:"Sin campañas. Crea un enlace con una campaña para empezar.",
-    campaigns_col_name:"Campaña", campaigns_col_links:"Enlaces", campaigns_col_clicks:"Clics totales", campaigns_col_history:"Historial",
-    campaigns_back:"← Volver", campaigns_history_title:"Historial de campaña:", campaigns_no_links:"Sin enlaces.",
-    admin_ban:"Bloquear", admin_unban:"Desbloquear", admin_banned:"Bloqueado", admin_active:"Activo", admin_expires:"Expira:", admin_notify:"Enviar notificación", admin_delete_user:"Eliminar usuario", admin_ban_user:"Bloquear usuario", admin_unban_user:"Desbloquear usuario",
-    bulkqr:"QR masivo", bulkqr_title:"Código QR masivo", bulkqr_hint:"Un enlace acortado por línea. Genera códigos QR en masa y descarga como archivo Excel.", bulkqr_generate:"Generar QR masivo", bulkqr_download:"Descargar Excel (.xls)", bulkqr_color:"Color QR", bulkqr_empty:"Sin enlaces válidos.", bulkqr_max:"Máx. 1200 enlaces por lote.", bulkqr_loading:"Generando QR...", bulkqr_done:"Códigos QR generados. Haz clic en 'Descargar Excel' para guardar.", bulkqr_super:"Función exclusiva del plan Super.",
-    guide_close:"Cerrar guía",
-    guide_home_title:"Comienza con SHORT URL", guide_home_desc:"Crea enlaces cortos, códigos QR y gestiona tu actividad desde un solo lugar.", guide_home_step1:"Crear Short URL — Acorta una URL larga en un enlace fácil de compartir.", guide_home_step2:"Crear código QR — Convierte un enlace en código QR para productos, documentos o promociones.", guide_home_step3:"Seguir actividad — Consulta clics y datos de uso en Analytics.", guide_home_cta:"Crear Short URL",
-    guide_shorturls_title:"Crear y gestionar Short URLs", guide_shorturls_desc:"Convierte URLs largas en enlaces cortos, fáciles de compartir y gestionar.", guide_shorturls_step1:"Pega la URL original — Introduce la URL que quieres acortar.", guide_shorturls_step2:"Personaliza si es necesario — Usa las opciones existentes del sistema.", guide_shorturls_step3:"Crea y comparte — Crea un Short URL y úsalo en tus canales.", guide_shorturls_cta:"Crear Short URL",
-    guide_dashboard_title:"Resumen de actividad", guide_dashboard_desc:"Consulta rápidamente el estado de tus Short URLs y la actividad de la cuenta desde un solo lugar.", guide_dashboard_step1:"Ver resumen — Comprueba los indicadores clave.", guide_dashboard_step2:"Seguir actividad — Revisa la actividad reciente del sistema.", guide_dashboard_step3:"Profundizar en Analytics — Abre Analytics cuando necesites un análisis más detallado.", guide_dashboard_cta:"Ver Analytics",
-    guide_bulkqr_title:"Crear códigos QR para una o más URLs", guide_bulkqr_desc:"Crea rápidamente un código QR o procesa varios enlaces a la vez.", guide_bulkqr_step1:"Elegir método — Crea un código QR individual o usa la herramienta QR masivo.", guide_bulkqr_step2:"Personalizar QR — Elige color y tamaño según tus necesidades.", guide_bulkqr_step3:"Crear y descargar — Crea códigos QR para documentos, productos o campañas.",
-    guide_analytics_title:"Entender el rendimiento de cada enlace", guide_analytics_desc:"Rastrea clics y descubre cómo interactúan los usuarios con tus enlaces.", guide_analytics_step1:"Ver clics — Rastrea el tráfico a lo largo del tiempo.", guide_analytics_step2:"Analizar visitantes — Consulta los datos de Analytics que proporciona el sistema.", guide_analytics_step3:"Comparar rendimiento — Usa los datos existentes para evaluar qué Short URLs funcionan mejor.",
-    guide_webhooks_title:"¿Qué son los Webhooks?", guide_webhooks_desc:"Conecta SHORT URL con otros sistemas para recibir notificaciones automáticas cuando ocurran eventos relacionados con tus enlaces.", guide_webhooks_step1:"Crear un Webhook — Añade una URL de destino para recibir notificaciones.", guide_webhooks_step2:"Elegir eventos — El sistema actualmente soporta el evento de clic.", guide_webhooks_step3:"Conectar y probar — Monitorea las solicitudes enviadas a tu URL para confirmar que el Webhook funciona.", guide_webhooks_cta:"Añadir Webhook",
-    guide_export_title:"Exporta tus datos", guide_export_desc:"Descarga datos de Short URL y actividad relacionada para almacenar, analizar o usar en otros sistemas.", guide_export_step1:"Seleccionar datos — Elige los enlaces y actividad que quieres descargar.", guide_export_step2:"Elegir formato — El sistema actualmente soporta exportación CSV y JSON.", guide_export_step3:"Exportar y guardar — Descarga el archivo a tu dispositivo.", guide_export_cta:"Exportar datos",
-    guide_campaigns_title:"Organizar enlaces por Campaign", guide_campaigns_desc:"Agrupa Short URLs y actividad relacionada para facilitar la gestión, el seguimiento y la comparación de rendimiento.", guide_campaigns_step1:"Crear una Campaign — Asigna una campaign a un enlace al crear o editar.", guide_campaigns_step2:"Asociar enlaces — Los enlaces de la misma campaign se agrupan.", guide_campaigns_step3:"Seguir y comparar — Vista general: número de enlaces, clics totales, historial de cambios.", guide_campaigns_cta:"Ver Campaigns",
-    guide_team_title:"Trabajar en equipo", guide_team_desc:"Gestiona miembros y permisos para que varias personas colaboren en SHORT URL.", guide_team_step1:"Invitar miembros — Añade el nombre de usuario de un miembro al equipo.", guide_team_step2:"Establecer accesos — Owner y Member tienen permisos diferentes en el equipo.", guide_team_step3:"Gestionar y seguir juntos — Los miembros del equipo pueden ver, editar y eliminar los enlaces de los demás.", guide_team_cta:"Crear equipo",
-    guide_api_title:"Integrar SHORT URL vía API", guide_api_desc:"Usa la API para conectar SHORT URL con tu sitio web, aplicación o sistema interno.", guide_api_step1:"Crear u obtener API Key — Genera un token de API en esta página.", guide_api_step2:"Enviar petición — Usa el endpoint /api/v1/shorten con tu API Key.", guide_api_step3:"Recibir y procesar — La API devuelve un enlace corto y datos relacionados.", guide_api_cta:"Crear API Key",
-    guide_pricing_title:"Elige el plan adecuado", guide_pricing_desc:"Compara los planes y elige el nivel que se ajuste a tus necesidades de creación, gestión y seguimiento de Short URLs.", guide_pricing_step1:"Ver límites — Free, Plus, Pro y Super.", guide_pricing_step2:"Comparar funciones — Cada plan tiene diferentes límites de enlaces, API, analíticas y funciones.", guide_pricing_step3:"Elegir el plan adecuado — Actualiza cuando necesites más capacidad.", guide_pricing_cta:"Ver planes",
-    guide_account_title:"Gestiona tu cuenta", guide_account_desc:"Gestiona la información de la cuenta, las preferencias personales y la configuración relacionada con tu experiencia SHORT URL.", guide_account_step1:"Verificar información — Consulta el nombre de usuario, email y plan actual.", guide_account_step2:"Ajustar configuración — Actualiza tu información y preferencias personales.", guide_account_step3:"Guardar cambios — Confirma para aplicar.", guide_account_cta:"Actualizar cuenta",
-    guide_admin_title:"Administración del sistema", guide_admin_desc:"Supervisa y gestiona los componentes de SHORT URL desde el área de administración.", guide_admin_step1:"Resumen del sistema — Gestiona usuarios, enlaces e informes.", guide_admin_step2:"Gestionar datos y usuarios — Revisa informes, lista negra, vouchers y pagos.", guide_admin_step3:"Verificar ajustes admin — Mantenimiento, seguridad, registros de auditoría y notificaciones.", guide_admin_cta:"Abrir Admin",
-    notif_title:"Notificaciones", notif_empty:"Sin notificaciones", notif_from:"De:", notif_new:"Nuevo", notif_ok:"Entendido", crown_hint:"Ver guía de funciones", crown_upgrade_to_unlock:"Actualiza para desbloquear esta función", demo_bulkqr_title:"Bulk QR — Crear QR en lote", demo_webhooks_title:"Webhooks — Envío automático de eventos", demo_campaigns_title:"Campaigns — Gestionar grupos de enlaces", demo_export_title:"Export — Exportar datos", demo_api_title:"API — Integrar sistemas externos", demo_dashboard_title:"Dashboard — Gestionar Short URLs", demo_bulkqr_s1_t:"Ingresa múltiples URLs en el cuadro de texto", demo_bulkqr_s1_d:"Una URL por línea", demo_bulkqr_s2_t:"Haz clic en Generar QR", demo_bulkqr_s2_d:"El sistema crea un QR para cada URL", demo_bulkqr_s3_t:"Descargar todos los QR", demo_bulkqr_s3_d:"Archivo ZIP con todos los códigos QR", demo_webhooks_s1_t:"Añadir URL de destino webhook", demo_webhooks_s1_d:"URL que recibe notificaciones de eventos", demo_webhooks_s2_t:"Cuando alguien hace clic en el enlace", demo_webhooks_s2_d:"El webhook envía automáticamente el evento", demo_webhooks_s3_t:"El sistema externo recibe los datos", demo_webhooks_s3_d:"IP, país, dispositivo, hora", demo_campaigns_s1_t:"Crear nueva Campaign", demo_campaigns_s1_d:"Nombra y describe tu campaña", demo_campaigns_s2_t:"Añadir Short URLs a la Campaign", demo_campaigns_s2_d:"Múltiples enlaces en un grupo", demo_campaigns_s3_t:"Ver Analytics agregados", demo_campaigns_s3_d:"Estadísticas de todos los enlaces de la Campaign", demo_export_s1_t:"Elegir formato CSV o JSON", demo_export_s1_d:"Exportar todos los enlaces y estadísticas", demo_export_s2_t:"Hacer clic en Exportar", demo_export_s2_d:"El sistema compila los datos", demo_export_s3_t:"Descargar archivo", demo_export_s3_d:"Archivo con todos los enlaces + clics + fechas", demo_api_s1_t:"Crear token de API", demo_api_s1_d:"Token para autenticación de API", demo_api_s2_t:"Enviar POST /api/v1/shorten", demo_api_s2_d:"Crear Short URL desde sistema externo", demo_api_s3_t:"Recibir resultado JSON", demo_api_s3_d:"Código Short URL + enlace completo", demo_dashboard_s1_t:"Crear Short URL", demo_dashboard_s1_d:"Pegar URL larga → obtener enlace corto", demo_dashboard_s2_t:"Gestionar enlaces", demo_dashboard_s2_d:"Copiar, QR, Analytics, Editar, Eliminar", demo_dashboard_s3_t:"Ver estadísticas", demo_dashboard_s3_d:"Número de enlaces, clics totales", demo_anim_url:"URL", demo_anim_qr:"QR", demo_anim_ok:"✓", demo_anim_link_click:"Clic enlace", demo_anim_event:"Evento", demo_anim_post:"POST → URL", demo_anim_external:"Sistema externo", demo_anim_campaign:"Campaña", demo_anim_analytics:"Analytics", demo_anim_data:"Datos", demo_anim_export:"Exportar", demo_anim_csv:"CSV/JSON", demo_anim_app:"App", demo_anim_url_long:"URL larga", demo_anim_clicks:"Clics", api_tier_expired:"Tu plan ha expirado. Actualiza para seguir usando la API.", api_not_available:"El plan actual no admite API. Actualiza a PRO o SUPER.", api_quota_exceeded:"Has agotado tu cuota de API", api_upgrade_to_continue:"Actualiza para continuar.", api_upgrade_to_increase:"Actualiza para aumentar los límites.",
-    feedback_title:"Comentarios y soporte", feedback_btn:"Comentarios", feedback_type_bug:"Reportar error", feedback_type_feature:"Solicitar función", feedback_type_question:"Hacer pregunta", feedback_type_other:"Otro", feedback_label_message:"Mensaje", feedback_placeholder:"Describe el problema, sugerencia o pregunta...", feedback_label_email:"Email (opcional)", feedback_email_placeholder:"email@example.com", feedback_cancel:"Cancelar", feedback_submit:"Enviar", feedback_success_title:"¡Enviado!", feedback_success_desc:"¡Gracias! Revisaremos y responderemos pronto.", feedback_close:"Cerrar", feedback_error:"Algo salió mal, inténtalo de nuevo.", admin_feedback_tab:"Comentarios", admin_no_feedback:"Sin comentarios por ahora.", acct_overview:"खाता अवलोकन", acct_total_clicks:"कुल क्लिक", acct_profile_title:"खाता प्रोफ़ाइल", acct_username:"उपयोगकर्ता नाम", acct_joined:"शामिल होने की तिथि", acct_plan_title:"वर्तमान योजना", acct_plan_active:"उपयोग में", acct_plan_running:"सक्रिय ✓", acct_plan_expired:"समाप्त", acct_free:"मुफ़्त", acct_joined_label:"शामिल", acct_expiry_label:"समाप्ति", acct_start_label:"शुरू", acct_upgrade_plan:"योजना अपग्रेड करें", acct_manage_plan:"योजना प्रबंधित करें", acct_pay_plan:"योजना", acct_pay_method:"विधि", acct_pay_amount:"राशि", acct_voucher_title:"वाउचर कोड से सक्रिय करें", acct_voucher_hint:"ऑफ़र या सेवा योजनाएं सक्रिय करने के लिए वाउचर कोड दर्ज करें।", acct_voucher_placeholder:"वाउचर कोड दर्ज करें", acct_voucher_btn:"सक्रिय करें", acct_security_title:"सुरक्षा", acct_2fa_enabled:"सक्षम ✓", acct_2fa_disabled:"अक्षम", acct_session:"सत्र", acct_current_device:"वर्तमान डिवाइस", acct_browser:"ब्राउज़र", acct_bank_qr:"बैंक QR", acct_pay_method_stripe:"Stripe", adm_notif_sys:"सिस्टम सूचनाएँ", adm_notif_empty:"कोई नई सूचना नहीं", adm_notif_read:"पढ़ा", adm_notif_unread:"अपठित", adm_notif_delete:"हटाएं", adm_notif_delete_confirm:"यह सूचना हटाएं?", adm_notif_deleted:"सूचना हटा दी गई", adm_notif_not_found:"सूचना नहीं मिली", adm_notif_missing_id:"सूचना ID गायब है", adm_notif_from:"से", adm_notif_to:"भेजा", adm_notif_all_users:"सभी उपयोगकर्ता", adm_notif_close:"बंद करें", fb_detail_title:"प्रतिक्रिया विवरण", fb_detail_type:"प्रकार", fb_detail_sender:"भेजने वाला", fb_detail_anonymous:"गुमनाम", fb_detail_page:"पेज", fb_detail_time:"समय", fb_detail_status:"स्थिति", fb_status_new:"नया", fb_status_replied:"उत्तर दिया", fb_status_closed:"बंद", fb_type_bug:"बग रिपोर्ट", fb_type_feature:"सुविधा अनुरोध", fb_type_question:"प्रश्न उत्तर", fb_type_other:"अन्य", notif_mark_all_read:"सभी को पढ़ा हुआ चिह्नित करें", notif_marked_all:"सभी पढ़ा हुआ चिह्नित किए गए",
-  },
 };
 
 function t(key){
@@ -3307,13 +1691,13 @@ function toggleUserNotifications() {
   var typeIcons = { info: li("info", 16), warning: li("alert", 16), success: li("check", 16), danger: li("x", 16) };
   var typeColors = { info: "#3b82f6", warning: "#f59e0b", success: "#22c55e", danger: "#ef4444" };
   var html = "<div style='font-weight:700;font-size:14px;padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--card);border-radius:12px 12px 0 0;z-index:1;'>" +
-    "<span>" + li("bell", 16) + " Thông báo</span>" +
+    "<span>" + li("bell", 16) + " " + t("notif_title") + "</span>" +
     "<div style='display:flex;align-items:center;gap:8px;'>" +
     "<button id='markAllReadBtn' style='background:none;border:none;color:var(--indigo);font-size:11px;cursor:pointer;padding:2px 8px;border-radius:6px;'>" + t("notif_mark_all_read") + "</button>" +
     "<button id='closeNotifPanelBtn' style='background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0 4px;line-height:1;'>&times;</button>" +
     "</div></div>";
   if (notifs.length === 0) {
-    html += "<div style='padding:24px 16px;text-align:center;color:var(--muted);font-size:13px;'>Không có thông báo nào</div>";
+    html += "<div style='padding:24px 16px;text-align:center;color:var(--muted);font-size:13px;'>" + t("notif_empty") + "</div>";
   } else {
     for (var i = 0; i < notifs.length; i++) {
       var n = notifs[i];
@@ -3330,9 +1714,9 @@ function toggleUserNotifications() {
       html += "<div style='font-weight:600;font-size:13px;color:var(--text);'>" + esc(n.title) + "</div>";
       html += "<div style='font-size:12px;color:var(--muted);margin-top:3px;word-break:break-word;line-height:1.4;'>" + esc(n.message) + "</div>";
       html += "<div style='font-size:10px;color:var(--muted2);margin-top:5px;display:flex;align-items:center;gap:6px;'>";
-      if (n.from) html += "<span>Từ: <b>" + esc(n.from) + "</b></span>";
+      if (n.from) html += "<span>" + t("notif_from") + " <b>" + esc(n.from) + "</b></span>";
       if (timeStr) html += "<span>• " + timeStr + "</span>";
-      if (!n.read) html += "<span style='background:var(--indigo);color:#fff;font-size:9px;padding:1px 6px;border-radius:8px;font-weight:600;'>Mới</span>";
+      if (!n.read) html += "<span style='background:var(--indigo);color:#fff;font-size:9px;padding:1px 6px;border-radius:8px;font-weight:600;'>" + t("notif_new") + "</span>";
       html += "</div>";
       html += "</div></div></div>";
     }
@@ -4285,7 +2669,7 @@ function renderNav() {
     if (state.user) {
       var bellId = state.user.role === "admin" ? "adminBell" : "userBell";
       var countId = state.user.role === "admin" ? "adminBellCount" : "userBellCount";
-      hHtml += '<span class="sb-icon-btn" id="' + bellId + '" role="button" tabindex="0" aria-label="Thông báo">' + li("bell", 18) + '<span class="sb-notif-dot" id="' + countId + '">0</span><span class="tooltip">Thông báo</span></span>';
+      hHtml += '<span class="sb-icon-btn" id="' + bellId + '" role="button" tabindex="0" aria-label="' + esc(t("notif_title")) + '">' + li("bell", 18) + '<span class="sb-notif-dot" id="' + countId + '">0</span><span class="tooltip">' + t("notif_title") + '</span></span>';
     }
     if (state.user) {
       var initial = (state.user.username || "?").charAt(0).toUpperCase();
@@ -4440,7 +2824,7 @@ function renderHome(app){
     userFieldsHtml =
       '<div class="row">' +
         '<div><label>' + t("custom_alias_opt") + helpLinkHtml('dat-ten-link-tuy-chinh', 'Tên rút gọn tuỳ chỉnh là gì? Xem hướng dẫn sử dụng') + '</label><input type="text" id="f_code" placeholder="ten-rieng-cua-ban" oninput="updateHomePreview()"></div>' +
-        '<div><label>' + t("title_opt") + '</label><input type="text" id="f_title" placeholder="Ghi chú cho link này"></div>' +
+        '<div><label>' + t("title_opt") + '</label><input type="text" id="f_title" placeholder="' + t("home_title_ph") + '"></div>' +
       '</div>' +
       '<div class="row">' +
         '<div><label>' + t("campaign") + helpLinkHtml('campaign-la-gi-huong-dan-quan-ly-link-theo-chien-dich', 'Campaign là gì? Xem hướng dẫn sử dụng') + '</label><input type="text" id="f_campaign" placeholder="' + t("optional") + '"></div>' +
@@ -4459,7 +2843,7 @@ function renderHome(app){
         '</div>' +
       '</div>' +
       '<div class="row">' +
-        '<div><label>' + t("password_protect") + helpLinkHtml('bao-ve-link-bang-mat-khau', 'Bảo vệ link bằng mật khẩu là gì? Xem hướng dẫn sử dụng') + '</label><input type="text" id="f_password" placeholder="Để trống = không bảo vệ"></div>' +
+        '<div><label>' + t("password_protect") + helpLinkHtml('bao-ve-link-bang-mat-khau', 'Bảo vệ link bằng mật khẩu là gì? Xem hướng dẫn sử dụng') + '</label><input type="text" id="f_password" placeholder="' + t("home_pw_ph") + '"></div>' +
         (canExpiry ? '<div><label>' + t("expiry_date") + helpLinkHtml('dat-ngay-het-han-cho-link', 'Đặt ngày hết hạn cho link là gì? Xem hướng dẫn sử dụng') + '</label><input type="date" id="f_expiry"></div>' : '') +
       '</div>' +
       (canExpiry ? '<div class="row"><div><label>' + t("custom_domain") + helpLinkHtml('tao-ten-mien-rieng-cho-link', 'Tên miền riêng là gì? Xem hướng dẫn sử dụng') + '</label>' +
@@ -4471,9 +2855,9 @@ function renderHome(app){
         '<input type="text" id="f_pixel_ga" placeholder="Google Analytics ID (vd: G-XXXXXXX)" style="margin-top:8px;">' +
         '<input type="text" id="f_pixel_tt" placeholder="TikTok Pixel ID" style="margin-top:8px;">' +
         '<hr style="border-color:rgba(148,163,184,0.15);margin:14px 0;">' +
-        '<label>' + t("ab_testing") + ' — thêm URL đích (Pro/Super)' + helpLinkHtml('ab-testing-la-gi-huong-dan-chia-traffic-link-rut-gon', 'A/B Testing là gì? Xem hướng dẫn sử dụng') + '</label>' +
-        '<input type="url" id="f_ab1" placeholder="URL đích A (thêm vào)" style="margin-top:8px;">' +
-        '<input type="url" id="f_ab2" placeholder="URL đích B (thêm vào)" style="margin-top:8px;">' +
+        '<label>' + t("ab_testing") + t("home_ab_suffix") + helpLinkHtml('ab-testing-la-gi-huong-dan-chia-traffic-link-rut-gon', 'A/B Testing là gì? Xem hướng dẫn sử dụng') + '</label>' +
+        '<input type="url" id="f_ab1" placeholder="' + t("home_ab_a_ph") + '" style="margin-top:8px;">' +
+        '<input type="url" id="f_ab2" placeholder="' + t("home_ab_b_ph") + '" style="margin-top:8px;">' +
         '<hr style="border-color:rgba(148,163,184,0.15);margin:14px 0;">' +
         '<label>' + t("deep_link") + ' (Pro/Super)' + helpLinkHtml('deep-link-va-smart-fallback-la-gi-huong-dan-cau-hinh', 'Deep Link là gì? Xem hướng dẫn sử dụng') + '</label>' +
         '<input type="url" id="f_dl_ios" placeholder="iOS app link (vd: myapp://)" style="margin-top:8px;">' +
@@ -4505,13 +2889,13 @@ function renderHome(app){
   app.innerHTML =
     promo +
     '<div class="card">' +
-    '<h1>SHURL</h1>' +
+    '<h1>SHURLVN.COM</h1>' +
     '<p class="sub">' + t("home_hero_sub") + '</p>' +
     '<form id="shortenForm">' +
       '<label>' + t("url_to_shorten") + helpLinkHtml('cach-rut-gon-link-mien-phi', 'Cách rút gọn link miễn phí — Xem hướng dẫn sử dụng') + '</label>' +
       '<input type="url" id="f_url" placeholder="https://vi-du.com/duong-dan-rat-dai" required oninput="updateHomePreview()">' +
       '<div id="homeLinkPreview" style="display:none;margin:16px 0;padding:14px 16px;background:var(--stat-bg);border:1px solid var(--border);border-radius:10px;">' +
-      '<div style="font-size:13px;color:var(--muted);margin-bottom:6px;">' + li('link', 14) + ' Link rút gọn của bạn:</div>' +
+      '<div style="font-size:13px;color:var(--muted);margin-bottom:6px;">' + li('link', 14) + ' ' + t("home_your_link") + '</div>' +
       '<div id="homePreviewUrl" style="font-size:16px;font-weight:600;color:#818cf8;word-break:break-all;"></div>' +
       '</div>' +
       userFieldsHtml +
@@ -5119,16 +3503,16 @@ function renderDashboard(app){
   // ====== Bảng link — header (render 1 lần) ======
   function tableHeadHtml(){
     return '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">' +
-      '<h2 style="margin:0;" id="linksHeading">Danh sách link</h2>' +
+      '<h2 style="margin:0;" id="linksHeading">' + t("dash_links_title") + '</h2>' +
       '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">' +
       (isAdmin ? '<select id="filterOwner" style="padding:6px 10px;border:1px solid var(--input-border);border-radius:8px;background:var(--input-bg);color:var(--text);font-size:13px;"><option value="">Tất cả user</option></select>' : '') +
-      (limits.hasDataExport ? '<button class="btn btn-ghost btn-sm" id="btnExport">Xuất CSV</button>' + helpLinkHtml('xuat-csv-danh-sach-link-huong-dan-su-dung', 'Xuất CSV là gì? Xem hướng dẫn sử dụng') : '') +
+      (limits.hasDataExport ? '<button class="btn btn-ghost btn-sm" id="btnExport">' + t("export") + '</button>' + helpLinkHtml('xuat-csv-danh-sach-link-huong-dan-su-dung', t("export_help_title")) : '') +
       '</div>' +
       '</div>' +
       '<div style="overflow-x:auto;"><table><thead><tr>' +
       '<th>' + t("col_link") + '</th><th>' + t("col_dest") + '</th>' + (isAdmin ? '<th>Chủ sở hữu</th>' : '') + '<th>' + t("col_clicks") + '</th><th>' + t("col_status") + '</th><th>' + t("col_created") + '</th>' +
       '</tr></thead><tbody id="linksBody"></tbody></table></div>' +
-      '<p class="hint" id="emptyHint" style="margin-top:14px;display:none;">Chưa có link nào. <a href="#/home">Tạo link đầu tiên ở trang chủ</a>.</p>' +
+      '<p class="hint" id="emptyHint" style="margin-top:14px;display:none;">' + t("dash_empty") + ' <a href="#/home">' + t("dash_empty_cta") + '</a>.</p>' +
       '<div id="linksPager"></div>' +
       '</div>';
   }
@@ -5616,7 +4000,7 @@ var bioRowCount = 0;
 function bioSubLinkRowHtml(title, url){
   var idx = bioRowCount++;
   return '<div class="bio-row" data-idx="' + idx + '" style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">' +
-    '<input type="text" class="bio-row-title" placeholder="Tiêu đề (VD: Fanpage Facebook)" value="' + esc(title || "") + '" style="flex:1;">' +
+    '<input type="text" class="bio-row-title" placeholder="' + esc(t("bio_row_title_ph")) + '" value="' + esc(title || "") + '" style="flex:1;">' +
     '<input type="url" class="bio-row-url" placeholder="https://..." value="' + esc(url || "") + '" style="flex:2;">' +
     '<button type="button" class="btn btn-ghost btn-sm" onclick="this.parentElement.remove()">' + li('x', 14) + '</button>' +
     '</div>';
@@ -5625,31 +4009,31 @@ function renderLinkInBio(app){
   var limits = state.limits || {};
   if (!limits.maxBioPages) {
     app.innerHTML = lockedFeatureCard('<h1>' + li('user', 24) + ' Link-in-bio</h1>') +
-      '<div class="card"><p class="hint">Link-in-bio là trang mini gom nhiều liên kết (Facebook, Zalo, Shop, v.v...) vào 1 short URL duy nhất — giống Linktree. Tính năng dành cho gói Plus trở lên.</p></div>';
+      '<div class="card"><p class="hint">' + t("bio_locked_desc") + '</p></div>';
     return;
   }
 
   bioRowCount = 0;
-  var html = '<div class="page-head"><h1>' + li('user', 24) + ' Link-in-bio' + helpLinkHtml('link-in-bio-la-gi-huong-dan-tao-trang-nhieu-link', 'Link-in-bio là gì? Xem hướng dẫn sử dụng') + '</h1></div>' +
+  var html = '<div class="page-head"><h1>' + li('user', 24) + ' Link-in-bio' + helpLinkHtml('link-in-bio-la-gi-huong-dan-tao-trang-nhieu-link', t("bio_help_title")) + '</h1></div>' +
     '<div class="card">' +
-    '<h2>Tạo trang mới</h2>' +
-    '<p class="hint">Gom nhiều liên kết vào 1 short URL duy nhất, kiểu Linktree.</p>' +
-    '<label>Tên hiển thị</label>' +
-    '<input type="text" id="bioDisplayName" placeholder="VD: Cửa hàng ABC" maxlength="60">' +
-    '<label>Mô tả ngắn (tuỳ chọn)</label>' +
+    '<h2>' + t("bio_create_title") + '</h2>' +
+    '<p class="hint">' + t("bio_create_hint") + '</p>' +
+    '<label>' + t("bio_display_name") + '</label>' +
+    '<input type="text" id="bioDisplayName" placeholder="' + t("bio_display_ph") + '" maxlength="60">' +
+    '<label>' + t("bio_desc_label") + '</label>' +
     '<textarea id="bioBio" rows="2" maxlength="200" style="width:100%;padding:10px;border:1px solid var(--input-border);border-radius:8px;background:var(--input-bg);color:var(--text);resize:vertical;"></textarea>' +
-    '<label style="margin-top:10px;display:block;">Các liên kết</label>' +
+    '<label style="margin-top:10px;display:block;">' + t("bio_links_label") + '</label>' +
     '<div id="bioRows">' + bioSubLinkRowHtml("", "") + bioSubLinkRowHtml("", "") + '</div>' +
-    '<button type="button" class="btn btn-ghost btn-sm" id="bioAddRowBtn">' + li('plus', 12) + ' Thêm liên kết</button>' +
+    '<button type="button" class="btn btn-ghost btn-sm" id="bioAddRowBtn">' + li('plus', 12) + ' ' + t("bio_add_link") + '</button>' +
     '<div style="margin-top:14px;">' +
-    '<label>Mã tuỳ chỉnh (tuỳ chọn)</label>' +
-    '<input type="text" id="bioCustomCode" placeholder="vd: cua-hang-abc">' +
+    '<label>' + t("bio_code_label") + '</label>' +
+    '<input type="text" id="bioCustomCode" placeholder="' + t("bio_code_ph") + '">' +
     '</div>' +
     '<div id="bioCreateMsg" style="margin-top:8px;"></div>' +
-    '<button class="btn btn-primary" id="bioCreateBtn" style="margin-top:8px;">' + li('save', 12) + ' Tạo trang</button>' +
+    '<button class="btn btn-primary" id="bioCreateBtn" style="margin-top:8px;">' + li('save', 12) + ' ' + t("bio_create_btn") + '</button>' +
     '</div>' +
     '<div class="card" id="bioListCard">' +
-    '<h2>' + li('user', 14) + ' Trang đã tạo</h2>' +
+    '<h2>' + li('user', 14) + ' ' + t("bio_list_title") + '</h2>' +
     '<div id="bioListBody"><p class="hint">' + t("processing") + '</p></div>' +
     '</div>';
   app.innerHTML = html;
@@ -5671,12 +4055,12 @@ function renderLinkInBio(app){
       var url = row.querySelector(".bio-row-url").value.trim();
       if (title && url) links.push({ title: title, url: url });
     });
-    if (!displayName) { msg.innerHTML = '<div class="msg msg-error">Vui lòng nhập tên hiển thị.</div>'; return; }
-    if (links.length === 0) { msg.innerHTML = '<div class="msg msg-error">Cần ít nhất 1 liên kết hợp lệ.</div>'; return; }
+    if (!displayName) { msg.innerHTML = '<div class="msg msg-error">' + t("bio_err_name") + '</div>'; return; }
+    if (links.length === 0) { msg.innerHTML = '<div class="msg msg-error">' + t("bio_err_links") + '</div>'; return; }
     btn.disabled = true;
-    msg.innerHTML = '<p class="hint">Đang tạo...</p>';
+    msg.innerHTML = '<p class="hint">' + t("bio_creating") + '</p>';
     api("/api/links/bio", "POST", { displayName: displayName, bio: bio, links: links, customCode: customCode || undefined }).then(function(data){
-      msg.innerHTML = '<div class="msg msg-ok">Đã tạo: ' + esc(data.bioPage.shortUrl) + '</div>';
+      msg.innerHTML = '<div class="msg msg-ok">' + t("bio_created") + ' ' + esc(data.bioPage.shortUrl) + '</div>';
       document.getElementById("bioDisplayName").value = "";
       document.getElementById("bioBio").value = "";
       document.getElementById("bioCustomCode").value = "";
@@ -5709,16 +4093,16 @@ function bioLoadList(){
 function bioRenderList(){
   var body = document.getElementById("bioListBody");
   if (!body) return;
-  if (bioPageItems.length === 0) { body.innerHTML = '<p class="hint">Bạn chưa tạo trang Link-in-bio nào.</p>'; return; }
+  if (bioPageItems.length === 0) { body.innerHTML = '<p class="hint">' + t("bio_empty") + '</p>'; return; }
   body.innerHTML = bioPageItems.map(function(p){
     var subRows = (p.bioLinks || []).map(function(sl){
       return '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);padding:2px 0;">' +
-        '<span>' + esc(sl.title) + '</span><span>' + fmtNum(sl.clicks || 0) + ' click</span></div>';
+        '<span>' + esc(sl.title) + '</span><span>' + fmtNum(sl.clicks || 0) + ' ' + t("bio_clicks") + '</span></div>';
     }).join("");
     return '<div class="card" style="margin-top:10px;">' +
       '<div style="display:flex;justify-content:space-between;align-items:center;">' +
       '<strong>' + esc(p.title) + '</strong>' +
-      '<span class="hint">' + fmtNum(p.totalClicks || 0) + ' lượt xem</span>' +
+      '<span class="hint">' + fmtNum(p.totalClicks || 0) + ' ' + t("bio_views") + '</span>' +
       '</div>' +
       '<div class="mono" style="margin:6px 0;"><a href="' + esc(p.shortUrl) + '" target="_blank">' + esc(p.shortUrl) + '</a></div>' +
       subRows +
@@ -7320,12 +5704,12 @@ function renderTeamTab(app){
         
         return '<div class="card" style="margin-bottom:12px;border:1px solid var(--border);">' +
           '<h2 style="display:flex;justify-content:space-between;align-items:center;">' + esc(team.name) + 
-          (isOwner ? ' <button class="btn btn-ghost btn-sm btnDelTeam" data-id="' + esc(team.id) + '" style="font-size:12px;">Xóa Team</button>' : '') +
+          (isOwner ? ' <button class="btn btn-ghost btn-sm btnDelTeam" data-id="' + esc(team.id) + '" style="font-size:12px;">' + t("team_delete_btn") + '</button>' : '') +
           '</h2>' +
-          '<p class="hint">Tạo: ' + esc((team.createdAt || "").slice(0,10)) + ' · ' + (team.members ? team.members.length : 0) + ' thành viên</p>' +
+          '<p class="hint">' + t("team_created_on") + ' ' + esc((team.createdAt || "").slice(0,10)) + ' · ' + (team.members ? team.members.length : 0) + ' ' + t("team_members_count") + '</p>' +
           '<table style="width:100%;border-collapse:collapse;margin-top:12px;"><thead><tr>' +
-          '<th style="text-align:left;padding:6px;border-bottom:1px solid var(--border);">Thành viên</th>' +
-          '<th style="text-align:left;padding:6px;border-bottom:1px solid var(--border);">Vai trò</th>' +
+          '<th style="text-align:left;padding:6px;border-bottom:1px solid var(--border);">' + t("team_col_member") + '</th>' +
+          '<th style="text-align:left;padding:6px;border-bottom:1px solid var(--border);">' + t("team_col_role") + '</th>' +
           '<th style="text-align:left;padding:6px;border-bottom:1px solid var(--border);">Tham gia</th>' +
           '<th style="text-align:right;padding:6px;border-bottom:1px solid var(--border);"></th>' +
           '</tr></thead><tbody>' + membersHtml + '</tbody></table>' +
@@ -7338,18 +5722,18 @@ function renderTeamTab(app){
       
       document.querySelectorAll(".btnDelTeam").forEach(function(btn){
         btn.onclick = function(){
-          if (!confirm("Xóa team này? Tất cả thành viên sẽ bị rời team.")) return;
+          if (!confirm(t("team_delete_confirm"))) return;
           api("/api/v1/teams/" + this.getAttribute("data-id"), "DELETE").then(function(){
             loadTeam();
-          }).catch(function(err){ alert("Lỗi: " + err.message); });
+          }).catch(function(err){ alert(t("err_prefix") + " " + err.message); });
         };
       });
       document.querySelectorAll(".btnRmMember").forEach(function(btn){
         btn.onclick = function(){
-          if (!confirm("Xóa thành viên này?")) return;
+          if (!confirm(t("team_remove_confirm"))) return;
           api("/api/v1/teams/members", "DELETE", { teamId: this.getAttribute("data-team"), username: this.getAttribute("data-user") }).then(function(){
             loadTeam();
-          }).catch(function(err){ alert("Lỗi: " + err.message); });
+          }).catch(function(err){ alert(t("err_prefix") + " " + err.message); });
         };
       });
       document.querySelectorAll(".btnAddMember").forEach(function(btn){
@@ -7358,10 +5742,10 @@ function renderTeamTab(app){
           var input = document.getElementById("addMember_" + teamId);
           var msg = document.getElementById("addMsg_" + teamId);
           var username = input.value.trim();
-          if (!username){ msg.innerHTML = '<div class="msg msg-error">Nhập username.</div>'; return; }
-          msg.innerHTML = '<p class="hint">Đang thêm...</p>';
+          if (!username){ msg.innerHTML = '<div class="msg msg-error">' + t("team_err_username") + '</div>'; return; }
+          msg.innerHTML = '<p class="hint">' + t("team_adding") + '</p>';
           api("/api/v1/teams/members", "POST", { teamId: teamId, username: username }).then(function(){
-            msg.innerHTML = '<div class="msg msg-success">Đã thêm!</div>';
+            msg.innerHTML = '<div class="msg msg-success">' + t("team_added") + '</div>';
             loadTeam();
           }).catch(function(err){
             msg.innerHTML = '<div class="msg msg-error">' + esc(err.message) + '</div>';
@@ -7735,7 +6119,7 @@ function renderAccount(app){
   // Language switcher
   secCard += '<div style="padding-top:8px;"><button class="btn btn-ghost btn-sm" style="width:100%;justify-content:space-between;" onclick="toggleLangPanel()"><span>' + li('setting', 14) + ' ' + t("language") + '</span><span id="langArrow" style="transition:transform 0.3s ease;">▶</span></button>';
   secCard += '<div id="langPanel" style="display:none;flex-wrap:wrap;gap:6px;margin-top:8px;overflow:hidden;transition:max-height 0.3s ease,opacity 0.3s ease;max-height:0;opacity:0;">';
-  var langs = [["vi","Tiếng Việt"],["en","English"],["ko","한국어"],["zh","中文"],["hi","हिन्दी"],["ja","日本語"],["fr","Français"],["es","Español"]];
+  var langs = [["vi","Tiếng Việt"],["en","English"]];
   for (var li2 = 0; li2 < langs.length; li2++) {
     secCard += '<button class="btn btn-sm ' + (currentLang === langs[li2][0] ? "btn-primary" : "btn-ghost") + '" onclick="switchLang(&#39;' + langs[li2][0] + '&#39;)">' + langs[li2][1] + '</button>';
   }
@@ -9717,6 +8101,16 @@ function renderReport(app){
 }
 
 // ---------- FOOTER I18N ----------
+// Thông tin doanh nghiệp hiển thị ở chân trang. Chưa có doanh nghiệp thì để trống: khối này tự ẩn, có thông tin thì điền vào đây.
+var BUSINESS_INFO = { name: "", taxCode: "", address: "", phone: "" };
+function businessInfoHtml(){
+  var rows = [];
+  if (BUSINESS_INFO.name) rows.push(t("ft_biz_name") + ": " + esc(BUSINESS_INFO.name));
+  if (BUSINESS_INFO.taxCode) rows.push(t("ft_biz_tax") + ": " + esc(BUSINESS_INFO.taxCode));
+  if (BUSINESS_INFO.address) rows.push(t("ft_biz_addr") + ": " + esc(BUSINESS_INFO.address));
+  if (BUSINESS_INFO.phone) rows.push(t("ft_biz_phone") + ": " + esc(BUSINESS_INFO.phone));
+  return rows.length ? '<p class="ft-biz">' + rows.join("<br>") + '</p>' : "";
+}
 function renderFooter(){
   var el = document.getElementById("siteFooter");
   if (!el) return;
@@ -9731,7 +8125,7 @@ function renderFooter(){
   el.innerHTML =
     '<div class="ft-grid">' +
       '<div class="ft-brand"><span class="ft-logo">SHURLVN.COM</span><p>' + t("footer_tagline") + '</p><p>' + t("ft_compliance") + '</p>' +
-      '<a href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=support@shurlvn.com&amp;su=SHURL%20Support" target="_blank" rel="noopener">' + t("footer_contact") + ': support@shurlvn.com</a></div>' +
+      '<a href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=support@shurlvn.com&amp;su=SHURL%20Support" target="_blank" rel="noopener">' + t("footer_contact") + ': support@shurlvn.com</a>' + businessInfoHtml() + '</div>' +
       col(t("ft_products"), [lnk("#/home", t("ft_shorten")), lnk("#/bulkqr", t("ft_qr")), lnk("#/linkinbio", t("ft_bio")), lnk("#/scanner", t("ft_scanner"))]) +
       col(t("ft_tools"), toolLinks) +
       col(t("ft_support"), [lnk("#/pricing", t("ft_pricing")), lnk("#/api", t("ft_api")), lnk("/blog", t("footer_blog"), "blog"), lnk("#/report", t("ft_report"), "report")]) +

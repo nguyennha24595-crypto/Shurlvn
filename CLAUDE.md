@@ -38,6 +38,6 @@ For that shape of task, skip heavyweight process by default:
 
 ## Conventions already in the codebase
 
-- UI strings live in the client-side `i18n` object inside `src/views/appHtml.js` (per-language keys); add new strings to every language block, not just `vi`/`en`. Server-side strings live separately in `src/i18n/server.js` (`SERVER_I18N`).
+- UI strings live in the client-side `i18n` object inside `src/views/appHtml.js`. Only two languages exist now, `vi` and `en` (the other six were dropped: ~26% of keys missing and ~23% of the page weight) — add every new string to BOTH blocks and never hard-code Vietnamese text in JS (admin-only panels excepted). `LANGS` and the account language list must match the blocks. Server-side strings live separately in `src/i18n/server.js` (`SERVER_I18N`).
 - Vietnamese comments in the source explain non-obvious business logic (rate limiting, quota rules) — keep that pattern for similarly non-obvious additions.
 - New routes are added as `if (path === "...")` checks in `src/index.js`'s `fetch()` dispatcher, following the existing numbered `// ===== N. SECTION =====` comment structure, calling into a handler exported from the matching `src/handlers/*.js` file (add the handler there, then import + wire the route in `src/index.js`).
