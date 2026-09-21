@@ -5,11 +5,19 @@ import { json } from "./http.js";
 import { st } from "../i18n/server.js";
 import { addAuditLog } from "../kv/audit.js";
 
+// Nhớ cờ bảo trì trong bộ nhớ isolate 30 giây: hàm này chạy ở gần như MỌI request (cờ "global" + cờ theo tính năng),
+// đọc KV mỗi lần rất tốn hạn mức đọc. Đổi cờ có thể trễ tối đa 30 giây ở các isolate khác.
+var MAINT_CACHE = new Map();
+var MAINT_TTL_MS = 30000;
 export async function isMaintenance(env, feature) {
+  var hit = MAINT_CACHE.get(feature);
+  if (hit && Date.now() - hit.t < MAINT_TTL_MS) return hit.v;
   try {
     var raw = await env.LINKS_KV.get("maintenance:" + feature);
-    if (!raw) return null;
-    try { return JSON.parse(raw); } catch(e) { return null; }
+    var val = null;
+    if (raw) { try { val = JSON.parse(raw); } catch(e) { val = null; } }
+    MAINT_CACHE.set(feature, { v: val, t: Date.now() });
+    return val;
   } catch(e) { return null; }
 }
 
@@ -28,6 +36,7 @@ export async function handleSetMaintenance(request, env, corsHeaders) {
   let body; try { body = await request.json(); } catch (e) { body = {}; }
   var feature = body.feature, active = body.active, note = body.note || "";
   if (!feature) return json({ error: "Thiếu tính năng" }, 400, corsHeaders);
+  MAINT_CACHE.delete(feature);
   if (active) { await env.LINKS_KV.put("maintenance:" + feature, JSON.stringify({ active: true, note: note, setAt: new Date().toISOString(), setBy: user.username })); }
   else { await env.LINKS_KV.delete("maintenance:" + feature); }
   await addAuditLog(env, user, "MAINTENANCE_TOGGLE", { feature: feature, active: active, note: note }, request);

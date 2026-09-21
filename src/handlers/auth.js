@@ -287,7 +287,12 @@ export async function handleMe(request, env, corsHeaders) {
     }
   }
 
-  try { await env.LINKS_KV.put("lastseen:" + user.username.toLowerCase(), String(Date.now()), { expirationTtl: 3600 }); } catch(e) {}
+  // Ghi "lần cuối hoạt động" tối đa 5 phút/lần (ghi KV rất hạn chế ở gói Free; đọc thì thoải mái). Admin coi là "đang hoạt động" nếu <15 phút.
+  try {
+    var lsKey = "lastseen:" + user.username.toLowerCase();
+    var lsPrev = parseInt(await env.LINKS_KV.get(lsKey), 10) || 0;
+    if (Date.now() - lsPrev > 5 * 60 * 1000) await env.LINKS_KV.put(lsKey, String(Date.now()), { expirationTtl: 3600 });
+  } catch(e) {}
 
   return json({ user, limits: await getEffectiveTierConfig(env, user.role) }, 200, corsHeaders);
 }

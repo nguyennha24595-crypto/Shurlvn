@@ -580,7 +580,7 @@ ${googleAdsGtagHead(env)}
       <div id="app" class="fade-in"></div>
       <div id="sidebarLeft" style="display:none;"></div>
       <div id="sidebarRight" style="display:none;"></div>
-      <footer id="siteFooter" class="site-footer"></footer>
+      <footer id="siteFooter" class="site-footer"><a href="/tools">Công cụ</a> · <a href="/blog">Blog</a> · <a href="#/terms">Điều khoản sử dụng</a> · <a href="#/privacy">Chính sách bảo mật</a></footer>
     </main>
   </div>
 </div>
@@ -3258,20 +3258,29 @@ function toggleGuide(page){
   if (el) el.classList.toggle("expanded");
 }
 
-function fetchUserNotifications() {
+// Mỗi lần gọi /api/notifications tốn 1 thao tác KV list + các lượt đọc (gói Free KV chỉ có 1.000 list/ngày),
+// nên chỉ tải lại nếu đã quá 5 phút; giữa hai lần chỉ vẽ lại huy hiệu từ dữ liệu đã có. force=true khi cần dữ liệu mới.
+var NOTIF_REFRESH_MS = 300000;
+var userNotifAt = 0, adminNotifAt = 0;
+function paintUserBadge() {
+  var count = state.userUnread || 0;
+  var badge = document.getElementById("userBellCount");
+  if (!badge) return;
+  if (count > 0) {
+    badge.style.display = "flex";
+    badge.textContent = count > 99 ? "99+" : String(count);
+  } else {
+    badge.style.display = "none";
+  }
+}
+function fetchUserNotifications(force) {
   if (!state.user) return Promise.resolve();
+  if (!force && state.userNotifs && Date.now() - userNotifAt < NOTIF_REFRESH_MS) { paintUserBadge(); return Promise.resolve(); }
+  userNotifAt = Date.now();
   return api("/api/notifications", "GET").then(function(data) {
-    var count = data.unreadCount || 0;
-    var badge = document.getElementById("userBellCount");
-    if (badge) {
-      if (count > 0) {
-        badge.style.display = "flex";
-        badge.textContent = count > 99 ? "99+" : String(count);
-      } else {
-        badge.style.display = "none";
-      }
-    }
+    state.userUnread = data.unreadCount || 0;
     state.userNotifs = data.notifications || [];
+    paintUserBadge();
   }).catch(function() {});
 }
 
@@ -3288,7 +3297,7 @@ function toggleUserNotifications() {
   var existing = document.getElementById("userNotifPanel");
   if (existing) { closeUserNotifPanel(); return; }
   // Show optimistically with cached data, then refresh once fresh data arrives
-  fetchUserNotifications().then(function() {
+  fetchUserNotifications(true).then(function() {
     if (document.getElementById("userNotifPanel")) { closeUserNotifPanel(); toggleUserNotifications(); }
   });
   var notifs = state.userNotifs || [];
@@ -3361,7 +3370,7 @@ function toggleUserNotifications() {
       markAllBtn.textContent = t("notif_marked_all");
       setTimeout(function() { markAllBtn.textContent = t("notif_mark_all_read"); }, 2000);
       // Delay fetch to allow KV writes to propagate
-      setTimeout(function() { fetchUserNotifications(); }, 3000);
+      setTimeout(function() { fetchUserNotifications(true); }, 3000);
     });
   };
   // Click on notification item — show detail modal + mark as read
@@ -3376,7 +3385,7 @@ function toggleUserNotifications() {
       if (notif && !notif.read) {
         api("/api/notifications/" + encodeURIComponent(notifId), "POST").then(function() {
           // Delay fetch to allow KV write to propagate
-          setTimeout(function() { fetchUserNotifications(); }, 3000);
+          setTimeout(function() { fetchUserNotifications(true); }, 3000);
         }).catch(function() {});
         notif.read = true;
         this.style.opacity = "0.55";
@@ -4122,8 +4131,23 @@ function applyMaintenanceCSS(){
 }
 
 // === ADMIN NOTIFICATIONS ===
-function fetchAdminNotifications() {
+function paintAdminBadge() {
+  var n = state.adminNotifs;
+  var badge = document.getElementById("adminBellCount");
+  if (!n || !badge) return;
+  var total = n.payments.length + n.reports.length + n.adminNotifs.length;
+  if (total > 0) {
+    badge.style.display = "flex";
+    badge.textContent = total > 99 ? "99+" : String(total);
+  } else {
+    badge.style.display = "none";
+  }
+}
+// 3 API (thanh toán QR, báo cáo, thông báo) = 3 KV list mỗi lần gọi; renderNav chạy ở mọi lần chuyển trang nên phải giới hạn 5 phút/lần.
+function fetchAdminNotifications(force) {
   if (!state.user || (state.user.role !== "admin" && state.user.role !== "super")) return;
+  if (!force && state.adminNotifs && Date.now() - adminNotifAt < NOTIF_REFRESH_MS) { paintAdminBadge(); return; }
+  adminNotifAt = Date.now();
   Promise.all([
     api("/api/admin/qr-payments", "GET").then(function(d) { return d.payments || []; }).catch(function() { return []; }),
     api("/api/admin/reports", "GET").then(function(d) { return d.reports || []; }).catch(function() { return []; }),
@@ -4132,17 +4156,8 @@ function fetchAdminNotifications() {
     var pendingPayments = results[0].filter(function(p) { return p.status === "pending"; });
     var pendingReports = results[1].filter(function(r) { return !r.dismissed; });
     var adminNotifs = results[2].filter(function(n) { return !n.read; });
-    var total = pendingPayments.length + pendingReports.length + adminNotifs.length;
-    var badge = document.getElementById("adminBellCount");
-    if (badge) {
-      if (total > 0) {
-        badge.style.display = "flex";
-        badge.textContent = total > 99 ? "99+" : String(total);
-      } else {
-        badge.style.display = "none";
-      }
-    }
     state.adminNotifs = { payments: pendingPayments, reports: pendingReports, adminNotifs: adminNotifs };
+    paintAdminBadge();
   });
 }
 
@@ -4313,7 +4328,7 @@ function renderNav() {
     document.removeEventListener("click", closeGuestLangDropdownHandler);
     document.addEventListener("click", closeGuestLangDropdownHandler);
     var bell = document.getElementById("adminBell");
-    if (bell) { bell.onclick = function() { toggleAdminNotifications(); }; fetchAdminNotifications(); }
+    if (bell) { bell.onclick = function() { toggleAdminNotifications(); fetchAdminNotifications(true); }; fetchAdminNotifications(); }
     var userBell = document.getElementById("userBell");
     if (userBell) { userBell.onclick = function() { toggleUserNotifications(); }; fetchUserNotifications(); }
     var aiBtn = document.getElementById("aiAssistantBtn");
