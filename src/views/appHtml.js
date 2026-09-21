@@ -326,15 +326,15 @@ tr:hover td{background:var(--hover-row);}
 .copybox .u{font-family:ui-monospace,monospace;color:var(--link-color);font-weight:700;flex:1;}
 footer{text-align:center;color:var(--muted2);font-size:12px;padding:30px 20px;}
 footer a{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 6px;}
-.site-footer{text-align:left;color:var(--muted);font-size:13px;padding:40px 8px 26px;margin-top:40px;border-top:1px solid var(--border);}
-.ft-grid{display:grid;grid-template-columns:1.7fr repeat(4,1fr);gap:28px;max-width:1100px;margin:0 auto;}
-.ft-logo{display:inline-block;font-size:20px;font-weight:800;background:linear-gradient(135deg,#6366f1,#a855f7);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:8px;}
+.site-footer{text-align:left;color:var(--muted);font-size:13px;padding:40px 0 26px;margin-top:40px;border-top:1px solid var(--border);}
+.ft-grid{display:grid;grid-template-columns:minmax(260px,1.8fr) repeat(4,minmax(120px,1fr));gap:36px;}
+.ft-logo{display:inline-block;font-size:20px;font-weight:800;letter-spacing:0.02em;background:linear-gradient(135deg,#6366f1,#a855f7);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:8px;}
 .ft-brand p{margin:0 0 10px;line-height:1.6;}
 .ft-col h4{font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text);margin:0 0 10px;}
 .ft-col a,.ft-brand a{display:flex;justify-content:flex-start;min-height:30px;padding:0;color:var(--muted);text-decoration:none;}
 .ft-brand a{display:inline-flex;}
 .ft-col a:hover,.ft-brand a:hover{color:var(--indigo);}
-.ft-bottom{max-width:1100px;margin:26px auto 0;padding-top:16px;border-top:1px solid var(--border);font-size:12px;color:var(--muted2);}
+.ft-bottom{margin:26px 0 0;padding-top:16px;border-top:1px solid var(--border);font-size:12px;color:var(--muted2);}
 @media(max-width:900px){.ft-grid{grid-template-columns:1fr 1fr;}.ft-brand{grid-column:1/-1;}}
 @media(max-width:640px){.row > *{min-width:100%;}}
 /* === LANGUAGE SWITCHER === */
@@ -9715,14 +9715,14 @@ function renderFooter(){
   toolLinks.push(lnk(vi ? "/tools" : "/en/tools", t("ft_all_tools"), "tools"));
   el.innerHTML =
     '<div class="ft-grid">' +
-      '<div class="ft-brand"><span class="ft-logo">SHURL</span><p>' + t("footer_tagline") + '</p><p>' + t("ft_compliance") + '</p>' +
+      '<div class="ft-brand"><span class="ft-logo">SHURLVN.COM</span><p>' + t("footer_tagline") + '</p><p>' + t("ft_compliance") + '</p>' +
       '<a href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=support@shurlvn.com&amp;su=SHURL%20Support" target="_blank" rel="noopener">' + t("footer_contact") + ': support@shurlvn.com</a></div>' +
       col(t("ft_products"), [lnk("#/home", t("ft_shorten")), lnk("#/bulkqr", t("ft_qr")), lnk("#/linkinbio", t("ft_bio")), lnk("#/scanner", t("ft_scanner"))]) +
       col(t("ft_tools"), toolLinks) +
       col(t("ft_support"), [lnk("#/pricing", t("ft_pricing")), lnk("#/api", t("ft_api")), lnk("/blog", t("footer_blog"), "blog"), lnk("#/report", t("ft_report"), "report")]) +
       col(t("ft_legal"), [lnk("#/terms", t("footer_terms"), "terms"), lnk("#/privacy", t("footer_privacy"), "privacy"), lnk("#/disclaimer", t("ft_disclaimer"), "disclaimer")]) +
     '</div>' +
-    '<div class="ft-bottom">© ' + new Date().getFullYear() + ' SHURL (shurlvn.com). ' + t("ft_rights") + '</div>';
+    '<div class="ft-bottom">© ' + new Date().getFullYear() + ' SHURLVN.COM. ' + t("ft_rights") + '</div>';
 }
 
 
