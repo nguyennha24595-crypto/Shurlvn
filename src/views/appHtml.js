@@ -168,7 +168,11 @@ export function renderAppHtml(env) {
 .slide-panel.open{transform:translateX(0);}
 .slide-bar{display:flex;align-items:center;gap:14px;padding:10px 16px;flex:none;background:var(--card-solid);border-bottom:1px solid var(--border);}
 .slide-back{display:inline-flex;align-items:center;gap:6px;}
-.slide-title{font-size:15px;color:var(--text);}
+.slide-title{font-size:15px;color:var(--text);white-space:nowrap;}
+.slide-url{flex:1;min-width:0;max-width:460px;display:flex;justify-content:center;align-items:center;padding:6px 16px;border-radius:12px;background:var(--nm-bg);border:1px solid var(--border);box-shadow:inset 3px 3px 7px var(--nm-in),inset -3px -3px 7px var(--nm-hi);font-size:13px;cursor:pointer;overflow:hidden;white-space:nowrap;}
+.slide-url:hover{border-color:var(--indigo);}
+.slide-url-host{color:#1e293b;}
+.slide-url-path{color:#94a3b8;overflow:hidden;text-overflow:ellipsis;}
 .slide-body{flex:1;min-height:0;overflow:auto;}
 .slide-frame{display:block;width:100%;height:100%;border:0;background:#f8fafc;}
 .slide-legal{max-width:820px;margin:0 auto;padding:24px 20px 60px;}
@@ -9635,6 +9639,7 @@ function renderFooter(){
 // /tools và /blog vẫn là trang server riêng (SEO); panel chỉ nhúng chúng bằng iframe cùng origin.
 // Điều khoản/Chính sách được vẽ thẳng vào panel bằng renderTerms/renderPrivacy. Không đổi URL, chỉ thêm 1 mục lịch sử để nút Back đóng panel.
 var slideOpen = false;
+var slidePath = "/";
 var SLIDE_LINKS = { footerToolsLink: "tools", footerBlogLink: "blog", footerTermsLink: "terms", footerPrivacyLink: "privacy" };
 function slidePanelEl(){
   var p = document.getElementById("slidePanel");
@@ -9644,18 +9649,31 @@ function slidePanelEl(){
   p.className = "slide-panel";
   p.innerHTML = '<div class="slide-bar"><button type="button" class="btn btn-ghost btn-sm slide-back">' +
     '<svg width="16" height="16" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg> <span></span></button>' +
-    '<strong class="slide-title"></strong></div><div class="slide-body"></div>';
+    '<strong class="slide-title"></strong>' +
+    '<div class="slide-url" role="button" tabindex="0"><span class="slide-url-host"></span><span class="slide-url-path"></span></div></div><div class="slide-body"></div>';
+  var urlBox = p.querySelector(".slide-url");
+  p.querySelector(".slide-url-host").textContent = location.host;
+  // Bấm vào ô link để chép đường dẫn thật của trang đang xem (URL trên thanh địa chỉ không đổi khi xem trong panel).
+  var copyUrl = function(){ copyText(location.origin + slidePath, p.querySelector(".slide-url-path")); };
+  urlBox.addEventListener("click", copyUrl);
+  urlBox.addEventListener("keydown", function(ev){ if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); copyUrl(); } });
   p.querySelector(".slide-back").addEventListener("click", function(){
     if (history.state && history.state.slide) history.back(); else closeSlide();
   });
   document.body.appendChild(p);
   return p;
 }
+function slideSetPath(path){
+  slidePath = path;
+  var el = document.querySelector("#slidePanel .slide-url-path");
+  if (el) el.textContent = path === "/" ? "" : path;
+}
 // Trang nhúng: ẩn header riêng (logo dẫn về "/" sẽ mở cả SPA lồng trong iframe) và chặn link về trang chủ.
 function slideFrameReady(e){
   try {
     var d = e.target.contentDocument;
     if (!d || !d.head) return;
+    slideSetPath(d.location.pathname + d.location.search);
     var st = d.createElement("style");
     st.textContent = "header{display:none!important}";
     d.head.appendChild(st);
@@ -9676,6 +9694,8 @@ function openSlide(kind, url){
   var body = p.querySelector(".slide-body");
   body.innerHTML = "";
   body.scrollTop = 0;
+  var startPath = url || (kind === "tools" ? (currentLang === "en" ? "/en/tools" : "/tools") : kind === "blog" ? "/blog" : "/#/" + kind);
+  slideSetPath(startPath);
   if (kind === "terms" || kind === "privacy") {
     var box = document.createElement("div");
     box.className = "slide-legal";
@@ -9686,7 +9706,7 @@ function openSlide(kind, url){
     f.className = "slide-frame";
     f.title = titles[kind] || "";
     f.addEventListener("load", slideFrameReady);
-    f.src = url || (kind === "tools" ? (currentLang === "en" ? "/en/tools" : "/tools") : "/blog");
+    f.src = startPath;
     body.appendChild(f);
   }
   if (!slideOpen) { history.pushState({ slide: kind }, ""); slideOpen = true; }
