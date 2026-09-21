@@ -28,6 +28,9 @@ For that shape of task, skip heavyweight process by default:
 1. Start the local worker: `preview_start` with the `worker-dev` config in `.claude/launch.json` (runs `wrangler dev --port 8788`), or `npx wrangler dev`.
 2. Hit the changed route directly — `curl -sk https://localhost:8788/<path>` (self-signed cert; the in-app Browser pane's `navigate` tool fails on this cert, so prefer `curl -k` via Bash for local checks) or open it in the Browser pane for UI changes.
 3. Check response status/body/headers match what was intended.
+4. For UI changes, work as observe → act → verify: read the DOM (`read_page`/`find`) to pick the exact element, do one action, then re-read state. Don't guess selectors.
+5. Verify the outcome independently (the resulting request via `read_network_requests`, console errors, DOM state) — "the click didn't error" is not proof it worked.
+6. Never blindly retry a mutation (form submit, KV write, deploy) — check current state first, since a retry can duplicate data.
 
 ## Deploy
 
